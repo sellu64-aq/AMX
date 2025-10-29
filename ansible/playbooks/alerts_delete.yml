@@ -1,0 +1,40 @@
+---
+- name: Delete a Grafana alert rule by title
+  hosts: grafana
+  gather_facts: no
+
+  tasks:
+    - name: Fetch existing alert rules
+      uri:
+        url: "{{ grafana_api_url }}/api/v1/provisioning/alert-rules"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ grafana_api_key }}"
+          Content-Type: "application/json"
+        return_content: true
+      register: existing_alerts
+
+    - name: Find the alert UID by title
+      set_fact:
+        alert_uid_to_delete: "{{ item.uid }}"
+      loop: "{{ existing_alerts.json }}"
+      when: item.title == alert_title_to_delete
+
+    - name: Fail if alert with specified title not found
+      fail:
+        msg: "Alert titled '{{ alert_title_to_delete }}' not found."
+      when: alert_uid_to_delete is not defined
+
+    - name: Delete the alert rule by UID
+      uri:
+        url: "{{ grafana_api_url }}/api/v1/provisioning/alert-rules/{{ alert_uid_to_delete }}"
+        method: DELETE
+        headers:
+          Authorization: "Bearer {{ grafana_api_key }}"
+          Content-Type: "application/json"
+        status_code: [200, 202, 204, 404]
+      register: delete_result
+
+    - name: Show delete result
+      debug:
+        var: delete_result

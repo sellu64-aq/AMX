@@ -1,0 +1,161 @@
+####### Alert Create #######
+#---- infra_1m -----
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "alert_file=infra/High_CPU_Usage_Server.json.j2" -e "rulegroup=infra_1m" -e "influxDS_name=influxdb_pri"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "alert_file=infra/High_Memory_Usage_Server.json.j2" -e "rulegroup=infra_1m" -e "influxDS_name=influxdb_pri"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "alert_file=infra/High_Disc_Usage_Server.json.j2" -e "rulegroup=infra_1m" -e "influxDS_name=influxdb_pri"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "alert_file=infra/High_System_Load_Alert.json.j2" -e "rulegroup=infra_1m" -e "influxDS_name=influxdb_pri"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "alert_file=infra/High_TCP_Established_Connections.json.j2" -e "rulegroup=infra_1m" -e "influxDS_name=influxdb_pri"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "alert_file=infra/High_TCP_CLOSE_WAIT_Connections.json.j2" -e "rulegroup=infra_1m" -e "influxDS_name=influxdb_pri"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "alert_file=infra/High_TCP_TIME_WAIT_Connections.json.j2" -e "rulegroup=infra_1m" -e "influxDS_name=influxdb_pri"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "alert_file=infra/Server_Reboot_Alert.json.j2" -e "rulegroup=infra_1m" -e "influxDS_name=influxdb_pri"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "alert_file=infra/Server_Down_Alert.json.j2" -e "rulegroup=infra_1m" -e "influxDS_name=influxdb_pri"
+#---- infra_5m -----
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "alert_file=infra/High_Swap_Usage_Server.json.j2" -e "rulegroup=infra_5m" -e "influxDS_name=influxdb_pri"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "alert_file=infra/High_Disk_IO_Utilization.json.j2" -e "rulegroup=infra_5m" -e "influxDS_name=influxdb_pri"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "alert_file=infra/High_Network_Interface_Errors.json.j2" -e "rulegroup=infra_5m" -e "influxDS_name=influxdb_pri"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "alert_file=infra/High_Disk_Inodes_Usage.json.j2" -e "rulegroup=infra_5m" -e "influxDS_name=influxdb_pri"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "alert_file=infra/High_Network_Packet_Drops.json.j2" -e "rulegroup=infra_5m" -e "influxDS_name=influxdb_pri"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "alert_file=infra/Low_Entropy_Availability.json.j2" -e "rulegroup=infra_5m" -e "influxDS_name=influxdb_pri"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "alert_file=infra/High_Context_Switch_Rate.json.j2" -e "rulegroup=infra_5m" -e "influxDS_name=influxdb_pri"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "alert_file=infra/Disk_IO_Wait_Time_Alert.json.j2" -e "rulegroup=infra_5m" -e "influxDS_name=influxdb_pri"
+#---- app_1m -----
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_1m" -e "influxDS_name=influxdb_pri" -e "alert_file=app/High_CPU_Usage_App.json.j2"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_1m" -e "influxDS_name=influxdb_pri" -e "alert_file=app/High_Memory_Usage_App.json.j2"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_1m" -e "influxDS_name=influxdb_pri" -e "alert_file=app/Application_Down.json.j2"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_1m" -e "influxDS_name=influxdb_pri" -e "alert_file=app/Accesslog_Failed_Response_Observed.json.j2"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_1m" -e "influxDS_name=influxdb_pri" -e "alert_file=app/SNMP_Trap_Received.json.j2"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_1m" -e "influxDS_name=influxdb_pri" -e "alert_file=app/Diameter_Request_Failure.json.j2"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_1m" -e "influxDS_name=influxdb_pri" -e "alert_file=app/Diameter_High_Req_Res_Time.json.j2"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_1m" -e "influxDS_name=influxdb_pri" -e "alert_file=app/BSS_bypassed_OCS_system.json.j2"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_1m" -e "influxDS_name=influxdb_pri" -e "alert_file=app/Network_link_Down.json.j2"
+#-----app_5m -----------
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_5m" -e "influxDS_name=influxdb_pri" -e "alert_file=app/High_PID_Count.json.j2"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_5m" -e "influxDS_name=influxdb_pri" -e "alert_file=app/High_Port_Response_time.json.j2"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup= app_5m" -e "influxDS_name=influxdb_pri" -e "alert_file=app/Network_Link_Down.json.j2"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_5m" -e "influxDS_name=influxdb_pri" -e "alert_file=app/Catalina_ERROR_Logs_in_Last_5mins_Interval.json.j2"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_5m" -e "influxDS_name=influxdb_pri" -e "alert_file=app/Catalina_WARN_logs_in_last_5mins_Interval.json.j2"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_5m" -e "influxDS_name=influxdb_pri" -e "alert_file=app/Diameter_Error_log.json.j2"
+#----- mysql_1m--------
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=mysql_1m" -e "influxDS_name=influxdb_pri" -e "alert_file=mysql/Mysql_Application_Down.json.j2"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=mysql_1m" -e "influxDS_name=influxdb_pri" -e "alert_file=mysql/MySQL_Replication_Stopped.json.j2"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "influxDS_name=influxdb_pri" -e "rulegroup=mysql_1m" -e "alert_file=mysql/MySQL_High_Rate_of_Connections.json.j2"
+#------ mysql_5m ---------
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=mysql_5m" -e "influxDS_name=influxdb_pri" -e "alert_file=mysql/MySQL_High_Threads_Connected.json.j2"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=mysql_5m" -e "influxDS_name=influxdb_pri" -e "alert_file=mysql/MySQL_High_Thread_Running.json.j2"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=mysql_5m" -e "influxDS_name=influxdb_pri" -e "alert_file=mysql/MySQL_High_Table_Lock_Waited_Time.json.j2"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=mysql_5m" -e "influxDS_name=influxdb_pri" -e "alert_file=mysql/MySQL_Performance_Alert_Full_joins_Without_Index.json.j2"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=mysql_5m" -e "influxDS_name=influxdb_pri" -e "alert_file=mysql/MySQL_Performance_Alert_Inefficient_Query_Access.json.j2"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=mysql_5m" -e "influxDS_name=influxdb_pri" -e "alert_file=mysql/High_Rate_Of_Temp_Table_Created.json.j2"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=mysql_5m" -e "influxDS_name=influxdb_pri" -e "alert_file=mysql/MySQL_Replication_Stopped.json.j2"
+#----- mysql_1h------
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=mysql_1h" -e "influxDS_name=influxdb_pri" -e "alert_file=mysql/MySQL_Long-Running_Queries_1_hour_Duration_Detected.json.j2"
+
+#----app_30m--------
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_30m" -e "influxDS_name=influxdb_pri" -e "alert_file=app/ESIM_High_Error_logs_Observed_in_Last_1hr_interval.json.j2"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_30m" -e "influxDS_name=influxdb_pri" -e "alert_file=app/WSO2_API_Gateway_no_Traffic_Detected_in_Last_5mins.json.j2"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_30m" -e "influxDS_name=influxdb_pri" -e "alert_file=app/WSO2_API_Gateway_High_Traffic_Detected_in_Last_5mins.json.j2"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_30m" -e "influxDS_name=influxdb_pri" -e "alert_file=app/High_OL_LocalHost_Access_Logs_Observed_in_Last_5mins.json.j2"
+
+#------profileSwitch-------
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=profileSwitch_1d" -e "influxDS_name=influxdb_pri" -e "alert_file=profileSwitch/GMI_ProfileSwitch_Critically_Low_SucessRate.json.j2"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=profileSwitch_1d" -e "influxDS_name=influxdb_pri" -e "alert_file=profileSwitch/GMI_ProfileSwitch_Low_SucessRate.json.j2 "
+
+#-------sms_30m--------
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=sms_30m" -e "influxDS_name=influxdb_pri" -e "alert_file=sms/High_SMS_Failure_in_Last_30mins.json.j2"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=sms_5m" -e "influxDS_name=influxdb_pri" -e "alert_file=sms/High_SMS_Error_Logs_in_last_5mins.json.j2"
+
+
+
+
+####### Alert Delete #########
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="High CPU Usage Application"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="High Memory Usage Application"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="Application Down."'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="High Process PID Count (>7)"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="AccessLog-Failed Response Observed"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="SNMP traps received."'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="Esim- High Error logs observed in last 1hr interval.."'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="WSO2 API Gateway: No Traffic Detected in Last 5 Minutes"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="WSO2 API Gateway: HIGH Traffic Detected in Last 5 Minutes"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="High OL-localHost Access logs observed in last 5 mins"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="Catalina ERROR Logs in last 5 mins interval."'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="Catalina High WARNING Logs in last 5mins interval"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="MySQL High rate of new connections per second."'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="MySQL Service Down."'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="MySQL Long-Running Queries (1 hour Duration) Detected."'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="MySQL High Threads Connected."'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="MySQL High Threads Running."'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="MySQL High Table Locks Waited Time (2 secs)."'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="MySQL Performance Alert: Full Joins Without Index"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="MySQL Performance Alert: Inefficient Query Access "'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="MySQL Created Temp Tables Rate High"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="GMI: Profile Switch Critically Low Success Rate."'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="GMI: Profile Switch Low Success Rate."'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="High SMS Failures in last 30 mins."'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="High SMS Error logs in last 5 mins."'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="High Swap Usage Server"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="High Disk IO Utilization"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="High Network Interface Errors"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="High Port Reponse Time (>500ms)"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="Network Link Down"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="High Disk Inodes Usage"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="High Network Packet Drops"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="Low Entropy Availability"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="High Context Switch Rate"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="Disk IO Wait Time Alert"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="High CPU Usage Server"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="High Memory Usage Server"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="High Disc Usage Server"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="High System Load Alert"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="High TCP Established Connections"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="High TCP CLOSE WAIT Connections"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="High TCP TIME WAIT Connections"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="Server Reboot Alert"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="Server Down Alert"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="SMS Error logs in last 5 mins."'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="Diameter Request Failures"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="Diameter-High Request Response Time (>500ms)"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="BSS Bypass Detected in OCS"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="Diameter Error Log Observed"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="High TCP CLOSE_WAIT Connections"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="Number of TCP connections in CLOSE_WAIT state is abnormally high."'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="High TCP TIME_WAIT Connections"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="High Network Interface Errors"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="MySQL Replication Stopped"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="Network link down in last 1 min intrvl"'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="
+
+
+
+
+
+############## Notitifcation Policy Provision ##################
+# group_wait	How long to wait to group alerts before sending the first notification.
+# group_interval	Minimum interval between notifications for a group of alerts.
+# repeat_interval	How often to resend a notification if the alert is still firing.
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/notification_provision.yml -e "rulegroup=infra_1m contact_point=All_Alerts group_by=['alertname','severity'] group_wait=10s group_interval=2m repeat_interval=30m"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/notification_provision.yml -e "rulegroup=infra_5m contact_point=All_Alerts group_by=['alertname','severity'] group_wait=10s group_interval=10m repeat_interval=1h"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/notification_provision.yml -e "rulegroup=app_1m contact_point=All_Alerts group_by=['alertname','severity'] group_wait=10s group_interval=5m repeat_interval=30m"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/notification_provision.yml -e "rulegroup=app_5m contact_point=All_Alerts group_by=['alertname','severity'] group_wait=10s group_interval=10m repeat_interval=1h"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/notification_provision.yml -e "rulegroup=app_30m contact_point=All_Alerts group_by=['alertname','severity'] group_wait=10s group_interval=30m repeat_interval=4h"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/notification_provision.yml -e "rulegroup=app_1h contact_point=All_Alerts group_by=['alertname','severity'] group_wait=10s group_interval=30m repeat_interval=4h"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/notification_provision.yml -e "rulegroup=mysql_1m contact_point=All_Alerts group_by=['alertname','severity'] group_wait=10s group_interval=2m repeat_interval=30m"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/notification_provision.yml -e "rulegroup=mysql_5m contact_point=All_Alerts group_by=['alertname','severity'] group_wait=10s group_interval=10m repeat_interval=1h"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/notification_provision.yml -e "rulegroup=mysql_30m contact_point=All_Alerts group_by=['alertname','severity'] group_wait=10s group_interval=30m repeat_interval=4h"
+
+
+########### Notitifcation Policy Delete ##############
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/notification_delete.yml -e "notification_policy_type=infra_1m"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/notification_delete.yml -e "notification_policy_type=infra_5m"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/notification_delete.yml -e "notification_policy_type=app_1m"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/notification_delete.yml -e "notification_policy_type=app_5m"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/notification_delete.yml -e "notification_policy_type=app_30m"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/notification_delete.yml -e "notification_policy_type=app_1h"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/notification_delete.yml -e "notification_policy_type=mysql_1m"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/notification_delete.yml -e "notification_policy_type=mysql_5m"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/notification_delete.yml -e "notification_policy_type=mysql_30m"
+
+curl -s -H "Authorization: Bearer glsa_ao7MZIeX4bKOEXz2KqzRstUxQ98I8JNi_073f2b4e" -H "Content-Type: application/json" https://grafanaops.airlinq.com:3000/api/v1/provisioning/alert-rules | jq -r '.[].title'
+
+
