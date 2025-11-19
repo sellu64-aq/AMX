@@ -1,0 +1,70 @@
+- name: Deploy DRA Event Processing Script and Systemd Service
+  hosts: dra
+  become: yes
+  tags: dra_event_time_script
+  any_errors_fatal: true
+
+  tasks:
+    - name: Ensure /opt/grafana/scripts directory exists
+      file:
+        path: "{{ telegraf_remote_path }}/scripts"
+        state: directory
+        owner: "{{ telegraf_user }}"
+        group: "{{ telegraf_group }}"
+        mode: '0755'
+
+    - name: Deploy DRA processing script with both InfluxDB targets
+      template:
+        src: "{{ ansible_folder }}/playbooks/files/dra_processingTime.sh.j2"
+        dest: "{{ telegraf_remote_path }}/scripts/Dra_RequestProcessingTime.sh"
+        owner: "{{ telegraf_user }}"
+        group: "{{ telegraf_group }}"
+        mode: '0755'
+      vars:
+        influx_priDB_name: "AMX_Dallas_North"
+        influx_Pri_IP: "10.221.93.106"
+        influx_Pri_Port: "8086"
+        influx_priDS_name: "Dallas_North"
+
+        influx_secDB_name: "AMX_Dallas_South"
+        influx_Sec_IP: "10.221.93.107"
+        influx_Sec_Port: "8086"
+        influx_secDS_name: "Dallas_South"
+
+    - name: Show influx vars
+      debug:
+        msg:
+          - "Primary => {{ influx_priDB_name }} @ {{ influx_Pri_IP }}:{{ influx_Pri_Port }}"
+          - "Secondary => {{ influx_secDB_name }} @ {{ influx_Sec_IP }}:{{ influx_Sec_Port }}"
+
+    - name: Deploy DRA systemd unit file
+      copy:
+        dest: /etc/systemd/system/dra-EventProcessingTime.service
+        mode: '0644'
+        owner: "{{ telegraf_user }}"
+        group: "{{ telegraf_group }}"
+        content: |
+          [Unit]
+          Description=DRA Event Processing Time Monitor
+          After=network.target
+
+          [Service]
+          Type=simple
+          ExecStart=/bin/bash {{ telegraf_remote_path }}/scripts/Dra_RequestProcessingTime.sh
+          Restart=on-failure
+          RestartSec=5
+          StandardOutput=syslog
+          StandardError=syslog
+          SyslogIdentifier=DRA-EventTimeTakenMonitor
+          User=root
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Enable and start dra-EventProcessingTime service
+      systemd:
+        daemon_reload: yes
+        name: dra-EventProcessingTime.service
+        enabled: yes
+        state: restarted
+

@@ -1,0 +1,135 @@
+[global_tags]
+  project = "{{ project }}"
+  zone = "{{ zone }}"
+  service = "lb"
+
+[agent]
+  debug = true
+  quiet = false
+  interval = "30s"
+  flush_interval = "10s"
+  logfile = "/var/log/telegraf/{{ telegraf_name }}_telegraf.log"
+  hostname = "{{ inventory_hostname }}"
+  omit_hostname = false
+  round_interval = true
+  metric_batch_size = 1000
+  metric_buffer_limit = 10000
+  collection_jitter = "0s"
+  flush_jitter = "0s"
+  precision = "0s"
+  logfile_rotation_interval = "12h"
+  logfile_rotation_max_size = "100MB"
+  logfile_rotation_max_archives = 5
+
+####### Port Status for {{ inventory_hostname }} #######
+{% for item in ports %}
+[[inputs.net_response]]
+  protocol = "tcp"
+  address = "{{ item.ip }}:{{ item.port }}"
+  name_override = "portResponsetime"
+  tags = { linkName="{{ item.name }}", ip="{{ item.ip }}", port="{{ item.port }}", host="{{ inventory_hostname }}" }
+{% endfor %}
+
+############# Link Status #########
+{% for port in ports if port.port is defined %}
+[[inputs.exec]]
+  commands = [
+    "bash -c 'echo -n \"port_status,host={{ inventory_hostname }},name={{ port.name | default('unknown') }},port={{ port.port }} status=\"; (ss -ltn | grep -q {{ port.port }}) && echo 1 || echo 0'"
+  ]
+  timeout = "5s"
+  data_format = "influx"
+  name_override = "IPPort_Status"
+{% endfor %}
+
+{% for p in ports %}
+[[inputs.exec]]
+  commands = [
+    "bash -c 'ss -nt | awk '\\''$4 ~ /:{{ p.port }}$/ { state[$1]++ } END { for (s in state) printf \"ip_listener_status,host={{ inventory_hostname }},name={{ p.name | default('unknown') }},ip={{ p.ip | default('*') }},port={{ p.port }},state=%s connections=%d\\n\", s, state[s] }'\\'''"
+  ]
+  timeout = "5s"
+  data_format = "influx"
+  name_override = "ip_listener_status"
+{% endfor %}
+
+############## Ping Monitoring ################
+[[inputs.ping]]
+  {% set unique_ips = ports | map(attribute='ip') | unique %}
+  urls = [{% for ip in unique_ips %}"{{ ip }}"{% if not loop.last %}, {% endif %}{% endfor %}]
+  count = 2
+  ping_interval = 3.0
+  timeout = 2.0
+  method = "exec"
+
+##### App Metrics ###########
+[[inputs.exec]]
+  commands = ["/opt/grafana/scripts/{{ telegraf_name }}_app_metrics.sh"]
+  data_format = "influx"
+  name_override = "app_metrics"
+  interval = "1m"
+  timeout = "50s"
+
+[[inputs.nginx]]
+  urls = ["http://localhost:8080/status"]
+  interval = "10s"
+  name_override = "nginx_metrics"
+
+[[inputs.tail]]
+  files = ["/var/log/nginx/error.log"]
+  initial_read_offset = "end"
+  name_override = "nginx_upstream_errors"
+  data_format = "grok"
+  grok_patterns = ["%{NGINX_UPSTREAM_ERROR}"]
+
+  grok_custom_patterns = '''
+    CUSTOM_TIMESTAMP %{YEAR}/%{MONTHNUM}/%{MONTHDAY} %{TIME}
+
+    NGINX_UPSTREAM_ERROR %{CUSTOM_TIMESTAMP:timestamp} \[%{LOGLEVEL:level}\] %{NUMBER:pid}#%{NUMBER}: \*%{NUMBER:req_id} %{GREEDYDATA:error_msg}, client: %{IP:client_ip}, server: %{IPORHOST:server_ip}:%{NUMBER:server_port}, request: "%{DATA:request}", upstream: "%{DATA:upstream}", url: "%{DATA:url}"
+  '''
+[[processors.converter]]
+  namepass = ["nginx_upstream_errors"]
+
+  [processors.converter.fields]
+    integer = ["pid", "req_id", "server_port"]
+    tag = ["url", "client_ip", "server_ip","level"]
+
+# Telegraf input plugin: tail Nginx access logs
+[[inputs.tail]]
+  files = ["/var/log/nginx/access.log"]
+  from_beginning = false
+  name_override = "nginx_access_logs"
+  data_format = "grok"
+  grok_patterns = ['%{NGINX_ACCESS_LOG}']
+  grok_custom_patterns = '''
+    NGINX_ACCESS_LOG %{IP:client_ip} - %{DATA:user} \[%{HTTPDATE:timestamp}\] "%{WORD:method} %{URIPATH:request_path}(?:\?%{DATA:query_string})? HTTP/%{NUMBER:http_version}" %{NUMBER:status} %{NUMBER:bytes_sent} "%{DATA:referer}" "%{DATA:user_agent}"
+
+    HTTPDATE %{MONTHDAY}/%{MONTH}/%{YEAR}:%{TIME} %{TZ}
+    MONTHDAY (?:3[01]|[12][0-9]|0?[1-9])
+    MONTH (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)
+    TIME %{HOUR}:%{MINUTE}:%{SECOND}
+    HOUR (?:2[0-3]|[01]?[0-9])
+    MINUTE (?:[0-5][0-9])
+    SECOND (?:[0-5][0-9])
+    TZ (?:\+|-)\d{4}
+  '''
+
+[[processors.converter]]
+  namepass = ["nginx_access_logs"]
+  [processors.converter.fields]
+    integer = ["status", "bytes_sent"]
+    tag = ["client_ip", "user", "method", "request_path", "http_version", "referer", "user_agent"]
+
+########  Outputs #########
+[[outputs.influxdb]]
+  urls = ["http://{{ influx_ip }}:8086"]
+  database = "{{ influx_DB_name }}"
+  retention_policy = "thirty_days"
+  timeout = "5s"
+  namepass = ["IPPort_Status","portResponsetime","ip_listener_status","ping","app_metrics","nginx_metrics"]
+
+# Output for all other measurements to default RP (30 days)
+[[outputs.influxdb]]
+  urls = ["http://{{ influx_ip }}:8086"]
+  database = "{{ influx_DB_name }}"
+  retention_policy = "1hrRP"
+  timeout = "5s"
+  namepass = ["nginx_upstream_errors","nginx_access_logs"]

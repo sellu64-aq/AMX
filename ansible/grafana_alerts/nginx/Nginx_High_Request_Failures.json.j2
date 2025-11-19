@@ -1,0 +1,83 @@
+{
+  "uid": "{{ alert_uid }}",
+  "folderUID": "{{ folder_uid }}",
+  "ruleGroup": "{{ rulegroup }}",
+  "title": "NGINX High 4xx-5xx Failed Response Observed",
+  "condition": "C",
+  "data": [
+    {
+      "refId": "A",
+      "relativeTimeRange": {"from": 300, "to": 0},
+      "datasourceUid": "{{ datasourceUid }}",
+      "model": {
+        "datasource": {"type": "influxdb", "uid": "{{ datasourceUid }}"},
+        "instant": false,
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "query": "select sum(CDRCounts) from \"thirty_days\".\"CQ_Access_Logs_1m\" where $timeFilter and response_code !~ /^2\\d{2}$/ group by time(1m),client_ip, response_code,project,host,service,app fill(null)",
+        "rawQuery": true,
+        "refId": "A",
+        "resultFormat": "time_series"
+      }
+    },
+    {
+      "refId": "B",
+      "relativeTimeRange": {"from": 300, "to": 0},
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": {"params": [], "type": "gt"},
+            "operator": {"type": "and"},
+            "query": { "params": ["B"] },
+            "reducer": {"params": [], "type": "last"},
+            "type": "query"
+          }
+        ],
+        "datasource": {"type": "__expr__", "uid": "__expr__"},
+        "expression": "A",
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "reducer": "mean",
+        "refId": "B",
+        "settings": {"mode": "replaceNN", "replaceWithValue": 0},
+        "type": "reduce"
+      }
+    },
+    {
+      "refId": "C",
+      "relativeTimeRange": {"from": 300, "to": 0},
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": { "params": [1000], "type": "gt" },
+            "operator": {"type": "and"},
+            "query": { "params": ["C"] },
+            "reducer": {"params": [], "type": "last"},
+            "type": "query"
+          }
+        ],
+        "datasource": {"type": "__expr__", "uid": "__expr__"},
+        "expression": "B",
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "refId": "C",
+        "type": "threshold"
+      }
+    }
+  ],
+  "noDataState": "OK",
+  "execErrState": "OK",
+  "annotations": {
+    "description": "access logs for client responses that do not return successful 2xx HTTP status codes. It highlights potential issues with requests failing, being rejected, or encountering errors.\n\nPurpose:\nTo detect and alert on unusual or high volumes of failed HTTP responses, which may indicate:\nApplication issues (500, 503 errors)\nAuthentication failures (401, 403)\nClient misuse or redirects (3xx, 4xx)\nBackend service failures\n\nImpact:\nSustained or spiking non-2xx responses could impact:\nEnd-user experience\nAPI integrations\nBackend service reliability"
+  },
+  "labels": {
+    "platform": "{{ project }}",
+    "zone"    : "{{ zone }}",
+    "severity": "CRITICAL",
+    "type"    : "{{ (rulegroup | string).split('_')[0] }}"
+  },
+  "isPaused": false
+}
+

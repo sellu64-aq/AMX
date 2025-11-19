@@ -1,0 +1,202 @@
+[global_tags]
+  project = "{{ project }}"
+  zone = "{{ zone }}"
+  nodeIP = "{{ ansible_host }}"
+  service = "nginx"
+
+[agent]
+  debug = true
+  quiet = false
+  interval = "30s"
+  flush_interval = "30s"
+  logfile = "{{ telegraf_remote_path }}/telegraf/logs/{{ telegraf_name }}_telegraf.log"
+  hostname = "{{ inventory_hostname }}"
+  omit_hostname = false
+  round_interval = true
+  metric_batch_size = 1000
+  metric_buffer_limit = 20000
+  collection_jitter = "0s"
+  flush_jitter = "0s"
+  precision = "0s"
+  logfile_rotation_interval = "12h"
+  logfile_rotation_max_size = "100MB"
+  logfile_rotation_max_archives = 5
+
+
+####### Port Status for {{ inventory_hostname }} #######
+{% for item in ports %}
+[[inputs.net_response]]
+  protocol = "tcp"
+  address = "{{ item.ip }}:{{ item.port }}"
+  name_override = "portResponsetime"
+  tags = { linkName="{{ item.name }}", ip="{{ item.ip }}", port="{{ item.port }}", host="{{ inventory_hostname }}" }
+{% endfor %}
+
+############# Port Monitor #############
+[[inputs.exec]]
+  commands = ["{{ telegraf_remote_path }}/scripts/{{ telegraf_name }}_port_listen_monitor.sh"]
+  timeout = "10s"
+  data_format = "influx"
+  name_override = "port_listen"
+
+############# Port Monitor #############
+[[inputs.exec]]
+  commands = ["{{ telegraf_remote_path }}/scripts/{{ telegraf_name }}_port_conn_monitor.sh"]
+  timeout = "10s"
+  data_format = "influx"
+  name_override = "link_count"
+
+############## Ping Monitoring ################
+[[inputs.ping]]
+  {% set unique_ips = ports | map(attribute='ip') | unique %}
+  urls = [{% for ip in unique_ips %}"{{ ip }}"{% if not loop.last %}, {% endif %}{% endfor %}]
+  count = 2
+  ping_interval = 3.0
+  timeout = 2.0
+  method = "exec"
+
+##### App Metrics ###########
+[[inputs.exec]]
+  commands = ["{{ telegraf_remote_path }}/scripts/{{ telegraf_name }}_app_metrics.sh"]
+  data_format = "influx"
+  name_override = "app_metrics"
+  interval = "1m"
+  timeout = "50s"
+
+######### Nginx #############
+[[inputs.nginx]]
+  urls = ["http://localhost:8080/status"]
+  interval = "10s"
+
+########## Tails ################
+
+########## Tails ################
+[[inputs.tail]]
+  files = ["/var/log/nginx/error.log"]
+  initial_read_offset = "beginning"
+  name_override = "nginx_upstream_errors"
+  data_format = "grok"
+  grok_patterns = ["%{NGINX_UPSTREAM_ERROR}"]
+
+  grok_custom_patterns = '''
+    CUSTOM_TIMESTAMP %{YEAR}/%{MONTHNUM}/%{MONTHDAY} %{TIME}
+
+    # Server can be IP or hostname (IPORHOST), port is number
+    NGINX_UPSTREAM_ERROR %{CUSTOM_TIMESTAMP:timestamp} \[%{LOGLEVEL:level}\] %{NUMBER:pid}#%{NUMBER}: \*%{NUMBER:req_id} %{GREEDYDATA:error_msg}, client: %{IP:client_ip}, server: %{IPORHOST:serverIP}:%{NUMBER:server_port}, request: "%{DATA:request}", host: "%{DATA:hostURL}"
+  '''
+[[processors.converter]]
+  namepass = ["nginx_upstream_errors"]
+  [processors.converter.fields]
+    integer = ["pid", "req_id", "server_port"]
+    tag = ["hostURL", "client_ip", "serverIP", "level"]
+
+#######################
+# Input: Tail Nginx Access Logs
+#######################
+[[inputs.tail]]
+  files = ["/var/log/nginx/access.log"]
+  name_override = "access_log"
+  data_format = "grok"
+  initial_read_offset = "end"
+  tags = { app = "gclb" }
+
+  grok_patterns = [
+    # Split path and query string properly
+    '%{IP:client_ip} - - \[%{HTTPDATE:timestamp}\] "%{WORD:method} %{URIPATH:message}(?:\?(?<querystring>[^\"]+))? HTTP/%{NUMBER:http_version}" %{INT:response_code} %{INT:response_size}(?:\s*\[%{INT:request_duration}\])?'
+  ]
+
+  grok_custom_patterns = '''
+HTTPDATE %{MONTHDAY}/%{MONTH}/%{YEAR}:%{TIME} %{ISO8601_TIMEZONE}
+'''
+
+#######################
+# Processor: Remove quotes from message (if any)
+#######################
+[[processors.regex]]
+  namepass = ["access_log"]
+  [[processors.regex.fields]]
+    key = "message"
+    pattern = '^"(.*)"$'
+    replacement = '${1}'
+
+#######################
+# Processor: Extract clean API path (no query string)
+#######################
+[[processors.regex]]
+  namepass = ["access_log"]
+  [[processors.regex.fields]]
+    key = "message"
+    pattern = '^([^? ]+)'  # Capture path only
+    replacement = '${1}'
+    result_key = "api_name"
+
+#######################
+# Processor (Optional): Tag static assets
+#######################
+[[processors.regex]]
+  namepass = ["access_log"]
+  [[processors.regex.fields]]
+    key = "message"
+    pattern = '.*\.(js|css|png|jpg|jpeg|ico|svg|woff2?|action|html|gif|map|ttf|otf)(\?.*)?$'
+    replacement = "static"
+    result_key = "asset_type"
+
+#######################
+# Processor: Parse query strings into logfmt fields
+#######################
+[[processors.regex]]
+  namepass = ["access_log"]
+  [[processors.regex.fields]]
+    key = "querystring"
+    pattern = "([^=&]+)=([^&]*)"
+    replacement = "${1}:${2}"
+    result_key = "parsed_kv"
+
+[[processors.parser]]
+  namepass = ["access_log"]
+  parse_fields = ["parsed_kv"]
+  data_format = "logfmt"
+
+#######################
+# Processor: Convert fields to tags and integers
+#######################
+[[processors.converter]]
+  namepass = ["access_log"]
+  [processors.converter.fields]
+    tag = ["api_name", "client_ip", "method", "response_code"]
+    integer = ["response_size", "request_duration"]
+
+
+################ OUTPUTS Pri #################
+[[outputs.influxdb]]
+  urls = ["http://{{ influx_Pri_IP }}:{{ influx_Pri_Port }}"]
+  database = "{{ influx_priDB_name }}"
+  retention_policy = "thirty_days"
+  timeout = "5s"
+  skip_database_creation = true
+  namepass = ["nginx","link_count","port_listen","IPPort_Status","portResponsetime","ping","app_metrics"]
+
+[[outputs.influxdb]]
+  urls = ["http://{{ influx_Pri_IP }}:{{ influx_Pri_Port }}"]
+  database = "{{ influx_priDB_name }}"
+  retention_policy = "1hrRP"
+  timeout = "5s"
+  skip_database_creation = true
+  namepass = ["access_log","nginx_upstream_errors"]
+
+### OUTPUTS Sec #####
+[[outputs.influxdb]]
+  urls = ["http://{{ influx_Sec_IP }}:{{ influx_Sec_Port }}"]
+  database = "{{ influx_secDB_name }}"
+  retention_policy = "thirty_days"
+  timeout = "5s"
+  skip_database_creation = true
+  namepass = ["nginx","link_count","port_listen","BSSbyPass","RestartLog","DraQueue","IPPort_Status","portResponsetime","ip_listener_status","ping","app_metrics"]
+
+[[outputs.influxdb]]
+  urls = ["http://{{ influx_Sec_IP }}:{{ influx_Sec_Port }}"]
+  database = "{{ influx_secDB_name }}"
+  retention_policy = "1hrRP"
+  timeout = "5s"
+  skip_database_creation = true
+  namepass = ["access_log","nginx_upstream_errors"]

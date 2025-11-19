@@ -1,0 +1,119 @@
+---
+- name: Install and configure Prometheus
+  hosts: all_servers
+  become: yes
+  vars:
+    prometheus_user: prometheus
+    prometheus_group: prometheus
+    prometheus_install_dir: /opt/grafana/prometheus
+    prometheus_data_dir: /opt/grafana/prometheus/data
+    prometheus_config_file: /opt/grafana/prometheus/prometheus.yml
+    prometheus_binary_local_path: /home/aqadmin/Ansible/binaries/prometheus
+    project_name: "{{ project }}"       # Customize this as needed
+    zone_name: "{{ zone }}"             # Customize this as needed
+
+  tasks:
+    - name: Create prometheus group
+      ansible.builtin.group:
+        name: "{{ prometheus_group }}"
+        state: present
+
+    - name: Create prometheus user
+      ansible.builtin.user:
+        name: "{{ prometheus_user }}"
+        group: "{{ prometheus_group }}"
+        system: yes
+        create_home: no
+        shell: /sbin/nologin
+
+    - name: Check if Prometheus install directory exists
+      ansible.builtin.stat:
+        path: "{{ prometheus_install_dir }}"
+      register: install_dir_stat
+
+    - name: Create Prometheus install directory
+      ansible.builtin.file:
+        path: "{{ prometheus_install_dir }}"
+        state: directory
+        owner: "{{ prometheus_user }}"
+        group: "{{ prometheus_group }}"
+        mode: "0755"
+      when: not install_dir_stat.stat.exists
+
+    - name: Check if Prometheus data directory exists
+      ansible.builtin.stat:
+        path: "{{ prometheus_data_dir }}"
+      register: data_dir_stat
+
+    - name: Create Prometheus data directory
+      ansible.builtin.file:
+        path: "{{ prometheus_data_dir }}"
+        state: directory
+        owner: "{{ prometheus_user }}"
+        group: "{{ prometheus_group }}"
+        mode: "0755"
+      when: not data_dir_stat.stat.exists
+
+    - name: Check if Prometheus binary exists
+      ansible.builtin.stat:
+        path: "{{ prometheus_install_dir }}/prometheus"
+      register: binary_stat
+
+    - name: Copy prometheus binary to install directory
+      ansible.builtin.copy:
+        src: "{{ prometheus_binary_local_path }}"
+        dest: "{{ prometheus_install_dir }}/prometheus"
+        owner: "{{ prometheus_user }}"
+        group: "{{ prometheus_group }}"
+        mode: "0755"
+      when: not binary_stat.stat.exists
+
+    - name: Copy prometheus.yml config from template
+      ansible.builtin.template:
+        src: /home/aqadmin/GMI_ansible/playbooks/files/prometheus.yml.j2
+        dest: "{{ prometheus_config_file }}"
+        owner: "{{ prometheus_user }}"
+        group: "{{ prometheus_group }}"
+        mode: "0644"
+
+    - name: Check if Prometheus systemd service file exists
+      ansible.builtin.stat:
+        path: /etc/systemd/system/prometheus.service
+      register: systemd_service_stat
+
+    - name: Create systemd service file for Prometheus
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/prometheus.service
+        owner: root
+        group: root
+        mode: '0644'
+        content: |
+          [Unit]
+          Description=Prometheus
+          Wants=network-online.target
+          After=network-online.target
+
+          [Service]
+          User={{ prometheus_user }}
+          Group={{ prometheus_group }}
+          ExecStart={{ prometheus_install_dir }}/prometheus \
+            --config.file={{ prometheus_config_file }} \
+            --storage.tsdb.path={{ prometheus_data_dir }} \
+            --web.listen-address=0.0.0.0:9090
+
+          Restart=on-failure
+
+          [Install]
+          WantedBy=multi-user.target
+      when: not systemd_service_stat.stat.exists
+
+    - name: Reload systemd daemon
+      ansible.builtin.systemd:
+        daemon_reload: yes
+
+    - name: Enable and start Prometheus service
+      ansible.builtin.systemd:
+        name: prometheus
+        state: started
+        enabled: yes
+

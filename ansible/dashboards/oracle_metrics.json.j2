@@ -1,0 +1,1137 @@
+{
+  "dashboard": {
+    "folderUid": "db777Sel",
+    "message": "deployment",
+    "overwrite": true,
+    "__inputs": [
+      {
+        "name"       : "influx_DS",
+        "label"      : "Select InfluxDB Source",
+        "description": "Choose the InfluxDB data source (Pri/Sec)",
+        "type"       : "datasource",
+        "pluginId"   : "influxdb",
+        "pluginName" : "InfluxDB"
+      }
+    ],
+    "__elements": {},
+    "__requires": [
+      {"type": "panel", "id": "gauge", "name": "Gauge", "version": ""},
+      {
+        "type"   : "grafana",
+        "id"     : "grafana",
+        "name"   : "Grafana",
+        "version": "12.0.2"
+      },
+      {
+        "type"   : "datasource",
+        "id"     : "influxdb",
+        "name"   : "InfluxDB",
+        "version": "1.0.0"
+      },
+      {"type": "panel", "id": "piechart", "name": "Pie chart", "version": ""},
+      {"type": "panel", "id": "stat", "name": "Stat", "version": ""},
+      {"type": "panel", "id": "table", "name": "Table", "version": ""},
+      {
+        "type"   : "panel",
+        "id"     : "timeseries",
+        "name"   : "Time series",
+        "version": ""
+      }
+    ],
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {"type": "grafana", "uid": "-- Grafana --"},
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": null,
+    "links": [],
+    "liveNow": true,
+    "panels": [
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "description": "Description:\n\nTracks total user sessions and how many are actively running. A high active/total ratio may indicate high database workload.\n\nTroubleshooting:\n\nCheck for blocking sessions: v$session joined with v$lock.\n\nMonitor top SQLs or long-running queries.\n\nThresholds:\n\n70% active sessions → investigate performance bottlenecks.",
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [ {"color": "green"}, {"color": "red", "value": 80} ]
+            },
+            "unit": "none"
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 3, "w": 5, "x": 0, "y": 0},
+        "id": 7,
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "percentChangeColorMode": "standard",
+          "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "fields": "",
+            "values": false
+          },
+          "showPercentChange": false,
+          "text": {"titleSize": 14, "valueSize": 27},
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "$tag_oracle_metrics",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT mean(\"active_sessions\") AS \"Active Sessions\", mean(\"total_sessions\") AS \"Total Sessions\"\nFROM \"oracle_metrics\"\nWHERE $timeFilter AND \"metric\" = 'sessions' AND \"host\" =~ /^$host$/\nGROUP BY time($interval) fill(null)\n",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "table"
+          }
+        ],
+        "type": "stat"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "description": "This panel monitors Oracle database lock contention events by tracking the 'lock_contention' metric from the oracle_metrics measurement.\n\n- The query calculates the average number of lock contention events ('count') over time.\n- A value of zero indicates no lock contention detected.\n- Non-zero values suggest lock contention, which may impact database performance.\n- The panel refreshes dynamically based on the dashboard's time filter.\n- Alerts can be configured to notify when lock contention count exceeds zero for a sustained period.\n\nUse this panel to quickly identify and respond to locking issues affecting Oracle DB performance on host DLVMAMXMEDIADB01.\n\n\nDescription:\n\n    Measures number of blocking locks. These can cause application slowdowns or deadlocks.\n\nTroubleshooting:\n\n    Use v$session and v$lock to identify blockers.\n\n    Kill blocking sessions if needed.",
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "green"              },
+                {"color": "#EAB839", "value": 5},
+                {"color": "red",     "value": 7}
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 3, "w": 3, "x": 5, "y": 0},
+        "id": 5,
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "percentChangeColorMode": "standard",
+          "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "fields": "",
+            "values": false
+          },
+          "showPercentChange": false,
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT mean(\"count\") AS \"Lock Contention Count\" \nFROM \"oracle_metrics\" \nWHERE \"metric\" = 'lock_contention' AND $timeFilter AND \"host\" =~ /^$host$/\nGROUP BY time($__interval) fill(null)\n",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "table"
+          }
+        ],
+        "type": "stat"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "description": "### 🐢 Long Running Queries (Runtime > 5 Minutes)\n\nThis panel displays the **latest count of active sessions running for more than 5 minutes** in the Oracle database within the selected time range.\n\n---\n\n#### 🛠️ What This Means:\n- The metric tracks queries where `last_call_et > 300` seconds (i.e., 5 minutes).\n- Helps identify SQL sessions that are potentially stuck, blocking others, or consuming excessive resources.\n\n---\n\n#### ⚠️ Why This Matters:\n- Long-running queries can lead to performance degradation, blocking, or session pile-up.\n- May indicate inefficient SQL, missing indexes, locks, or application design issues.\n- Useful in proactive alerting and trend monitoring to prevent production slowdowns.\n\n---\n\n#### 🧪 Troubleshooting Tips:\n- Use Oracle views like `v$session`, `v$sql`, or `v$session_longops` to investigate specific sessions.\n- Identify which application or module is triggering the query (`module`, `action` fields in `v$session`).\n- Kill runaway sessions if necessary (use with caution).\n- Review query plans and DB statistics for potential optimization.\n\n---\n\nℹ️ _Metric Source: `oracle_metrics.metric = 'long_running_queries'`, field: `count`_\n",
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "semi-dark-green"            },
+                {"color": "#EAB839",         "value": 5},
+                {"color": "semi-dark-red",   "value": 7}
+              ]
+            },
+            "unit": "queries"
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 3, "w": 3, "x": 8, "y": 0},
+        "id": 13,
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "percentChangeColorMode": "standard",
+          "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "fields": "",
+            "values": false
+          },
+          "showPercentChange": false,
+          "text": {"titleSize": 14, "valueSize": 27},
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT last(\"count\") AS \"Long Running Queries\" FROM \"oracle_metrics\"\nWHERE \"metric\" = 'long_running_queries' AND $timeFilter AND \"host\" =~ /^$host$/\n",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "table"
+          }
+        ],
+        "type": "stat"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "description": "### 🔁 Redo Log Switch Rate (Last Hour)\n\nThis panel displays the **most recent redo log switch count per hour** from Oracle. High or low switch rates can indicate database activity trends, misconfigurations, or potential performance issues.\n\n---\n\n#### 🛠️ What This Means:\nOracle writes all changes to redo logs. Each switch creates a new log and archives the previous. Log switches too frequently or too infrequently can impact performance, recovery, and archive log space.\n\n- **Too Frequent**: May lead to excessive archiving or log contention.\n- **Too Rare**: May indicate low activity or a stuck redo log group.\n\n---\n\n#### ⚠️ Threshold Guidance:\n- 🔴 **>10 per hour**: May need to increase redo log size.\n- 🟡 **<1 per hour**: Investigate if DB activity is unexpectedly low.\n\n---\n\n#### 🧪 Troubleshooting Tips:\n- Check redo log sizes: `SELECT group#, bytes FROM v$log;`\n- Confirm archive log status: `SELECT status FROM v$archive_dest;`\n- Investigate long-running transactions: `v$session`, `v$transaction`\n- Review alert logs for redo-related errors.\n\n---\n\nℹ️ _Metric Source: `oracle_metrics.metric = 'redo_log_switch_rate'`_\n",
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "semi-dark-red"              },
+                {"color": "#EAB839",         "value": 5},
+                {"color": "semi-dark-green", "value": 7}
+              ]
+            },
+            "unit": "ops"
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 3, "w": 3, "x": 11, "y": 0},
+        "id": 9,
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "percentChangeColorMode": "standard",
+          "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "fields": "",
+            "values": false
+          },
+          "showPercentChange": false,
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "Redo Log Switch Rate",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT last(\"count_last_hour\") AS \"Redo Log Switch Rate\"  FROM \"oracle_metrics\"\nWHERE \"metric\" = 'redo_log_switch_rate' AND $timeFilter AND \"host\" =~ /^$host$/\n",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "table"
+          }
+        ],
+        "type": "stat"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "description": "### 🚧 Oracle Blocked Sessions (Current Count)\n\n**Query:**\n`SELECT last(\"count\") FROM \"oracle_metrics\" WHERE \"metric\" = 'blocked_sessions' AND $timeFilter`\n\n**Purpose:**\nDisplays the **most recent count** of **blocked sessions** in the Oracle database.\n\n**Info for Ops:**\n- A **blocked session** occurs when a session is waiting for a resource held by another session.\n- This metric helps detect **locking issues** or **contention problems** that can impact performance.\n- Typically, this value should be **zero**. Any non-zero value may require immediate investigation.\n\n**Alerting Tips:**\n- Set alert thresholds > 0.\n- Combine with session-level views to diagnose blocking chains.\n\n_Last updated: Sep 2025_\n",
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "semi-dark-green"            },
+                {"color": "#EAB839",         "value": 1},
+                {"color": "#EF843C",         "value": 2},
+                {"color": "semi-dark-red",   "value": 5}
+              ]
+            },
+            "unit": "none"
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 3, "w": 3, "x": 14, "y": 0},
+        "id": 16,
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "percentChangeColorMode": "standard",
+          "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "fields": "",
+            "values": false
+          },
+          "showPercentChange": false,
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "blocked_sessions",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT last(\"count\") AS \"Blocked Sessions\" FROM \"oracle_metrics\"\nWHERE \"metric\" = 'blocked_sessions' AND $timeFilter\nAND \"host\" =~ /^$host$/\n",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "table"
+          }
+        ],
+        "type": "stat"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "description": "### 🔒 Locked or Expired User Accounts\n\nThis panel shows the **most recent count of locked or expired Oracle user accounts** on the selected host.\n\n---\n\n#### 🛠️ What This Means:\nLocked or expired accounts can prevent legitimate users from accessing the database and may indicate security or operational issues such as:\n\n- User accounts that are intentionally locked (e.g., due to policy).\n- Accounts locked due to failed login attempts.\n- Accounts expired due to password expiration policies.\n\n---\n\n#### ⚠️ Why This Matters:\n- Locked accounts may cause access problems for developers, applications, or administrators.\n- A sudden increase may indicate brute force attacks or misconfiguration.\n- Monitoring helps ensure timely unlocking or password resets.\n\n---\n\n#### 🧪 Troubleshooting Tips:\n- Identify locked/expired users using Oracle SQL:\n  ```sql\n  SELECT username, account_status FROM dba_users\n  WHERE account_status IN ('LOCKED', 'EXPIRED');\n",
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "semi-dark-green"             },
+                {"color": "#EAB839",         "value":  5},
+                {"color": "semi-dark-red",   "value": 10}
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 3, "w": 3, "x": 17, "y": 0},
+        "id": 11,
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "percentChangeColorMode": "standard",
+          "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "fields": "",
+            "values": false
+          },
+          "showPercentChange": false,
+          "text": {"titleSize": 14, "valueSize": 27},
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "Locked or Expired User Accounts",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT last(\"locked_or_expired_users\") AS \"Locaked/Expired User Accounts\" FROM \"oracle_metrics\"\nWHERE \"metric\" = 'user_account_status' AND $timeFilter AND \"host\" =~ /^$host$/\n\n \n",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "table"
+          }
+        ],
+        "type": "stat"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "description": "📦 Buffer Cache Hit Ratio\n\nWhat it Measures:\nPercentage of data block reads served from memory (buffer cache) instead of disk.\n\nWhy it Matters:\n\nHigh ratio = fast performance (memory is faster than disk)\n\nLow ratio = performance issues due to disk I/O\n\nThresholds:\n\n✅ Ideal: > 95%\n\n⚠️ Warning: < 95%\n\n❌ Critical: < 90%\n\nTroubleshooting:\n\n🔧 Increase SGA / DB_CACHE_SIZE\n\n🧠 Optimize queries & indexing\n\n📊 Check for queries bypassing buffer cache\n\n🔍 Investigate sudden workload changes\n\nNotes:\n\nSudden drops may indicate memory pressure or inefficient SQL.\n\nConsistently low values suggest tuning is needed.",
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "dark-red"                    },
+                {"color": "#EF843C",         "value": 25},
+                {"color": "#EAB839",         "value": 50},
+                {"color": "semi-dark-green", "value": 75}
+              ]
+            },
+            "unit": "percent"
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 3, "w": 4, "x": 20, "y": 0},
+        "id": 4,
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "percentChangeColorMode": "standard",
+          "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "fields": "",
+            "values": false
+          },
+          "showPercentChange": false,
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT mean(\"value\") AS \"Buffer Cache Hit Ratio\"\nFROM \"oracle_metrics\"\nWHERE $timeFilter AND \"metric\" = 'buffer_cache_hit_ratio' AND \"host\" =~ /^$host$/\nGROUP BY time($interval) fill(null)\n",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "table"
+          }
+        ],
+        "type": "stat"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "description": "Description:\n\nMeasures number of commits vs rollbacks. Frequent rollbacks may indicate application or transaction issues.\n\nTroubleshooting:\n\nReview error logs for failed DML.\n\nIdentify application logic flaws.\n\nThresholds:\n\nRollback > 20% of commits → check transaction handling.",
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "barWidthFactor": 0.6,
+              "drawStyle": "line",
+              "fillOpacity": 13,
+              "gradientMode": "hue",
+              "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+              "insertNulls": false,
+              "lineInterpolation": "linear",
+              "lineWidth": 3,
+              "pointSize": 5,
+              "scaleDistribution": {"type": "linear"},
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {"group": "A", "mode": "none"},
+              "thresholdsStyle": {"mode": "off"}
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [ {"color": "green"}, {"color": "red", "value": 80} ]
+            },
+            "unit": "decbytes"
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 7, "w": 8, "x": 0, "y": 3},
+        "id": 10,
+        "options": {
+          "legend": {
+            "calcs": ["min", "mean", "max"],
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {"hideZeros": false, "mode": "single", "sort": "none"}
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "$tag_tablespace",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT last(\"used_bytes\") FROM \"oracle_metrics\"\nWHERE \"metric\" = 'temp_tablespace' AND $timeFilter AND \"host\" =~ /^$host$/\nGROUP BY time($interval),\"tablespace\"\n",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series"
+          }
+        ],
+        "title": "Temp Tablespace Usage bytes",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "description": "Description:\n\nMeasures number of commits vs rollbacks. Frequent rollbacks may indicate application or transaction issues.\n\nTroubleshooting:\n\nReview error logs for failed DML.\n\nIdentify application logic flaws.\n\nThresholds:\n\nRollback > 20% of commits → check transaction handling.",
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "barWidthFactor": 0.6,
+              "drawStyle": "line",
+              "fillOpacity": 13,
+              "gradientMode": "hue",
+              "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+              "insertNulls": false,
+              "lineInterpolation": "linear",
+              "lineWidth": 3,
+              "pointSize": 5,
+              "scaleDistribution": {"type": "linear"},
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {"group": "A", "mode": "none"},
+              "thresholdsStyle": {"mode": "off"}
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [ {"color": "green"}, {"color": "red", "value": 80} ]
+            },
+            "unit": "short"
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 7, "w": 8, "x": 8, "y": 3},
+        "id": 14,
+        "options": {
+          "legend": {
+            "calcs": ["min", "mean", "max"],
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {"hideZeros": false, "mode": "single", "sort": "none"}
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "$tag_oracle_metrics",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT mean(\"user_commits\") AS \"Commits\", mean(\"user_rollbacks\") AS \"Rollbacks\"\nFROM \"oracle_metrics\"\nWHERE $timeFilter AND \"metric\" = 'sysstat' AND \"host\" =~ /^$host$/\nGROUP BY time($interval) fill(null)\n",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "table"
+          }
+        ],
+        "title": "Commits vs Rollbacks",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "description": "### ⏱️ Top SQL Queries by Elapsed Time\n\nThis panel displays the **elapsed execution time (in seconds) of top SQL queries** grouped by their SQL ID within the selected time range.\n\n---\n\n#### 🛠️ What This Means:\n- Shows the most time-consuming SQL queries currently running or recently executed.\n- Helps identify slow or inefficient queries impacting database performance.\n- Grouping by `sql_id` allows tracking specific queries over time.\n\n---\n\n#### ⚠️ Why This Matters:\n- Long-running queries can cause database contention, slow response times, and resource bottlenecks.\n- Identifying and optimizing these queries improves overall system performance.\n- Trends in elapsed time can indicate worsening query performance or data growth issues.\n\n---\n\n#### 🧪 Troubleshooting Tips:\n- Use Oracle tools like `SQL Monitoring` or `AWR` reports for detailed query analysis.\n- Review execution plans (`EXPLAIN PLAN`) for the problematic SQL IDs.\n- Check for missing indexes, stale statistics, or inefficient joins.\n- Coordinate with developers to optimize or rewrite slow queries.\n\n---\n\nℹ️ _Metric Source: `oracle_metrics.metric = 'top_sql'` with field `elapsed_time_sec`, grouped by `sql_id`_\n",
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "hideFrom": {"legend": false, "tooltip": false, "viz": false}
+            },
+            "fieldMinMax": false,
+            "mappings": [],
+            "unit": "s"
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 7, "w": 8, "x": 16, "y": 3},
+        "id": 12,
+        "options": {
+          "displayLabels": ["value"],
+          "legend": {
+            "displayMode": "list",
+            "placement": "right",
+            "showLegend": true,
+            "values": []
+          },
+          "pieType": "pie",
+          "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "fields": "",
+            "values": false
+          },
+          "tooltip": {"hideZeros": false, "mode": "single", "sort": "none"}
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "sql_id=$tag_sql_id",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT \"elapsed_time_sec\" FROM \"oracle_metrics\"\nWHERE \"metric\" = 'top_sql' AND $timeFilter AND \"host\" =~ /^$host$/\nGROUP BY \"sql_id\"\n",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series"
+          }
+        ],
+        "title": "Top SQL by Elapsed Time",
+        "type": "piechart"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "description": "### 🔍 Oracle CPU Usage - Sessions (Rate)\n\n**Query:**\n`SELECT derivative(\"cpu_used_by_session\") FROM \"oracle_metrics\" WHERE \"metric\" = 'cpu_usage' AND $timeFilter`\n\n**Purpose:**\nDisplays the **rate of change of CPU usage** by Oracle sessions over time. Helps identify spikes or unusual CPU behavior related to session activity.\n\n**Key Info for Ops:**\n- Uses the `derivative()` function to show per-second changes in `cpu_used_by_session`.\n- A **positive value** indicates increasing CPU usage; **negative** means decreasing.\n- Ensure appropriate `GROUP BY time()` is applied in the query editor.\n- Can be used to **spot abnormal workload patterns** or **performance issues**.\n\n**Alerting Tips:**\n- Watch for sustained high positive values — may signal load spikes.\n- Normal usage dips may show as negative values — typically expected.\n\n_Last updated: Sep 2025_\n",
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "continuous-GrYlRd", "seriesBy": "last"},
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "barWidthFactor": 0.6,
+              "drawStyle": "line",
+              "fillOpacity": 13,
+              "gradientMode": "none",
+              "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+              "insertNulls": false,
+              "lineInterpolation": "linear",
+              "lineWidth": 3,
+              "pointSize": 5,
+              "scaleDistribution": {"type": "linear"},
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {"group": "A", "mode": "none"},
+              "thresholdsStyle": {"mode": "off"}
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "percentage",
+              "steps": [
+                {"color": "green"               },
+                {"color": "#EAB839", "value": 25},
+                {"color": "#EF843C", "value": 50},
+                {"color": "red",     "value": 80}
+              ]
+            },
+            "unit": "percent"
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 8, "w": 8, "x": 0, "y": 10},
+        "id": 2,
+        "options": {
+          "legend": {
+            "calcs": ["min", "mean", "max"],
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {"hideZeros": false, "mode": "single", "sort": "none"}
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "cpu_usage",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT non_negative_derivative(mean(\"cpu_used_by_session\"), 1s)  AS \"Session CPU Usages\"\nFROM \"oracle_metrics\"\nWHERE \"metric\" = 'cpu_usage' AND $timeFilter AND \"host\" =~ /^$host$/\nGROUP BY time($interval)\n",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "table"
+          }
+        ],
+        "title": "CPU Usage by Sessions",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "description": "### 🧠 Oracle Memory Snapshot – SGA & PGA\n\n**SGA Query:**\n`SELECT last(\"sga_target\"), last(\"sga_free\") FROM \"oracle_metrics\" WHERE \"metric\" = 'memory' AND $timeFilter`\n\n**PGA Query:**\n`SELECT last(\"pga_target\"), last(\"pga_used\") FROM \"oracle_metrics\" WHERE \"metric\" = 'memory' AND $timeFilter`\n\n**Purpose:**\nProvides a **latest snapshot** of memory allocation and usage in Oracle:\n- **SGA (System Global Area):**\n  - `sga_target`: Configured memory\n  - `sga_free`: Free memory currently available\n- **PGA (Program Global Area):**\n  - `pga_target`: Configured memory\n  - `pga_used`: Currently used memory\n\n**Ops Notes:**\n- Monitor low `sga_free` as a potential sign of high memory usage in SGA.\n- High `pga_used` relative to `pga_target` may indicate a need for PGA tuning.\n- Useful for **daily checks**, performance troubleshooting, or during memory-related incidents.\n\n_Last updated: Sep 2025_\n",
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "dark-red"                    },
+                {"color": "#EF843C",         "value": 25},
+                {"color": "#EAB839",         "value": 50},
+                {"color": "semi-dark-green", "value": 75}
+              ]
+            },
+            "unit": "decbytes"
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 4, "w": 8, "x": 8, "y": 10},
+        "id": 15,
+        "options": {
+          "minVizHeight": 75,
+          "minVizWidth": 75,
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "fields": "",
+            "values": false
+          },
+          "showThresholdLabels": false,
+          "showThresholdMarkers": false,
+          "sizing": "auto"
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "hide": true,
+            "query": " SELECT last(\"sga_target\") AS \"SGA_Target\", last(\"sga_free\") AS \"SGA_Free\" FROM \"oracle_metrics\"\nWHERE \"metric\" = 'memory' AND $timeFilter AND \"host\" =~ /^$host$/\n\n",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "table"
+          },
+          {
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "hide": false,
+            "query": "SELECT last(\"pga_target\") AS \"PGA_Target\", last(\"pga_used\") AS \"PGA_Used\" FROM \"oracle_metrics\"\nWHERE \"metric\" = 'memory' AND $timeFilter AND \"host\" =~ /^$host$/\n",
+            "rawQuery": true,
+            "refId": "B",
+            "resultFormat": "table"
+          }
+        ],
+        "type": "gauge"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "custom": {
+              "align": "auto",
+              "cellOptions": {"type": "auto"},
+              "inspect": false
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [ {"color": "green"}, {"color": "red", "value": 80} ]
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {"id": "byName", "options": "tablespace"},
+              "properties": [ {"id": "custom.width", "value": 142} ]
+            },
+            {
+              "matcher": {"id": "byName", "options": "Free"},
+              "properties": [ {"id": "custom.width", "value": 91} ]
+            },
+            {
+              "matcher": {"id": "byName", "options": "Total"},
+              "properties": [ {"id": "custom.width", "value": 105} ]
+            },
+            {
+              "matcher": {"id": "byName", "options": "used %"},
+              "properties": [
+                {"id": "custom.width", "value": 101},
+                {
+                  "id": "custom.cellOptions",
+                  "value": {"type": "color-background"}
+                },
+                {"id": "decimals", "value": 0},
+                {"id": "color"},
+                {
+                  "id": "thresholds",
+                  "value": {
+                    "mode": "absolute",
+                    "steps": [
+                      {"color": "green"               },
+                      {"color": "#EAB839", "value": 50},
+                      {"color": "#EF843C", "value": 75},
+                      {"color": "red",     "value": 90}
+                    ]
+                  }
+                },
+                {"id": "unit", "value": ""}
+              ]
+            },
+            {
+              "matcher": {"id": "byName", "options": "Time"},
+              "properties": [ {"id": "custom.width", "value": 195} ]
+            },
+            {
+              "matcher": {"id": "byName", "options": "Free"},
+              "properties": [ {"id": "unit", "value": "decbytes"} ]
+            },
+            {
+              "matcher": {"id": "byName", "options": "Total"},
+              "properties": [ {"id": "unit", "value": "decbytes"} ]
+            }
+          ]
+        },
+        "gridPos": {"h": 22, "w": 8, "x": 16, "y": 10},
+        "id": 3,
+        "options": {
+          "cellHeight": "sm",
+          "footer": {
+            "countRows": false,
+            "fields": "",
+            "reducer": ["sum"],
+            "show": false
+          },
+          "showHeader": true,
+          "sortBy": [ {"desc": true, "displayName": "Total"} ]
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT last(free_bytes) AS Free, last(total_bytes) AS Total, last(used_percent) AS \"used %\"\nFROM \"oracle_metrics\"\nWHERE $timeFilter AND \"host\" =~ /^$host$/ group by tablespace\n",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "table"
+          }
+        ],
+        "title": "Table Space",
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {"Time": true},
+              "includeByName": {},
+              "indexByName": {
+                "Free"      : 2,
+                "Time"      : 0,
+                "Total"     : 4,
+                "tablespace": 1,
+                "used %"    : 3
+              },
+              "renameByName": {"tablespace": "TableSpace"}
+            }
+          }
+        ],
+        "type": "table"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "description": "### 🧠 Oracle Memory Snapshot – SGA & PGA\n\n**SGA Query:**\n`SELECT last(\"sga_target\"), last(\"sga_free\") FROM \"oracle_metrics\" WHERE \"metric\" = 'memory' AND $timeFilter`\n\n**PGA Query:**\n`SELECT last(\"pga_target\"), last(\"pga_used\") FROM \"oracle_metrics\" WHERE \"metric\" = 'memory' AND $timeFilter`\n\n**Purpose:**\nProvides a **latest snapshot** of memory allocation and usage in Oracle:\n- **SGA (System Global Area):**\n  - `sga_target`: Configured memory\n  - `sga_free`: Free memory currently available\n- **PGA (Program Global Area):**\n  - `pga_target`: Configured memory\n  - `pga_used`: Currently used memory\n\n**Ops Notes:**\n- Monitor low `sga_free` as a potential sign of high memory usage in SGA.\n- High `pga_used` relative to `pga_target` may indicate a need for PGA tuning.\n- Useful for **daily checks**, performance troubleshooting, or during memory-related incidents.\n\n_Last updated: Sep 2025_\n",
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "dark-red"                    },
+                {"color": "#EF843C",         "value": 25},
+                {"color": "#EAB839",         "value": 50},
+                {"color": "semi-dark-green", "value": 75}
+              ]
+            },
+            "unit": "decbytes"
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 4, "w": 8, "x": 8, "y": 14},
+        "id": 17,
+        "options": {
+          "minVizHeight": 75,
+          "minVizWidth": 75,
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "fields": "",
+            "values": false
+          },
+          "showThresholdLabels": false,
+          "showThresholdMarkers": false,
+          "sizing": "auto"
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "hide": false,
+            "query": " SELECT last(\"sga_target\") AS \"SGA_Target\", last(\"sga_free_memory\") AS \"SGA_Free\" FROM \"oracle_metrics\"\nWHERE \"metric\" = 'memory' AND $timeFilter AND \"host\" =~ /^$host$/\n\n",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "table"
+          },
+          {
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "hide": true,
+            "query": "SELECT last(\"pga_target\") AS \"PGA_Target\", last(\"pga_used\") AS \"PGA_Used\" FROM \"oracle_metrics\"\nWHERE \"metric\" = 'memory' AND $timeFilter AND \"host\" =~ /^$host$/\n",
+            "rawQuery": true,
+            "refId": "B",
+            "resultFormat": "table"
+          }
+        ],
+        "type": "gauge"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "Time in ms",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "barWidthFactor": 0.6,
+              "drawStyle": "line",
+              "fillOpacity": 5,
+              "gradientMode": "none",
+              "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+              "insertNulls": false,
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {"type": "linear"},
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {"group": "A", "mode": "none"},
+              "thresholdsStyle": {"mode": "off"}
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "green"                 },
+                {"color": "#EF843C", "value": 1000},
+                {"color": "#EAB839", "value": 1000},
+                {"color": "red",     "value": 1000},
+                {"color": "#6ED0E0", "value": 7000}
+              ]
+            },
+            "unit": "ms"
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 7, "w": 16, "x": 0, "y": 18},
+        "id": 8,
+        "options": {
+          "legend": {
+            "calcs": ["min", "mean", "max"],
+            "displayMode": "table",
+            "placement": "right",
+            "showLegend": true
+          },
+          "tooltip": {"hideZeros": false, "mode": "single", "sort": "none"}
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "$tag_event",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT last(\"time_waited_ms\") \nFROM \"oracle_metrics\" \nWHERE \"metric\" = 'wait_event' \nAND $timeFilter \nGROUP BY time($interval),\"event\"\n",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series"
+          }
+        ],
+        "title": "Oracle Wait Events",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "description": "### 🔄 Redo Log Group Status\n\n**Purpose:**  \nDisplays the status of Oracle redo log groups, helping detect log switch issues or archiving delays.\n\n**How to Use:**  \n- `group`: Redo log group number\n- `status`: CURRENT = in use, INACTIVE = available\n- `archived`: YES/NO — shows if logs are archived\n\n**Expected Behavior:**\n- Only **one group** should be in `CURRENT` state.\n- Other groups should be `INACTIVE` and **archived = YES**.\n- If multiple groups show `CURRENT`, or `archived = NO` for older logs, investigate.\n\n**Troubleshooting:**\n- Frequent `CURRENT` logs or `archived=NO` → Check archive log backups, log switch frequency, or archive destination space.\n- No `INACTIVE` groups → Possible log switch backlog or stuck archiving.\n- Use Oracle query:\n  ```sql\n  SELECT group#, status, archived FROM v$log;\n",
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "custom": {
+              "align": "auto",
+              "cellOptions": {"type": "auto"},
+              "inspect": false
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [ {"color": "green"}, {"color": "red", "value": 80} ]
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {"id": "byName", "options": "archived"},
+              "properties": [ {"id": "custom.width", "value": 90} ]
+            },
+            {
+              "matcher": {"id": "byName", "options": "group"},
+              "properties": [ {"id": "custom.width", "value": 75} ]
+            },
+            {
+              "matcher": {"id": "byName", "options": "status"},
+              "properties": [ {"id": "custom.width", "value": 156} ]
+            },
+            {
+              "matcher": {"id": "byName", "options": "host"},
+              "properties": [ {"id": "custom.width", "value": 230} ]
+            },
+            {
+              "matcher": {"id": "byName", "options": "Redo Group Count"},
+              "properties": [ {"id": "custom.width", "value": 153} ]
+            },
+            {
+              "matcher": {"id": "byName", "options": "Time"},
+              "properties": [ {"id": "custom.width", "value": 199} ]
+            }
+          ]
+        },
+        "gridPos": {"h": 7, "w": 16, "x": 0, "y": 25},
+        "id": 6,
+        "options": {
+          "cellHeight": "sm",
+          "footer": {
+            "countRows": false,
+            "fields": "",
+            "reducer": ["sum"],
+            "show": false
+          },
+          "showHeader": true,
+          "sortBy": []
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT last(\"count\") AS \"Redo Group Count\"\nFROM \"oracle_metrics\"\nWHERE $timeFilter\n  AND \"metric\" = 'redo_log'\n  AND \"host\" =~ /^$host$/\nGROUP BY \"group\", \"status\", \"archived\", \"host\"\n",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "table"
+          }
+        ],
+        "title": "Redo Logs",
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {"host": false},
+              "includeByName": {             },
+              "indexByName"  : {             },
+              "renameByName" : {             }
+            }
+          }
+        ],
+        "type": "table"
+      }
+    ],
+    "schemaVersion": 41,
+    "tags": ["oracle", "db"],
+    "templating": {
+      "list": [
+        {
+          "allowCustomValue": false,
+          "current": {},
+          "name": "InfluxDS",
+          "options": [],
+          "query": "influxdb",
+          "refresh": 1,
+          "regex": "",
+          "type": "datasource"
+        },
+        {
+          "allowCustomValue": false,
+          "current": {},
+          "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+          "definition": "SHOW TAG VALUES FROM \"oracle_metrics\" WITH KEY = \"project\" WHERE service = 'oracledb'",
+          "name": "project",
+          "options": [],
+          "query": {
+            "query": "SHOW TAG VALUES FROM \"oracle_metrics\" WITH KEY = \"project\" WHERE service = 'oracledb'",
+            "refId": "InfluxVariableQueryEditor-VariableQuery"
+          },
+          "refresh": 1,
+          "regex": "",
+          "type": "query"
+        },
+        {
+          "allowCustomValue": false,
+          "current": {},
+          "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+          "definition": "SHOW TAG VALUES FROM \"oracle_metrics\" WITH KEY = \"zone\" WHERE project = '$project' AND service = 'oracledb'",
+          "name": "zone",
+          "options": [],
+          "query": {
+            "query": "SHOW TAG VALUES FROM \"oracle_metrics\" WITH KEY = \"zone\" WHERE project = '$project' AND service = 'oracledb'",
+            "refId": "InfluxVariableQueryEditor-VariableQuery"
+          },
+          "refresh": 1,
+          "regex": "",
+          "type": "query"
+        },
+        {
+          "allowCustomValue": false,
+          "current": {},
+          "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+          "definition": "SHOW TAG VALUES FROM \"oracle_metrics\" WITH KEY = \"host\" WHERE project = '$project' AND zone = '$zone'  AND service = 'oracledb'",
+          "name": "host",
+          "options": [],
+          "query": {
+            "query": "SHOW TAG VALUES FROM \"oracle_metrics\" WITH KEY = \"host\" WHERE project = '$project' AND zone = '$zone'  AND service = 'oracledb'",
+            "refId": "InfluxVariableQueryEditor-VariableQuery"
+          },
+          "refresh": 1,
+          "regex": "",
+          "type": "query"
+        },
+        {
+          "allowCustomValue": false,
+          "current": {},
+          "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+          "definition": "SHOW TAG VALUES FROM \"oracle_metrics\" WITH KEY = \"nodeIP\" WHERE project = '$project' AND zone = '$zone'  AND host = '$host' AND service = 'oracledb'",
+          "name": "IP",
+          "options": [],
+          "query": {
+            "query": "SHOW TAG VALUES FROM \"oracle_metrics\" WITH KEY = \"nodeIP\" WHERE project = '$project' AND zone = '$zone'  AND host = '$host' AND service = 'oracledb'",
+            "refId": "InfluxVariableQueryEditor-VariableQuery"
+          },
+          "refresh": 1,
+          "regex": "",
+          "type": "query"
+        },
+        {
+          "allowCustomValue": false,
+          "current": {},
+          "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+          "definition": "SHOW TAG VALUES FROM \"oracle_metrics\" WITH KEY = \"service\" WHERE project = '$project' AND zone = '$zone'  AND host = '$host' AND service = 'oracledb'",
+          "hide": 2,
+          "name": "service",
+          "options": [],
+          "query": {
+            "query": "SHOW TAG VALUES FROM \"oracle_metrics\" WITH KEY = \"service\" WHERE project = '$project' AND zone = '$zone'  AND host = '$host' AND service = 'oracledb'",
+            "refId": "InfluxVariableQueryEditor-VariableQuery"
+          },
+          "refresh": 1,
+          "regex": "",
+          "type": "query"
+        },
+        {
+          "auto": true,
+          "auto_count": 30,
+          "auto_min": "1m",
+          "current": {"text": "$__auto", "value": "$__auto"},
+          "name": "interval",
+          "options": [
+            {"selected": false, "text": "1m",  "value": "1m" },
+            {"selected": false, "text": "5m",  "value": "5m" },
+            {"selected": false, "text": "10m", "value": "10m"},
+            {"selected": false, "text": "30m", "value": "30m"},
+            {"selected": false, "text": "1h",  "value": "1h" },
+            {"selected": false, "text": "6h",  "value": "6h" },
+            {"selected": false, "text": "12h", "value": "12h"},
+            {"selected": false, "text": "1d",  "value": "1d" },
+            {"selected": false, "text": "7d",  "value": "7d" },
+            {"selected": false, "text": "14d", "value": "14d"},
+            {"selected": false, "text": "30d", "value": "30d"}
+          ],
+          "query": "1m,5m,10m,30m,1h,6h,12h,1d,7d,14d,30d",
+          "refresh": 2,
+          "type": "interval"
+        }
+      ]
+    },
+    "time": {"from": "now-1h", "to": "now"},
+    "timepicker": {
+      "refresh_intervals": ["1m", "5m", "15m", "30m", "1h", "2h", "1d"]
+    },
+    "timezone": "Asia/Kolkata",
+    "title": "Oracle metrics",
+    "uid": "777selOrclm",
+    "version": 4,
+    "weekStart": ""
+  }
+}

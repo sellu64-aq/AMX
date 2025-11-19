@@ -1,0 +1,50 @@
+# Variables for DLVMAMXORA04
+---
+# Add host-specific variables below
+########## Feature Flags ##########
+deploy_telegraf_redis: false
+deploy_telegraf_postgres: false
+deploy_telegraf_infra: false
+deploy_mysql_replica_status_monitor: false
+deploy_mysql_slowquery_script: false
+deploy_app_metrics: true
+deploy_port_listen_monitor: true
+deploy_port_conn_monitor: true
+deploy_ntp_status: false
+deploy_dra_process_script: false
+deploy_nginx: false
+deploy_oracle_Metrics: true
+
+########## Oracle Input Plugin ##########
+oracle_servers:
+  - user: telegraf
+    password: telegraf
+    host: 10.221.87.133
+    port: 1521
+
+oracle_home: /u01/app/oracle/product/11.2.4/dbhome_1
+db_conn: "telegraf/telegraf@RWDB"
+
+########## Application Monitoring ##########
+apps:
+  - name: "oracle_PMON"
+    match: "ora_pmon_"
+    type: "pattern"
+  - name: "oracle_SMON"
+    match: "ora_smon_"
+    type: "pattern"
+  - name: "oracle_LogWriter"
+    match: "ora_lgwr_"
+    type: "pattern"
+  - name: "oracle_Listener"
+    match: "tnslsnr"
+    type: "pattern"
+
+########## Port Monitoring ##########
+ports:
+  - ip: 127.0.0.1
+    port: 1521
+    name: lcl_oracleDB
+  - ip: 10.221.82.45
+    port: 1521
+    name: oracleDB

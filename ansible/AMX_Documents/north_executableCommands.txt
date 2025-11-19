@@ -1,0 +1,59 @@
+----- Grafana/influxdb--------
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/install_grafana.yml --ask-become-pass
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/install_influxdb1.yml --ask-become-pass
+
+---plugins-------
+---> this will default to all_servers.yml
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/install_telegraf.yml -e "telegraf_conf_file=infra_tele.conf.j2 telegraf_name=infra" -e "@group_vars/all_servers.yml" --limit "ocs,dra"
+
+---> this will specific to given 'target_group'
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/install_telegraf.yml -e "telegraf_conf_file=api_tele.conf.j2" -e "telegraf_name=api" --limit api
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/install_telegraf.yml -e "telegraf_conf_file=dra_tele.conf.j2" -e "telegraf_name=dra" --limit dra
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/install_telegraf.yml -e "telegraf_conf_file=ocs_tele.conf.j2" -e "telegraf_name=ocs" --limit ocs
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/install_telegraf.yml -e "telegraf_conf_file=bss_tele.conf.j2" -e "telegraf_name=bss" --limit bss
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/install_telegraf.yml -e "telegraf_conf_file=mysql_tele.conf.j2" -e "telegraf_name=mysql" --limit mysql
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/install_telegraf.yml -e "telegraf_conf_file=mysql_queryCenter_tele.conf.j2" -e "telegraf_name=mysqlCenter" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/install_telegraf.yml -e "telegraf_conf_file=mysql_queryCenter_tele.conf.j2" -e "telegraf_name=mysqlCenter" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/install_telegraf.yml -e "telegraf_conf_file=oracledb_tele.conf.j2" -e "telegraf_name=oracle" --limit oracle
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/install_telegraf.yml -e "telegraf_conf_file=billing_tele.conf.j2" -e "telegraf_name=billing" --limit billing
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/install_telegraf.yml -e "telegraf_conf_file=spark_tele.conf.j2" -e "telegraf_name=spark" --limit spark
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/install_telegraf.yml -e "telegraf_conf_file=nginx_tele.conf.j2" -e "telegraf_name=nginx" --limit nginx
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/install_telegraf.yml -e "telegraf_conf_file=kafka_tele.conf.j2" -e "telegraf_name=kafkaNNM" --limit DLVMAMXHMST01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/install_telegraf.yml -e "telegraf_conf_file=kafka_tele.conf.j2" -e "telegraf_name=kafkaNN1" --limit DLVMAMXHNN01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/install_telegraf.yml -e "telegraf_conf_file=kafka_tele.conf.j2" -e "telegraf_name=kafkaNN2" --limit DLVMAMXHNN02
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/install_telegraf.yml -e "telegraf_conf_file=kafka_tele.conf.j2" -e "telegraf_name=kafkaNN3" --limit DLVMAMXHNN03
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/install_telegraf.yml -e "telegraf_conf_file=downloadCenter_tele.conf.j2" -e "telegraf_name=downloadCenter" --limit download_center
+
+--- dashbaords----
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/import_dashboard_byAPInew.yml   -e "dashboard_name=infra_summary.json.j2" -e "folder_name=Infra" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/import_dashboard_byAPInew.yml   -e "dashboard_name=serverInsight.json.j2" -e "folder_name=Infra" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/import_dashboard_byAPInew.yml   -e "dashboard_name=dra_stats.json.j2" -e "folder_name=App" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/import_dashboard_byAPInew.yml   -e "dashboard_name=bss_stats.json.j2" -e "folder_name=App" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/import_dashboard_byAPInew.yml   -e "dashboard_name=ocs_stats.json.j2" -e "folder_name=App" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/import_dashboard_byAPInew.yml   -e "dashboard_name=aircontrol.json.j2" -e "folder_name=App" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/import_dashboard_byAPInew.yml   -e "dashboard_name=downloadCenter.json.j2" -e "folder_name=App" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/import_dashboard_byAPInew.yml   -e "dashboard_name=kafka_stats.json.j2" -e "folder_name=App" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/import_dashboard_byAPInew.yml   -e "dashboard_name=nginx_stats.json.j2" -e "folder_name=App" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/import_dashboard_byAPInew.yml   -e "dashboard_name=spark_stats.json.j2" -e "folder_name=App" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/import_dashboard_byAPInew.yml   -e "dashboard_name=tomcat_stats.json.j2" -e "folder_name=App" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/import_dashboard_byAPInew.yml   -e "dashboard_name=billing.json.j2" -e "folder_name=App" --limit DLVMTMAMXOPS01
+
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/import_dashboard_byAPInew.yml   -e "dashboard_name=mysqlDB_stats.json.j2" -e "folder_name=Databases" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/import_dashboard_byAPInew.yml   -e "dashboard_name=mysql_metrics.json.j2" -e "folder_name=Databases" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/import_dashboard_byAPInew.yml   -e "dashboard_name=mysql_slowQueries.json.j2" -e "folder_name=Databases" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/import_dashboard_byAPInew.yml   -e "dashboard_name=oracledb_stats.json.j2" -e "folder_name=Databases" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/import_dashboard_byAPInew.yml   -e "dashboard_name=oracle_metrics.json.j2" -e "folder_name=Databases" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/import_dashboard_byAPInew.yml   -e "dashboard_name=redisDB_metrics.json.j2" -e "folder_name=Databases" --limit DLVMTMAMXOPS01
+
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/import_dashboard_byAPInew.yml   -e "dashboard_name=apiStats_ext.json.j2" -e "folder_name=API" --limit DLVMTMAMXOPS01
+
+
+
+----- uninstall ------
+
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/uninstall_telegraf.yml -e telegraf_name=infra --limit DLVMANSIBLECONTR01
+
+
+------ Test commands -----
+curl -s -H "Authorization: Bearer Selvamglsa_MrPSsVddW6W8XvqT6AEp8s5EseQL9pCn_1c06cc07" "http://10.221.92.106:3000/api/v1/provisioning/alert-rules" | grep -A3 '"title":"High Swap Usage Server"'
+curl -X DELETE -H "Authorization: Bearer Selvamglsa_MrPSsVddW6W8XvqT6AEp8s5EseQL9pCn_1c06cc07" "http://10.221.92.106:3000/api/v1/provisioning/alert-rules/GmpYGcTZgISE"

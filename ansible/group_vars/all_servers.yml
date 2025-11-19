@@ -1,0 +1,23 @@
+# Variables for all_servers
+# Add host-specific variables below
+
+deploy_app_metrics: true
+deploy_port_conn_monitor: true
+deploy_port_listen_monitor: true
+deploy_ntp_status: true
+deploy_dra_process_script: false
+deploy_mysql_slowquery_script: false
+deploy_oracle_Metrics: false
+
+apps:
+  - match: telegraf
+    name: Telegraf
+    type: "pattern"              # or "patter"
+
+ports:
+  - ip: 10.221.92.106
+    port: 8086
+    name: telegraf
+  - ip: 10.221.92.107
+    port: 8086
+    name: telegraf

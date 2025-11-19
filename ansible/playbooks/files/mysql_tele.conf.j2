@@ -1,0 +1,193 @@
+[global_tags]
+  project = "{{ project }}"
+  zone = "{{ zone }}"
+  nodeIP = "{{ ansible_host }}"
+  service = "mysql"
+
+[agent]
+  debug = true
+  quiet = false
+  interval = "30s"
+  flush_interval = "30s"
+  logfile = "{{ telegraf_remote_path }}/telegraf/logs/{{ telegraf_name }}_telegraf.log"
+  hostname = "{{ inventory_hostname }}"
+  omit_hostname = false
+  round_interval = true
+  metric_batch_size = 1000
+  metric_buffer_limit = 20000
+  collection_jitter = "0s"
+  flush_jitter = "0s"
+  precision = "0s"
+  logfile_rotation_interval = "12h"
+  logfile_rotation_max_size = "100MB"
+  logfile_rotation_max_archives = 5
+
+####### Port Status for {{ inventory_hostname }} #######
+{% for item in ports %}
+[[inputs.net_response]]
+  protocol = "tcp"
+  address = "{{ item.ip }}:{{ item.port }}"
+  name_override = "portResponsetime"
+  tags = { linkName="{{ item.name }}", ip="{{ item.ip }}", port="{{ item.port }}", host="{{ inventory_hostname }}" }
+{% endfor %}
+
+############# Port Listen #############
+[[inputs.exec]]
+  commands = ["{{ telegraf_remote_path }}/scripts/{{ telegraf_name }}_port_listen_monitor.sh"]
+  timeout = "10s"
+  data_format = "influx"
+  name_override = "port_listen"
+
+############# Link Monitor #############
+[[inputs.exec]]
+  commands = ["{{ telegraf_remote_path }}/scripts/{{ telegraf_name }}_port_conn_monitor.sh"]
+  timeout = "10s"
+  data_format = "influx"
+  name_override = "link_count"
+
+############## Ping Monitoring ################
+[[inputs.ping]]
+  {% set unique_ips = ports | map(attribute='ip') | unique %}
+  urls = [{% for ip in unique_ips %}"{{ ip }}"{% if not loop.last %}, {% endif %}{% endfor %}]
+  count = 2
+  ping_interval = 3.0
+  timeout = 2.0
+  method = "exec"
+
+############## Mysql_DB ################
+#[[inputs.mysql]]
+#servers = [
+#{% for mysql in mysql_servers %}
+#  "{{ mysql.user }}:{{ mysql.password }}@tcp({{ mysql.host | default(ansible_host) }}:{{ mysql.port }})/"{{ "," if not loop.last else "" }}
+#{% endfor %}
+#]
+#interval = "30s"  # How often to pull metrics
+#tagexclude = ["server"]
+#gather_table_schema = true
+
+## Optional: Which databases to monitor (if not specified, it monitors all)
+# Uncomment the line below if you want to include or exclude specific databases
+# database_include = ["your_database"]
+# database_exclude = ["mysql", "performance_schema", "information_schema", "sys"]
+
+## Optional: Gather specific statistics
+#  gather_process_list = true
+#  gather_user_statistics = true
+#  gather_info_schema_auto_inc = true
+#  gather_innodb_metrics = true
+#  gather_slave_status = true
+#  gather_binary_logs = true
+#  gather_table_io_waits = true
+#  gather_table_lock_waits = true
+#  gather_index_io_waits = true
+#  gather_event_waits = true
+#  gather_file_events_stats = true
+#  gather_perf_events_statements = true
+
+##### Mysql Slow Queries ###########
+[[inputs.exec]]
+  commands = ["{{ telegraf_remote_path }}/scripts/slowQueryMonitor.sh"]
+  timeout = "5s"
+  data_format = "influx"
+  name_override = "mysql_long_running_queries"
+  interval = "30m"
+
+##### Mysql Replication Status ###########
+[[inputs.exec]]
+  commands = ["{{ telegraf_remote_path }}/scripts/mysql_replica_status.sh"]
+  timeout = "5s"
+  data_format = "influx"
+  name_override = "mysql_replica_status"
+  interval = "30s"
+
+##### Mysql Monitor ###########
+[[inputs.exec]]
+  commands = ["{{ telegraf_remote_path }}/scripts/mysql_monitor.sh"]
+  timeout = "5s"
+  data_format = "influx"
+#  name_override = "mysql_monitor" ## Script oerirdes table name into multiple tables.
+  interval = "30s"
+
+##### App Metrics ###########
+[[inputs.exec]]
+  commands = ["{{ telegraf_remote_path }}/scripts/{{ telegraf_name }}_app_metrics.sh"]
+  data_format = "influx"
+  name_override = "app_metrics"
+  interval = "1m"
+  timeout = "50s"
+
+####### DRA Request processtime script ########
+[[inputs.exec]]
+  commands = ["{{ telegraf_remote_path }}/scripts/{{ telegraf_name }}_REQprocessingTime.sh"]
+  data_format = "influx"
+  interval = "1m"
+  timeout = "50s"
+
+######## Tails ########
+[[inputs.tail]]
+  files = ["/var/log/mysqld.log"]
+  name_override = "mysql_log"
+  data_format = "grok"
+  grok_patterns = ['%{MYSQL_LOG}']
+  grok_custom_patterns = '''
+    MYSQL_TIMESTAMP %{YEAR}-%{MONTHNUM}-%{MONTHDAY}T%{HOUR}:%{MINUTE}:%{SECOND}\.%{INT}
+    MYSQL_LOG %{MYSQL_TIMESTAMP:timestamp} %{INT:thread_id} \[%{LOGLEVEL:level}\] \[%{MYCODE:error_code}\] \[%{WORD:subsystem}\](?: Slave (?:I/O )?for channel '(?<channel>[^']+)':)?(?: connected to master '(?<user>[^@]+)@(?<master_ip>[^:]+):(?<master_port>\d+)')?(?:,replication (?:started|resumed) in log '(?<binlog>[^']+)' at position %{INT:position})?(?:.*?)?:? %{GREEDYDATA:message}
+    LOGLEVEL (System|Warning|ERROR)
+    MYCODE MY-\d+
+  '''
+  initial_read_offset = "end"
+[[processors.converter]]
+  namepass = ["mysql_log"]
+  [processors.converter.fields]
+    tag = ["level", "error_code", "subsystem", "channel", "master_ip", "master_port"]
+
+
+### OUTPUTS Pri #####
+[[outputs.influxdb]]
+  urls = ["http://{{ influx_Pri_IP }}:{{ influx_Pri_Port }}"]
+  database = "{{ influx_priDB_name }}"
+  retention_policy = "thirty_days"
+  timeout = "5s"
+  skip_database_creation = true
+  namepass = ["mysql","mysql_replica_status","link_count","port_listen","portResponsetime","ping","app_metrics"]
+
+[[outputs.influxdb]]
+  urls = ["http://{{ influx_Pri_IP }}:{{ influx_Pri_Port }}"]
+  database = "{{ influx_priDB_name }}"
+  retention_policy = "1hrRP"
+  timeout = "5s"
+  skip_database_creation = true
+  namepass = ["mysql_long_running_queries"]
+
+[[outputs.influxdb]]
+  urls = ["http://{{ influx_Pri_IP }}:{{ influx_Pri_Port }}"]
+  database = "{{ influx_priDB_name }}"
+  retention_policy = "one_day"
+  timeout = "5s"
+  skip_database_creation = true
+  namepass = ["mysql_log"]
+
+### OUTPUTS Sec #####
+[[outputs.influxdb]]
+  urls = ["http://{{ influx_Sec_IP }}:{{ influx_Sec_Port }}"]
+  database = "{{ influx_secDB_name }}"
+  retention_policy = "thirty_days"
+  timeout = "5s"
+  skip_database_creation = true
+  namepass = ["mysql","mysql_replica_status","link_count","port_listen","portResponsetime","ping","app_metrics"]
+
+[[outputs.influxdb]]
+  urls = ["http://{{ influx_Sec_IP }}:{{ influx_Sec_Port }}"]
+  database = "{{ influx_secDB_name }}"
+  retention_policy = "1hrRP"
+  timeout = "5s"
+  skip_database_creation = true
+  namepass = ["mysql_long_running_queries"]
+
+[[outputs.influxdb]]
+  urls = ["http://{{ influx_Sec_IP }}:{{ influx_Sec_Port }}"]
+  database = "{{ influx_secDB_name }}"
+  retention_policy = "one_day"
+  timeout = "5s"
+  skip_database_creation = true
+  namepass = ["mysql_log"]

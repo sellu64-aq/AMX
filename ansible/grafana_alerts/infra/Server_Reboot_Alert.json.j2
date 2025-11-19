@@ -1,0 +1,82 @@
+{
+  "uid": "{{ alert_uid }}",
+  "title": "Server Reboot Alert",
+  "folderUID": "{{ folder_uid }}",
+  "ruleGroup": "{{ rulegroup }}",
+  "condition": "C",
+  "data": [
+    {
+      "refId": "A",
+      "relativeTimeRange": {
+        "from": 300,
+        "to": 0
+      },
+      "datasourceUid": "{{ datasourceUid }}",
+      "model": {
+        "refId": "A",
+        "query": "SELECT last(\"uptime\") AS \"Uptime\" FROM \"system\" WHERE $timeFilter GROUP BY time(1m), project, zone, host",
+        "rawQuery": true
+      }
+    },
+    {
+      "refId": "B",
+      "relativeTimeRange": {
+        "from": 0,
+        "to": 0
+      },
+      "datasourceUid": "__expr__",
+      "model": {
+        "type": "reduce",
+        "expression": "A",
+        "reducer": "last"
+      }
+    },
+    {
+      "refId": "C",
+      "relativeTimeRange": {
+        "from": 0,
+        "to": 0
+      },
+      "datasourceUid": "__expr__",
+      "model": {
+        "type": "threshold",
+        "expression": "B",
+        "conditions": [
+          {
+            "evaluator": {
+              "type": "lt",
+              "params": [300]
+            },
+            "operator": {
+              "type": "and"
+            },
+            "query": {
+              "params": ["C"]
+            },
+            "reducer": {
+              "type": "last",
+              "params": []
+            },
+            "type": "query"
+          }
+        ]
+      }
+    }
+  ],
+  "interval": "1m",
+  "for": "0s",
+  "noDataState": "OK",
+  "execErrState": "OK",
+  "labels": {
+    "platform": "{{ project }}",
+    "zone": "{{ zone }}",
+    "severity": "CRITICAL",
+        "type": "{{ (rulegroup | string).split('_')[0] }}"
+  },
+  "annotations": {
+    "summary": "Server has rebooted recently (uptime < 10 minutes).",
+    "description": "🧐 **Why This Happens**\n- Server rebooted due to planned maintenance, kernel update, or unexpected crash.\n- Could indicate unplanned outage or instability.\n- Possible hardware fault, OS panic, or VM restart by hypervisor.\n\n🔍 **Impact**\n- Services may not be fully started.\n- Applications can experience downtime.\n- Risk of data inconsistency if reboot was unclean.\n\n✅ **Immediate Actions for Ops**\n1. **Confirm uptime:**\n   ```\n   uptime\n   ```\n   or\n   ```\n   cat /proc/uptime\n   ```\n2. **Check system logs for reboot reason:**\n   ```\n   last -x | head\n   journalctl -b -1\n   ```\n3. **Verify critical services are running:**\n   ```\n   systemctl list-units --type=service --state=failed\n   ```\n4. **If unplanned reboot:**\n   - Review `/var/log/messages` or `dmesg` for hardware/OS errors.\n   - Check hypervisor or cloud provider console for restart events.\n5. **If recurring reboots:**\n   - Investigate hardware stability, memory issues, or OS kernel bugs.\n   - Check for watchdog or panic triggers.\n6. Document the incident and inform stakeholders if unplanned.\n\n⚠ **Note:** This alert triggers if `uptime` is less than **10 minutes (600 seconds)**. Use to detect **unplanned reboots or instability** quickly."
+  },
+  "isPaused": false
+}
+

@@ -1,0 +1,83 @@
+{
+  "uid": "{{ alert_uid }}",
+  "folderUID": "{{ folder_uid }}",
+  "ruleGroup": "{{ rulegroup }}",
+  "title": "WSO2 API Gateway: No Traffic Detected in Last 5 Minutes",
+  "condition": "C",
+  "data": [
+    {
+      "refId": "A",
+      "relativeTimeRange": {"from": 900, "to": 0},
+      "datasourceUid": "{{ datasourceUid }}",
+      "model": {
+        "datasource": {"type": "influxdb", "uid": "{{ datasourceUid }}"},
+        "instant": false,
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "query": "select sum(log_count) from \"thirty_days\".\"CQ_wso2_wire_logs_1m\" where $timeFilter group by time(5m), component, log_level, host, project, zone fill(0)",
+        "rawQuery": true,
+        "refId": "A",
+        "resultFormat": "time_series"
+      }
+    },
+    {
+      "refId": "B",
+      "relativeTimeRange": {"from": 300, "to": 0},
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": {"params": [], "type": "gt"},
+            "operator": {"type": "and"},
+            "query": { "params": ["B"] },
+            "reducer": {"params": [], "type": "last"},
+            "type": "query"
+          }
+        ],
+        "datasource": {"type": "__expr__", "uid": "__expr__"},
+        "expression": "A",
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "reducer": "last",
+        "refId": "B",
+        "settings": {"mode": "replaceNN", "replaceWithValue": 0},
+        "type": "reduce"
+      }
+    },
+    {
+      "refId": "C",
+      "relativeTimeRange": {"from": 300, "to": 0},
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": { "params": [1], "type": "lt" },
+            "operator": {"type": "and"},
+            "query": { "params": ["C"] },
+            "reducer": {"params": [], "type": "last"},
+            "type": "query"
+          }
+        ],
+        "datasource": {"type": "__expr__", "uid": "__expr__"},
+        "expression": "B",
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "refId": "C",
+        "type": "threshold"
+      }
+    }
+  ],
+  "noDataState": "OK",
+  "execErrState": "KeepLast",
+  "annotations": {
+    "description": "Problem:\nNo wire log activity detected from WSO2 API Gateway components in the last 5 minutes.\nThis likely means no API traffic is flowing, which could impact customer-facing services.\n\nImpact:\nCustomers may experience API failures or timeouts.\nCritical integrations relying on WSO2 APIs could be down.\nSLA breach risk if outage persists.\n\n✅ Possible Root Causes\nAPI Gateway process is stopped or crashed.\nBackend unreachable → all calls failing silently.\nNetwork issue between client and gateway.\nTraffic source down (no client requests).\nWire logs disabled by mistake.\n\n✅ Immediate Ops Actions\nCheck API Gateway Process\nOn the WSO2 host: \nps -ef | grep wso2am\nIf process is not running, restart:\nsh /opt/wso2am-2.1.0/bin/wso2server.sh start\n\nCheck Logs for Errors\ntail -f /opt/wso2am-2.1.0/repository/logs/wso2carbon.log\n\nLook for ERROR, FATAL, or OOM (Out of Memory) issues.\n\nVerify Disk Space\nIf disk is full, WSO2 may not write logs and could hang.\ndf -sh\n\nTest API Health\nFrom API Gateway server:\ncurl -vk https://<api_gateway_host>:9443/api/am/publisher/v0.14/apis\n\nEscalate if Needed\nIf gateway restarted but traffic still zero after 5 more minutes → escalate to API team.\n\n✅ Preventive Measures\nImplement service restart scripts or systemd health check for WSO2.\nConfigure low disk space alerts.\nRotate and compress logs regularly"
+  },
+  "labels": {
+    "platform": "{{ project }}",
+    "zone"    : "{{ zone }}",
+    "severity": "MAJOR",
+        "type": "{{ (rulegroup | string).split('_')[0] }}"
+  },
+  "isPaused": false
+}
+

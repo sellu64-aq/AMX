@@ -1,0 +1,17 @@
+---
+- name: Create Grafana monitoring user on all MySQL DB servers
+  hosts: mysql
+  become: yes
+  tasks:
+
+    - name: Copy user creation script
+      copy:
+        src: mysql_create_grafana_user.sh
+        dest: /tmp/create_grafana_user.sh
+        mode: '0755'
+
+    - name: Run script to create monitoring user
+      shell: /tmp/create_grafana_user.sh
+      args:
+        executable: /bin/bash
+

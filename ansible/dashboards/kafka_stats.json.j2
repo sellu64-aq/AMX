@@ -3,7 +3,7 @@
     "folderUid": "app777Sel",
     "message": "deployment",
     "overwrite": true,
-  "__inputs": [
+    "__inputs": [
     {
     "name": "influx_DS",
     "label": "Select InfluxDB Source",
@@ -15,6 +15,12 @@
   ],
   "__elements": {},
   "__requires": [
+    {
+      "type": "panel",
+      "id": "bargauge",
+      "name": "Bar gauge",
+      "version": ""
+    },
     {
       "type": "grafana",
       "id": "grafana",
@@ -31,6 +37,12 @@
       "type": "panel",
       "id": "stat",
       "name": "Stat",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "state-timeline",
+      "name": "State timeline",
       "version": ""
     },
     {
@@ -52,6 +64,12 @@
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
         "type": "dashboard"
       }
     ]
@@ -67,6 +85,160 @@
         "type": "influxdb",
         "uid": "${InfluxDS}"
       },
+      "description": "This panel displays the latest system uptime for the selected host ($host). It tells you how long the server has been continuously running without a reboot. This is helpful for understanding server stability, detecting unexpected reboots, and planning maintenance.\n\n How to Use\n\n    Uptime is displayed in seconds – you can use Grafana transformations or unit conversion in the panel to show it in minutes, hours, or days.\n\n    Look for unusually short uptimes which might indicate recent reboots, crashes, or maintenance.\n\n    Useful for ensuring high availability and detecting system restarts.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "#6ED0E0",
+                "value": 10000
+              },
+              {
+                "color": "#EAB839",
+                "value": 100000
+              },
+              {
+                "color": "#EF843C",
+                "value": 1000000
+              },
+              {
+                "color": "#E24D42",
+                "value": 10000000
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 3,
+        "x": 0,
+        "y": 0
+      },
+      "id": 39,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^last$/",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "alias": "UpTime",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${InfluxDS}"
+          },
+          "query": "SELECT last(\"uptime\")\nFROM \"system\" \nWHERE \"host\" = '$host' \nGROUP BY \"host\"\n",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "table"
+        }
+      ],
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${InfluxDS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "shades"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 2,
+        "x": 3,
+        "y": 0
+      },
+      "id": 38,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^last$/",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {
+          "titleSize": 12,
+          "valueSize": 15.7
+        },
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "alias": "",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${InfluxDS}"
+          },
+          "hide": false,
+          "query": " select last(os_description) from os_info where host = '$host' group by host, nodeIP",
+          "rawQuery": true,
+          "refId": "B",
+          "resultFormat": "table"
+        }
+      ],
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${InfluxDS}"
+      },
+      "description": "Available kernel entropy pool\n\nOps Notes:\n\nMeasures the number of random bits currently available in the system’s entropy pool.\n\nThe entropy pool is used for cryptographic operations (TLS/SSL, key generation, random numbers).\n\nLow entropy can cause applications relying on randomness to block or slow down, e.g., SSH key generation, TLS handshakes, cryptographic operations.\n\nHigh entropy indicates healthy random number availability.\n\nMonitoring Guidance:\n\nTypical Range: Linux systems usually have 1000–4096 bits in the entropy pool (depends on kernel).\n\nLow Threshold: 100–200 bits (warning)\n\nCritical Threshold: <50 bits (critical) → could indicate entropy starvation.\n\nRecommended Action:\n\nInvestigate entropy-consuming processes (e.g., heavy crypto usage).\n\nConsider installing haveged or rng-tools to supplement entropy.\n\nCheck for blocking applications relying on /dev/random.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -80,26 +252,39 @@
                 "color": "semi-dark-red"
               },
               {
+                "color": "#EF843C",
+                "value": 250
+              },
+              {
+                "color": "#6ED0E0",
+                "value": 500
+              },
+              {
+                "color": "#EAB839",
+                "value": 750
+              },
+              {
                 "color": "semi-dark-green",
-                "value": 1
+                "value": 1000
               }
             ]
-          }
+          },
+          "unit": "decbits"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 2,
-        "w": 4,
-        "x": 0,
+        "w": 3,
+        "x": 5,
         "y": 0
       },
-      "id": 7,
+      "id": 40,
       "options": {
         "colorMode": "background",
         "graphMode": "area",
         "justifyMode": "auto",
-        "orientation": "horizontal",
+        "orientation": "auto",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
@@ -115,12 +300,12 @@
       "pluginVersion": "12.0.2",
       "targets": [
         {
-          "alias": "Active Brokers",
+          "alias": "entropy_avail",
           "datasource": {
             "type": "influxdb",
             "uid": "${InfluxDS}"
           },
-          "query": "SELECT last(\"kafka_broker_info\") AS \"Broker Info\"\nFROM \"kafka_broker_info\"\nWHERE $timeFilter\n  AND \"host\" =~ /^$host$/\nGROUP BY time($interval), \"broker_id\"\n",
+          "query": "SELECT mean(\"entropy_avail\") \nFROM \"kernel\" \nWHERE $timeFilter AND \"host\" =~ /^$host$/ \nGROUP BY time($interval), \"host\" fill(null)\n",
           "rawQuery": true,
           "refId": "A",
           "resultFormat": "time_series"
@@ -133,6 +318,7 @@
         "type": "influxdb",
         "uid": "${InfluxDS}"
       },
+      "description": "Panel Description: Hardware interrupt rate\n\nOps Notes: Spike may indicate network, disk, or hardware issues\nThreshold: > 10000/sec sustained for 5 min → investigate",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -143,11 +329,122 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "#35b70a"
+                "color": "green"
               },
               {
-                "color": "#ad0f1b",
-                "value": 1
+                "color": "#EAB839",
+                "value": 2500
+              },
+              {
+                "color": "#6ED0E0",
+                "value": 5000
+              },
+              {
+                "color": "#EF843C",
+                "value": 10000
+              },
+              {
+                "color": "red",
+                "value": 20000
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 3,
+        "x": 8,
+        "y": 0
+      },
+      "id": 41,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {
+          "titleSize": 12
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "alias": "Interrupts/sec",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${InfluxDS}"
+          },
+          "query": "SELECT derivative(mean(\"interrupts\"), 1s) AS \"Interrupts/sec\"\nFROM \"kernel\" \nWHERE $timeFilter AND \"host\" =~ /^$host$/ \nGROUP BY time(1m), \"host\" fill(null)\n",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series"
+        }
+      ],
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${InfluxDS}"
+      },
+      "description": "Panel Description: Number of processes created per second\n\nOps Notes: High fork rate can indicate process storms or spikes in workload\n\nThreshold: > 200/sec sustained for 5 min → investigate",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "semi-dark-red",
+                  "index": 1,
+                  "text": "No"
+                },
+                "1": {
+                  "color": "semi-dark-green",
+                  "index": 0,
+                  "text": "Yes"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "#6ED0E0",
+                "value": 100
+              },
+              {
+                "color": "#EAB839",
+                "value": 250
+              },
+              {
+                "color": "#EF843C",
+                "value": 500
+              },
+              {
+                "color": "red",
+                "value": 750
               }
             ]
           }
@@ -156,11 +453,122 @@
       },
       "gridPos": {
         "h": 2,
-        "w": 4,
-        "x": 4,
+        "w": 6,
+        "x": 11,
         "y": 0
       },
-      "id": 33,
+      "id": 42,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {
+          "titleSize": 12
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "alias": "",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${InfluxDS}"
+          },
+          "query": "select last(NTP_enabled) AS \"NTP_Enabled\",  last(NTP_synchronized) AS \"NTP_synchronized\" from ntp_sync_status where $timeFilter and host = '$host' group by time($interval)\n",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "table"
+        },
+        {
+          "alias": "",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${InfluxDS}"
+          },
+          "hide": true,
+          "query": "select last(NTP_enabled) AS \"NTP_Enabled\",  last(NTP_synchronized) AS \"NTP_synchronized\" from ntp_sync_status order by time desc limit 10\n",
+          "rawQuery": true,
+          "refId": "B",
+          "resultFormat": "time_series"
+        }
+      ],
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${InfluxDS}"
+      },
+      "description": "🔍 Purpose of This Panel\n\nThis panel shows the system load averages over different time intervals (1 minute, 5 minutes, and 15 minutes) for the selected server. It gives insight into how busy the system has been recently, helping you monitor performance and detect potential overloads.\n\n🧾 What This Query Does\n\n    Metrics Tracked:\n\n        load1 = system load average over the past 1 minute\n\n        load5 = system load over 5 minutes\n\n        load15 = load over 15 minutes\n\n    Filter: Data is scoped to the selected host ($host) and time range ($timeFilter).\n\n🧑‍💻 How to Use\n\n    These values represent the average number of active processes waiting for CPU time.\n\n    Rule of thumb:\n\n        If the load average is less than or equal to the number of CPU cores, the system is handling the load well.\n\n        If it’s higher, it indicates the system may be under stress.\n\n    Useful for:\n\n        Detecting spikes in load\n\n        Monitoring overall system health\n\n        Comparing short-term vs long-term load trends",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-GrYlRd"
+          },
+          "mappings": [],
+          "max": 7,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "#6ED0E0",
+                "value": 1
+              },
+              {
+                "color": "#EAB839",
+                "value": 2
+              },
+              {
+                "color": "#EF843C",
+                "value": 3
+              },
+              {
+                "color": "#E24D42",
+                "value": 4
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "B"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "text",
+                  "mode": "shades"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 3,
+        "x": 17,
+        "y": 0
+      },
+      "id": 46,
       "options": {
         "colorMode": "background",
         "graphMode": "area",
@@ -176,8 +584,8 @@
         },
         "showPercentChange": false,
         "text": {
-          "titleSize": 14,
-          "valueSize": 16
+          "titleSize": 16,
+          "valueSize": 14
         },
         "textMode": "auto",
         "wideLayout": true
@@ -185,12 +593,356 @@
       "pluginVersion": "12.0.2",
       "targets": [
         {
-          "alias": "Under-Replicated Partitions",
+          "alias": "CPU ",
           "datasource": {
             "type": "influxdb",
             "uid": "${InfluxDS}"
           },
-          "query": "SELECT sum(\"kafka_topic_partition_under_replicated_partition\") FROM \"kafka_topic_partition_under_replicated_partition\" WHERE $timeFilter AND \"host\" =~ /^$host$/ GROUP BY time($interval)",
+          "query": "select load1 as \"1m Load\",load5 as \"5m Load\",load15 as \"15m load\" from system where $timeFilter and host = '$host' ",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "table"
+        },
+        {
+          "alias": "CPU ",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${InfluxDS}"
+          },
+          "hide": false,
+          "query": "select n_cpus as \"Total_CPU\"  from system where $timeFilter and host = '$host' ",
+          "rawQuery": true,
+          "refId": "B",
+          "resultFormat": "table"
+        }
+      ],
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${InfluxDS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "fieldMinMax": false,
+          "mappings": [],
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "#EAB839",
+                "value": 50
+              },
+              {
+                "color": "#EF843C",
+                "value": 75
+              },
+              {
+                "color": "#E24D42",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": [
+          {
+            "__systemRef": "hideSeriesFrom",
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "exclude",
+                "names": [
+                  "procstat.count_cpu_time_system { pid:  }",
+                  "procstat.count_cpu_time_user { pid:  }",
+                  "procstat.count_cpu_usage { pid:  }",
+                  "procstat.count_memory_anonymous { pid:  }",
+                  "procstat.count_memory_private_clean { pid:  }",
+                  "procstat.count_memory_private_dirty { pid:  }",
+                  "procstat.count_memory_pss { pid:  }",
+                  "procstat.count_memory_referenced { pid:  }",
+                  "procstat.count_memory_rss { pid:  }",
+                  "procstat.count_memory_shared_clean { pid:  }",
+                  "procstat.count_memory_shared_dirty { pid:  }",
+                  "procstat.count_memory_size { pid:  }",
+                  "procstat.count_memory_swap { pid:  }",
+                  "procstat.count_memory_usage { pid:  }",
+                  "procstat.count_num_threads { pid:  }",
+                  "procstat.count_pid { pid:  }",
+                  "procstat.count_ppid { pid:  }",
+                  "procstat.count_read_bytes { pid:  }",
+                  "procstat.count_status { pid:  }",
+                  "procstat.count_user { pid:  }",
+                  "procstat.count_write_bytes { pid:  }"
+                ],
+                "prefix": "All except:",
+                "readOnly": true
+              }
+            },
+            "properties": []
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "procstat.CPU_usage"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "continuous-GrYlRd"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 4,
+        "x": 20,
+        "y": 0
+      },
+      "id": 36,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "top",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "text": {},
+        "valueMode": "color"
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "alias": "$tag_path",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${InfluxDS}"
+          },
+          "query": "SELECT \n    last(\"used_percent\" )\nFROM \"disk\" \nWHERE $timeFilter\nand host = '$host'\ngroup by path,device\n",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series"
+        }
+      ],
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${InfluxDS}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "semi-dark-red",
+                  "index": 1,
+                  "text": "Down"
+                },
+                "1": {
+                  "color": "semi-dark-green",
+                  "index": 0,
+                  "text": "Up"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "#EAB839",
+                "value": 25
+              },
+              {
+                "color": "#EF843C",
+                "value": 50
+              },
+              {
+                "color": "#6ED0E0",
+                "value": 75
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 2
+      },
+      "id": 44,
+      "options": {
+        "alignValue": "center",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "alias": "$tag_app",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${InfluxDS}"
+          },
+          "hide": false,
+          "query": "SELECT last(running) FROM app_metrics\nWHERE $timeFilter and host = '$host' and \"service\" =~ /^(infra|$service)$/\nGROUP BY time($interval),app, host\n",
+          "rawQuery": true,
+          "refId": "B",
+          "resultFormat": "time_series"
+        }
+      ],
+      "type": "state-timeline"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${InfluxDS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "max": 7,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 0
+              },
+              {
+                "color": "semi-dark-green",
+                "value": 1
+              },
+              {
+                "color": "#EAB839",
+                "value": 5
+              },
+              {
+                "color": "#EF843C",
+                "value": 10
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 4,
+        "x": 6,
+        "y": 2
+      },
+      "id": 45,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {
+          "titleSize": 12,
+          "valueSize": 14
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "alias": "PID count - $tag_app",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${InfluxDS}"
+          },
+          "query": "SELECT mean(\"pidcount\") AS \"PID Count\"\nFROM \"app_metrics\"\nWHERE $timeFilter AND host = '$host' AND \"service\" =~ /^(infra|$service)$/\nGROUP BY time($interval), app fill(null)\n",
           "rawQuery": true,
           "refId": "A",
           "resultFormat": "time_series"
@@ -203,6 +955,7 @@
         "type": "influxdb",
         "uid": "${InfluxDS}"
       },
+      "description": "Panel Description: Number of processes created per second\n\nOps Notes: High fork rate can indicate process storms or spikes in workload\n\nThreshold: > 200/sec sustained for 5 min → investigate",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -213,7 +966,11 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "#35b70a"
+                "color": "green"
+              },
+              {
+                "color": "#6ED0E0",
+                "value": 100
               },
               {
                 "color": "#EAB839",
@@ -224,225 +981,26 @@
                 "value": 500
               },
               {
-                "color": "#ad0f1b",
-                "value": 1000
+                "color": "red",
+                "value": 750
               }
             ]
           }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 3,
-        "x": 8,
-        "y": 0
-      },
-      "id": 34,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "horizontal",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "pluginVersion": "12.0.2",
-      "targets": [
-        {
-          "alias": "Total Consumer Groups",
-          "datasource": {
-            "type": "influxdb",
-            "uid": "${InfluxDS}"
-          },
-          "query": "SELECT sum(\"kafka_consumergroup_members\") AS \"Total Consumer Groups\"  FROM \"1hrRP\".\"kafka_consumergroup_members\" WHERE $timeFilter and host = '$host' group by time($interval)",
-          "rawQuery": true,
-          "refId": "A",
-          "resultFormat": "table"
-        }
-      ],
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "influxdb",
-        "uid": "${InfluxDS}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "#35b70a"
-              },
-              {
-                "color": "#ad0f1b",
-                "value": 1
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 3,
-        "x": 11,
-        "y": 0
-      },
-      "id": 36,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "horizontal",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "pluginVersion": "12.0.2",
-      "targets": [
-        {
-          "alias": "Total Consumer Lag",
-          "datasource": {
-            "type": "influxdb",
-            "uid": "${InfluxDS}"
-          },
-          "query": "SELECT sum(\"kafka_consumergroup_lag_sum\") AS \"Total Consumer Lags\" FROM \"kafka_consumergroup_lag_sum\" WHERE $timeFilter AND \"host\" =~ /^$host$/",
-          "rawQuery": true,
-          "refId": "A",
-          "resultFormat": "table"
-        }
-      ],
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "influxdb",
-        "uid": "${InfluxDS}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "#35b70a"
-              },
-              {
-                "color": "#ad0f1b",
-                "value": 1
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 3,
-        "x": 14,
-        "y": 0
-      },
-      "id": 39,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "horizontal",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "pluginVersion": "12.0.2",
-      "targets": [
-        {
-          "alias": "In-Sync Replicas",
-          "datasource": {
-            "type": "influxdb",
-            "uid": "${InfluxDS}"
-          },
-          "query": "SELECT sum(\"kafka_topic_partition_in_sync_replica\") AS \"In-Sync Replicas\" FROM \"kafka_topic_partition_in_sync_replica\" WHERE $timeFilter AND \"host\" =~ /^$host$/",
-          "rawQuery": true,
-          "refId": "A",
-          "resultFormat": "table"
-        }
-      ],
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "influxdb",
-        "uid": "${InfluxDS}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "#b80920"
-              },
-              {
-                "color": "#308816",
-                "value": 1
-              }
-            ]
-          },
-          "unit": "percent"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 2,
         "w": 4,
-        "x": 17,
-        "y": 0
+        "x": 10,
+        "y": 2
       },
-      "id": 40,
+      "id": 48,
       "options": {
         "colorMode": "background",
         "graphMode": "area",
         "justifyMode": "auto",
-        "orientation": "horizontal",
+        "orientation": "auto",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
@@ -458,15 +1016,15 @@
       "pluginVersion": "12.0.2",
       "targets": [
         {
-          "alias": "In-Sync Replicas",
+          "alias": "Fork rate",
           "datasource": {
             "type": "influxdb",
             "uid": "${InfluxDS}"
           },
-          "query": "SELECT mean(\"kafka_topic_partition_leader_is_preferred\") * 100 AS \"Preferred Leader %\" FROM \"kafka_topic_partition_leader_is_preferred\" WHERE $timeFilter AND \"host\" =~ /^$host$/",
+          "query": "SELECT derivative(mean(\"processes_forked\"), 1s) AS \"Fork Rate\"\nFROM \"kernel\" \nWHERE $timeFilter AND \"host\" =~ /^$host$/ \nGROUP BY time(1s), \"host\" fill(null)\n",
           "rawQuery": true,
           "refId": "A",
-          "resultFormat": "table"
+          "resultFormat": "time_series"
         }
       ],
       "type": "stat"
@@ -476,6 +1034,7 @@
         "type": "influxdb",
         "uid": "${InfluxDS}"
       },
+      "description": "IP packets received\n\nMonitor traffic load both way ingress & egress packets.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -489,8 +1048,20 @@
                 "color": "semi-dark-red"
               },
               {
+                "color": "semi-dark-orange",
+                "value": 2500
+              },
+              {
+                "color": "#6ED0E0",
+                "value": 5000
+              },
+              {
+                "color": "semi-dark-yellow",
+                "value": 10000
+              },
+              {
                 "color": "semi-dark-green",
-                "value": 1
+                "value": 20000
               }
             ]
           }
@@ -498,12 +1069,12 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 2,
-        "w": 4,
-        "x": 0,
+        "h": 6,
+        "w": 3,
+        "x": 14,
         "y": 2
       },
-      "id": 8,
+      "id": 47,
       "options": {
         "colorMode": "background",
         "graphMode": "area",
@@ -518,18 +1089,116 @@
           "values": false
         },
         "showPercentChange": false,
+        "text": {
+          "titleSize": 12
+        },
         "textMode": "auto",
         "wideLayout": true
       },
       "pluginVersion": "12.0.2",
       "targets": [
         {
-          "alias": "Total Brokers",
+          "alias": "IP packets recieved/sec",
           "datasource": {
             "type": "influxdb",
             "uid": "${InfluxDS}"
           },
-          "query": "SELECT last(\"kafka_brokers\") AS \"Total Brokers\"\nFROM \"kafka_brokers\"\nWHERE $timeFilter \n  AND \"host\" =~ /^$host$/\n",
+          "query": "SELECT derivative(mean(\"ip_inreceives\"), 1s) AS \"Packets in/sec\"\nFROM \"net\"\nWHERE $timeFilter AND host = '$host'\nGROUP BY time($interval), host\n",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series"
+        },
+        {
+          "alias": "IP packets sent/sec",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${InfluxDS}"
+          },
+          "hide": false,
+          "query": "SELECT derivative(mean(\"ip_outrequests\"), 1s) AS \"Packets out/sec\"\nFROM \"net\"\nWHERE $timeFilter AND host = '$host'\nGROUP BY time($interval), host\n",
+          "rawQuery": true,
+          "refId": "B",
+          "resultFormat": "time_series"
+        }
+      ],
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${InfluxDS}"
+      },
+      "description": "Panel Description: CPU context switch rate\n\nOps Notes: High context switches may indicate CPU saturation or process scheduling pressure",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "#6ED0E0",
+                "value": 2000
+              },
+              {
+                "color": "#EAB839",
+                "value": 2500
+              },
+              {
+                "color": "#EF843C",
+                "value": 5000
+              },
+              {
+                "color": "red",
+                "value": 7500
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 4,
+        "x": 10,
+        "y": 4
+      },
+      "id": 49,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {
+          "titleSize": 12
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "alias": "Context Switches/sec",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${InfluxDS}"
+          },
+          "query": "SELECT derivative(mean(\"context_switches\"), 1s) AS \"Context Switches/sec\"\nFROM \"kernel\" \nWHERE $timeFilter AND \"host\" =~ /^$host$/ \nGROUP BY time(5m), \"host\" fill(null)\n",
           "rawQuery": true,
           "refId": "A",
           "resultFormat": "time_series"
@@ -547,16 +1216,25 @@
           "color": {
             "mode": "thresholds"
           },
+          "displayName": "Open Sockets",
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "#35b70a"
+                "color": "blue"
               },
               {
-                "color": "#ad0f1b",
-                "value": 1
+                "color": "#EAB839",
+                "value": 25
+              },
+              {
+                "color": "#EF843C",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 80
               }
             ]
           }
@@ -566,15 +1244,15 @@
       "gridPos": {
         "h": 2,
         "w": 4,
-        "x": 4,
-        "y": 2
+        "x": 10,
+        "y": 6
       },
-      "id": 38,
+      "id": 43,
       "options": {
         "colorMode": "background",
         "graphMode": "area",
         "justifyMode": "auto",
-        "orientation": "horizontal",
+        "orientation": "auto",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
@@ -590,15 +1268,14 @@
       "pluginVersion": "12.0.2",
       "targets": [
         {
-          "alias": "",
           "datasource": {
             "type": "influxdb",
             "uid": "${InfluxDS}"
           },
-          "query": "SELECT sum(\"kafka_topic_partitions\") AS \"Total Partititons\" FROM \"kafka_topic_partitions\" WHERE $timeFilter AND \"host\" =~ /^$host$/",
+          "query": "SELECT sum(\"total_sockets\") AS \"Open Sockets\"\nFROM \"app_metrics\" \nWHERE $timeFilter AND \"host\" =~ /^$host$/ \nGROUP BY time($interval), \"project\" fill(null)\n",
           "rawQuery": true,
           "refId": "A",
-          "resultFormat": "table"
+          "resultFormat": "time_series"
         }
       ],
       "type": "stat"
@@ -608,7 +1285,124 @@
         "type": "influxdb",
         "uid": "${InfluxDS}"
       },
-      "description": "🧾 Purpose:\n\nThis panel shows the number of active members (consumers) in each Kafka consumer group over time on the selected host. It helps monitor whether expected services are connected and consuming data.\n\n✅ Operational Use:\n\n    Monitor whether consumer groups have active members.\n\n    Detect unexpected drops to 0, which may indicate:\n\n        Service crashes\n\n        Lost connectivity\n\n        Improper configuration or topic assignment\n\n⚠️ Things to Watch:\n\n    If expected consumer groups show no members consistently, it may indicate a service outage.\n\n    Groups with rapidly fluctuating membership may suggest scaling issues or unhealthy consumer instances.\n\n    Ensure kafka-consumer-groups.sh --describe shows matching active members for troubleshooting.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 18,
+            "gradientMode": "hue",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "#EAB839",
+                "value": 15
+              },
+              {
+                "color": "#6ED0E0",
+                "value": 25
+              },
+              {
+                "color": "#EF843C",
+                "value": 50
+              },
+              {
+                "color": "#E24D42",
+                "value": 75
+              },
+              {
+                "color": "#BA43A9",
+                "value": 95
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 0,
+        "y": 8
+      },
+      "id": 50,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "alias": "$tag_app",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${InfluxDS}"
+          },
+          "hide": false,
+          "query": "SELECT mean(cpu_percent) FROM app_metrics\nWHERE $timeFilter and host = '$host' and \"service\" =~ /^(infra|$service)$/\nGROUP BY time($interval), app fill(null)\n",
+          "rawQuery": true,
+          "refId": "B",
+          "resultFormat": "time_series"
+        }
+      ],
+      "title": "CPU Usage %",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${InfluxDS}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -618,13 +1412,271 @@
             "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
-            "axisLabel": "Members Count",
+            "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
-            "fillOpacity": 11,
+            "fillOpacity": 22,
             "gradientMode": "hue",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 0,
+          "fieldMinMax": false,
+          "mappings": [],
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "#EAB839",
+                "value": 15
+              },
+              {
+                "color": "#6ED0E0",
+                "value": 25
+              },
+              {
+                "color": "#EF843C",
+                "value": 50
+              },
+              {
+                "color": "#E24D42",
+                "value": 75
+              },
+              {
+                "color": "#BA43A9",
+                "value": 95
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 8,
+        "y": 8
+      },
+      "id": 51,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "alias": "$tag_app",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${InfluxDS}"
+          },
+          "query": "SELECT mean(\"mem_usage_percent\") \nFROM \"app_metrics\" \nWHERE $timeFilter and \"service\" =~ /^(infra|$service)$/ and host = '$host'\n GROUP BY time($interval),app\n",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series"
+        }
+      ],
+      "title": "Memory Usages %",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${InfluxDS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 13,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "area"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "#EAB839",
+                "value": 50
+              },
+              {
+                "color": "#EF843C",
+                "value": 75
+              },
+              {
+                "color": "semi-dark-red",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "mbytes"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "B"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#88b2ef",
+                  "mode": "shades"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 16,
+        "y": 8
+      },
+      "id": 60,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "alias": "$tag_app",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${InfluxDS}"
+          },
+          "hide": false,
+          "query": "SELECT mean(\"mem_resident_kb\") / 1024 \nFROM \"app_metrics\" \nWHERE $timeFilter and \"service\" =~ /^(infra|$service)$/ and host = '$host'\n GROUP BY time($interval),app\n",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series"
+        },
+        {
+          "alias": "Total Mem",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${InfluxDS}"
+          },
+          "hide": false,
+          "query": "SELECT last(\"total\") / (1024 * 1024)\nFROM \"mem\" \nWHERE $timeFilter and host = '$host'\n GROUP BY time($interval)\n",
+          "rawQuery": true,
+          "refId": "B",
+          "resultFormat": "time_series"
+        }
+      ],
+      "title": "Memory Usages",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${InfluxDS}"
+      },
+      "description": "🔹 running\n\n    The process is actively executing on a CPU.\n\n    It's doing work right now.\n\n    This is usually the most active state.\n\n🔹 sleep\n\n    The process is waiting for something (like I/O, disk read, or network response).\n\n    It's not currently using CPU, but it’s ready to wake up and run when the resource becomes available.\n\n    Most processes spend a lot of time in this state.\n\nCode\tTelegraf procstat.state\tMeaning\n\nR\trunning\tRunning or runnable (on CPU or ready to run)\n\nS\tsleep\tInterruptible sleep (waiting for I/O or event)\n\nD\tsleep\tUninterruptible sleep (usually waiting on disk I/O)\n\nT\tstopped\tStopped by job control signal (e.g., SIGSTOP)\n\nt\tstopped\tStopped by debugger during tracing\n\nZ\tzombie\tZombie process (terminated but not cleaned up by parent)\n\nX\tdead\tDead process (shouldn't be seen — internal kernel state)\n\nI\tidle\tIdle kernel threads (only on some systems like newer kernels)\n\nW\tpaging (very rare)\tPaging (obsolete or not used in modern Linux systems)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": true,
+            "axisColorMode": "text",
+            "axisLabel": "Read_IO",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 26,
+            "gradientMode": "opacity",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
@@ -654,486 +1706,72 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "semi-dark-red"
+                "color": "green"
               },
               {
-                "color": "semi-dark-green",
-                "value": 1
+                "color": "#EAB839",
+                "value": 1000000000
+              },
+              {
+                "color": "#6ED0E0",
+                "value": 100000000000
+              },
+              {
+                "color": "#EF843C",
+                "value": 1000000000000
+              },
+              {
+                "color": "red",
+                "value": 10000000000000
               }
             ]
           },
-          "unit": "short"
+          "unit": "decbytes"
         },
         "overrides": [
           {
             "matcher": {
-              "id": "byName",
-              "options": "consumergroup"
+              "id": "byFrameRefID",
+              "options": "B"
             },
-            "properties": []
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Members"
-            },
-            "properties": []
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "kafka_consumergroup_members"
-            },
-            "properties": []
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "custom.axisCenteredZero",
+                "value": true
+              },
+              {
+                "id": "custom.transform",
+                "value": "negative-Y"
+              },
+              {
+                "id": "custom.axisLabel",
+                "value": "Write_IO"
+              }
+            ]
           }
         ]
       },
       "gridPos": {
-        "h": 10,
+        "h": 7,
         "w": 8,
         "x": 0,
-        "y": 4
+        "y": 15
       },
-      "id": 13,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull",
-            "sum"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true,
-          "sortBy": "Last *",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.0.2",
-      "targets": [
-        {
-          "alias": "$tag_consumergroup",
-          "datasource": {
-            "type": "influxdb",
-            "uid": "${InfluxDS}"
-          },
-          "query": "SELECT last(\"kafka_consumergroup_members\")\nFROM \"1hrRP\".\"kafka_consumergroup_members\"\nWHERE $timeFilter \n  AND \"host\" =~ /^$host$/ \nGROUP BY time($interval), \"consumergroup\" \nFILL(null)",
-          "rawQuery": true,
-          "refId": "A",
-          "resultFormat": "time_series"
-        }
-      ],
-      "timeFrom": "1h",
-      "title": "kafka Consumer Group Members",
-      "transformations": [
-        {
-          "disabled": true,
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "Time": true
-            },
-            "includeByName": {},
-            "indexByName": {},
-            "renameByName": {}
-          }
-        }
-      ],
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "influxdb",
-        "uid": "${InfluxDS}"
-      },
-      "description": "🧾 Purpose:\n\nThis panel tracks the message ingest rate per Kafka topic on each host, by calculating how fast offsets are increasing. It helps detect which topics are active and how fast data is being consumed.\n\n✅ Operational Use:\n\n    Monitor real-time throughput of production topics\n\n    Detect slowdowns or spikes in message processing\n\n    Helps in Kafka sizing, consumer lag diagnosis, or traffic balancing\n\n⚠️ Things to Watch:\n\n    A sudden drop to zero could mean a stuck connector or stalled topic.\n\n    Very high values may indicate a spike in load or a consumer catching up.\n\n    Ensure retention and partition counts are tuned based on ingest rate.",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "Msgs / Sec",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 1,
-            "gradientMode": "hue",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "smooth",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "linearThreshold": 3,
-              "log": 2,
-              "type": "log"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "decimals": 0,
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "semi-dark-red"
-              },
-              {
-                "color": "semi-dark-green",
-                "value": 1
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 10,
-        "w": 8,
-        "x": 8,
-        "y": 4
-      },
-      "id": 9,
-      "options": {
-        "legend": {
-          "calcs": [
-            "sum"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.0.2",
-      "targets": [
-        {
-          "alias": "$tag_topic",
-          "datasource": {
-            "type": "influxdb",
-            "uid": "${InfluxDS}"
-          },
-          "query": "SELECT non_negative_derivative(mean(\"kafka_topic_partition_current_offset\"), 1s)\nFROM \"kafka_topic_partition_current_offset\"\nWHERE $timeFilter AND \"host\" =~ /^$host$/\nGROUP BY time($interval), \"topic\"\nFILL(null)\n",
-          "rawQuery": true,
-          "refId": "A",
-          "resultFormat": "time_series"
-        }
-      ],
-      "title": "Topic Messages in per second",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "influxdb",
-        "uid": "${InfluxDS}"
-      },
-      "description": " Explanation\nConcept\tDescription\nLag\tNumber of messages a consumer hasn't yet read.\nZero Lag\tPerfect health — the consumer is caught up.\nHigh Lag\tIndicates backlog — investigate possible bottlenecks (CPU, GC, code issues).\nSpikes in Lag\tOften due to restarts, rebalances, or broker downtime.\nConstantly Increasing\tSign of a stuck or slow consumer — immediate action needed.",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "Counts",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "none"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 10,
-        "w": 8,
-        "x": 16,
-        "y": 4
-      },
-      "id": 2,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true,
-          "sortBy": "Total",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.0.2",
-      "targets": [
-        {
-          "alias": "$tag_topic",
-          "datasource": {
-            "type": "influxdb",
-            "uid": "${InfluxDS}"
-          },
-          "query": "SELECT max(\"kafka_consumergroup_lag\") \nFROM \"kafka_consumergroup_lag\" \nWHERE $timeFilter AND \"host\" =~ /^$host$/ \nGROUP BY time($interval), \"topic\", \"consumergroup\"\nFILL(null)\n",
-          "rawQuery": true,
-          "refId": "A",
-          "resultFormat": "time_series"
-        }
-      ],
-      "title": "Kafka Per Topic Lag Overview",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "influxdb",
-        "uid": "${InfluxDS}"
-      },
-      "description": "🔍 Objective\n\nTo monitor Kafka consumer lag (kafka_consumergroup_lag) using the InfluxDB gauge metric, identify lag spikes, detect unresponsive consumers, and alert operators before downstream systems are impacted.\n\nkafka_consumergroup_lag typically indicates how many messages are yet to be consumed by the consumer group for a given topic-partition.\n\n✅ Regular Checks:\n\n    Daily: Review consumer lag patterns.\n\n    Weekly: Check for persistent high-lag consumers.\n\n    Monthly: Audit topic/consumer group alignment and Kafka broker health.\n\n🛠️ What to Do When You See High Lag:\n\n    Check if consumer is running.\n\n    Inspect consumer logs for errors or processing slowdowns.\n\n    Scale consumers if lag is consistently high under normal load.\n\n    Check Kafka brokers for partition unavailability or ISR issues.\n\n📌 Example: What is “Normal” Lag?\n\n    For real-time processing, lag should be near zero.\n\n    For batch consumers, lag may build up and drain periodically.\n\n    Lag of 1000+ messages that doesn’t reduce quickly is a sign of a slow or stuck consumer.",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "Count",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "noValue": "0",
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 14
-      },
-      "id": 6,
+      "id": 53,
       "options": {
         "legend": {
           "calcs": [
             "min",
-            "mean",
             "max",
             "sum",
             "lastNotNull"
           ],
           "displayMode": "table",
           "placement": "bottom",
-          "showLegend": true,
-          "sortBy": "Total",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.0.2",
-      "targets": [
-        {
-          "alias": "ConsumerGroup= $tag_consumergroup.",
-          "datasource": {
-            "type": "influxdb",
-            "uid": "${InfluxDS}"
-          },
-          "query": "SELECT sum(\"avg_members\")\nFROM CQ_Kafka_Consumers_5m\nWHERE $timeFilter AND \"host\" =~ /^$host$/\nGROUP BY time($interval), \"consumergroup\"\n",
-          "rawQuery": true,
-          "refId": "A",
-          "resultFormat": "time_series"
-        }
-      ],
-      "title": "Kafka Consumer Group Members",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "influxdb",
-        "uid": "${InfluxDS}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "Partition Count",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 1,
-            "gradientMode": "hue",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "smooth",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "linearThreshold": 3,
-              "log": 2,
-              "type": "symlog"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "decimals": 0,
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "semi-dark-red"
-              },
-              {
-                "color": "semi-dark-green",
-                "value": 1
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 14
-      },
-      "id": 14,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
           "showLegend": true
         },
         "tooltip": {
@@ -1145,314 +1783,31 @@
       "pluginVersion": "12.0.2",
       "targets": [
         {
-          "alias": "$tag_topic",
-          "datasource": {
-            "type": "influxdb",
-            "uid": "${InfluxDS}"
-          },
-          "query": "SELECT mean(\"kafka_topic_partitions\")\nFROM \"kafka_topic_partitions\"\nWHERE $timeFilter AND \"host\" =~ /^$host$/\nGROUP BY time($interval), \"topic\"\n",
-          "rawQuery": true,
-          "refId": "A",
-          "resultFormat": "time_series"
-        }
-      ],
-      "title": "Partition Per Topic",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "influxdb",
-        "uid": "${InfluxDS}"
-      },
-      "description": "🔍 Objective\n\nTo monitor Kafka consumer lag (kafka_consumergroup_lag) using the InfluxDB gauge metric, identify lag spikes, detect unresponsive consumers, and alert operators before downstream systems are impacted.\n\nkafka_consumergroup_lag typically indicates how many messages are yet to be consumed by the consumer group for a given topic-partition.\n\n✅ Regular Checks:\n\n    Daily: Review consumer lag patterns.\n\n    Weekly: Check for persistent high-lag consumers.\n\n    Monthly: Audit topic/consumer group alignment and Kafka broker health.\n\n🛠️ What to Do When You See High Lag:\n\n    Check if consumer is running.\n\n    Inspect consumer logs for errors or processing slowdowns.\n\n    Scale consumers if lag is consistently high under normal load.\n\n    Check Kafka brokers for partition unavailability or ISR issues.\n\n📌 Example: What is “Normal” Lag?\n\n    For real-time processing, lag should be near zero.\n\n    For batch consumers, lag may build up and drain periodically.\n\n    Lag of 1000+ messages that doesn’t reduce quickly is a sign of a slow or stuck consumer.",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 9,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "smooth",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "log": 10,
-              "type": "symlog"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "normal"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 24,
-        "x": 0,
-        "y": 22
-      },
-      "id": 31,
-      "options": {
-        "legend": {
-          "calcs": [
-            "sum",
-            "lastNotNull",
-            "min",
-            "max"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.0.2",
-      "targets": [
-        {
-          "alias": "Messages_Pending - $tag_topic",
+          "alias": "Reads - $tag_app",
           "datasource": {
             "type": "influxdb",
             "uid": "${InfluxDS}"
           },
           "hide": false,
-          "query": "SELECT mean(\"kafka_consumergroup_lag\")\nFROM \"kafka_consumergroup_lag\"\nWHERE $timeFilter AND \"host\" =~ /^$host$/ \nGROUP BY time($__interval), \"consumergroup\",\"topic\" fill(null)\n",
+          "query": "SELECT mean(read_bytes)\nFROM app_metrics\nWHERE $timeFilter and host = '$host' and \"service\" =~ /^(infra|$service)$/\nGROUP BY time($interval), app fill(null)\n",
           "rawQuery": true,
           "refId": "B",
           "resultFormat": "time_series"
         },
         {
-          "alias": "Messages_In - $tag_topic",
-          "datasource": {
-            "type": "influxdb",
-            "uid": "${InfluxDS}"
-          },
-          "hide": true,
-          "query": "SELECT mean(\"kafka_consumergroup_current_offset\")\nFROM \"kafka_consumergroup_current_offset\"\nWHERE $timeFilter AND \"host\" =~ /^$host$/\nGROUP BY time($__interval), \"consumergroup\",\"topic\"\n",
-          "rawQuery": true,
-          "refId": "A",
-          "resultFormat": "time_series"
-        }
-      ],
-      "title": "Pending Messages",
-      "transformations": [
-        {
-          "disabled": true,
-          "id": "joinByField",
-          "options": {
-            "byField": "consumergroup",
-            "mode": "outer"
-          }
-        },
-        {
-          "disabled": true,
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "Time kafka_consumergroup_current_offset": true,
-              "Time kafka_consumergroup_lag": true,
-              "topic": false
-            },
-            "includeByName": {},
-            "indexByName": {
-              "Messages_In": 1,
-              "Msgs_Pending": 2,
-              "Time kafka_consumergroup_current_offset": 4,
-              "Time kafka_consumergroup_lag": 5,
-              "consumergroup": 0,
-              "topic": 3
-            },
-            "renameByName": {}
-          }
-        }
-      ],
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "influxdb",
-        "uid": "${InfluxDS}"
-      },
-      "description": "🔍 Objective\n\nTo monitor Kafka consumer lag (kafka_consumergroup_lag) using the InfluxDB gauge metric, identify lag spikes, detect unresponsive consumers, and alert operators before downstream systems are impacted.\n\nkafka_consumergroup_lag typically indicates how many messages are yet to be consumed by the consumer group for a given topic-partition.\n\n✅ Regular Checks:\n\n    Daily: Review consumer lag patterns.\n\n    Weekly: Check for persistent high-lag consumers.\n\n    Monthly: Audit topic/consumer group alignment and Kafka broker health.\n\n🛠️ What to Do When You See High Lag:\n\n    Check if consumer is running.\n\n    Inspect consumer logs for errors or processing slowdowns.\n\n    Scale consumers if lag is consistently high under normal load.\n\n    Check Kafka brokers for partition unavailability or ISR issues.\n\n📌 Example: What is “Normal” Lag?\n\n    For real-time processing, lag should be near zero.\n\n    For batch consumers, lag may build up and drain periodically.\n\n    Lag of 1000+ messages that doesn’t reduce quickly is a sign of a slow or stuck consumer.",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 9,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "smooth",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "log": 10,
-              "type": "symlog"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "normal"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 24,
-        "x": 0,
-        "y": 29
-      },
-      "id": 32,
-      "options": {
-        "legend": {
-          "calcs": [
-            "sum",
-            "lastNotNull",
-            "min",
-            "max"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.0.2",
-      "targets": [
-        {
-          "alias": "Messages_Pending - $tag_topic",
-          "datasource": {
-            "type": "influxdb",
-            "uid": "${InfluxDS}"
-          },
-          "hide": true,
-          "query": "SELECT mean(\"kafka_consumergroup_lag\")\nFROM \"kafka_consumergroup_lag\"\nWHERE $timeFilter AND \"host\" =~ /^$host$/ \nGROUP BY time($__interval), \"consumergroup\",\"topic\"\n",
-          "rawQuery": true,
-          "refId": "B",
-          "resultFormat": "time_series"
-        },
-        {
-          "alias": "Processed - $tag_topic",
+          "alias": "Writes - $tag_app",
           "datasource": {
             "type": "influxdb",
             "uid": "${InfluxDS}"
           },
           "hide": false,
-          "query": "SELECT mean(\"kafka_consumergroup_current_offset\")\nFROM \"kafka_consumergroup_current_offset\"\nWHERE $timeFilter AND \"host\" =~ /^$host$/\nGROUP BY time($__interval), \"consumergroup\",\"topic\"\n",
+          "query": "SELECT mean(write_bytes)\nFROM app_metrics\nWHERE $timeFilter and host = '$host' and \"service\" =~ /^(infra|bss)$/\nGROUP BY time($interval), app fill(null)\n",
           "rawQuery": true,
           "refId": "A",
           "resultFormat": "time_series"
         }
       ],
-      "title": "Processed Messages",
-      "transformations": [
-        {
-          "disabled": true,
-          "id": "joinByField",
-          "options": {
-            "byField": "consumergroup",
-            "mode": "outer"
-          }
-        },
-        {
-          "disabled": true,
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "Time kafka_consumergroup_current_offset": true,
-              "Time kafka_consumergroup_lag": true,
-              "topic": false
-            },
-            "includeByName": {},
-            "indexByName": {
-              "Messages_In": 1,
-              "Msgs_Pending": 2,
-              "Time kafka_consumergroup_current_offset": 4,
-              "Time kafka_consumergroup_lag": 5,
-              "consumergroup": 0,
-              "topic": 3
-            },
-            "renameByName": {}
-          }
-        }
-      ],
+      "title": "Disk Read/Writes (I/O)",
       "type": "timeseries"
     },
     {
@@ -1460,7 +1815,6 @@
         "type": "influxdb",
         "uid": "${InfluxDS}"
       },
-      "description": "🎯 Purpose of This Panel:\n\n    To monitor real-time performance and health of Debezium connectors.\n    Helps determine if connectors are keeping up with Kafka topics, or falling behind due to load or errors.\n    Useful for proactive alerting before data processing delays impact downstream systems.\n\n✅ Expected Behavior:\n\n    Lag should stay low or near-zero under normal operating conditions.\n    Temporary spikes may happen during:\n        Kafka partition reassignments\n        Connector restarts\n        Temporary throughput spikes\n\n🚨 When to Alert:\n\n    Lag grows continuously over time (e.g., consistently increasing over 5–10 min window).\n    Lag exceeds threshold (e.g., >100k messages for a connector or topic).\n    Connector appears stuck (high lag, no offset commits).\n\n🔧 Troubleshooting Tips:\n\n    Check connector logs:\n\n        Look for retry loops, deserialization errors, or backpressure warnings.\n    Check Kafka topic throughput:\n        High producer volume may overload the connector.\n    Review connector settings:\n        max.tasks, poll.interval.ms, batch.size, etc.\n    Evaluate resource usage:\n        CPU/memory on the Kafka Connect node.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1475,15 +1829,15 @@
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
-            "fillOpacity": 1,
-            "gradientMode": "none",
+            "fillOpacity": 7,
+            "gradientMode": "opacity",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
             },
             "insertNulls": false,
-            "lineInterpolation": "smooth",
+            "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
             "scaleDistribution": {
@@ -1499,7 +1853,241 @@
               "mode": "off"
             }
           },
+          "decimals": 1,
+          "fieldMinMax": false,
           "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "#EAB839",
+                "value": 10
+              },
+              {
+                "color": "#6ED0E0",
+                "value": 20
+              },
+              {
+                "color": "#EF843C",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 70
+              },
+              {
+                "color": "dark-red",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 8,
+        "y": 15
+      },
+      "id": 54,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "alias": "$host <=> $tag_url",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${InfluxDS}"
+          },
+          "hide": false,
+          "query": "SELECT \n    last(\"percent_packet_loss\")\nFROM \"ping\" \nWHERE $timeFilter and \"service\" =~ /^(infra|$service)$/\nand host = '$host'\nGROUP BY time($interval),\"url\"",
+          "rawQuery": true,
+          "refId": "B",
+          "resultFormat": "time_series"
+        }
+      ],
+      "title": "PacketLoss Trend",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${InfluxDS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 2,
+          "fieldMinMax": false,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "#EAB839",
+                "value": 1
+              },
+              {
+                "color": "#6ED0E0",
+                "value": 2
+              },
+              {
+                "color": "#EF843C",
+                "value": 5
+              },
+              {
+                "color": "#E24D42",
+                "value": 7
+              },
+              {
+                "color": "#BA43A9",
+                "value": 9
+              }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 16,
+        "y": 15
+      },
+      "id": 55,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "alias": "$host <=> $tag_url",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${InfluxDS}"
+          },
+          "query": "SELECT \n    last(\"maximum_response_ms\")\nFROM \"thirty_days\".\"ping\" \nWHERE $timeFilter and \"service\" =~ /^(infra|$service)$/\nand host = '$host'\nGROUP BY time($interval),\"url\"",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series"
+        }
+      ],
+      "title": "PingResponse Trend",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${InfluxDS}"
+      },
+      "description": "LISTEN | Waiting for incoming connections. (Server-side socket)\n\nSYN-SENT | Client has sent a connection request; waiting for a response.\n\nSYN-RECEIVED | Server has received SYN and sent SYN-ACK, waiting for ACK from client.\n\nESTABLISHED | Connection is open and active. Data can be sent both ways.\n\nFIN-WAIT-1 | First step in active close; waiting for FIN-ACK or FIN from other end.\n\nFIN-WAIT-2 | Waiting for the other end to send its FIN.\n\nCLOSE-WAIT | Waiting for the application to close the connection (after receiving FIN).\n\nCLOSING | Both sides have sent FIN, waiting for ACK.\n\nLAST-ACK | Waiting for final ACK after sending own FIN.\n\nTIME-WAIT | Waiting to ensure remote side received final ACK; prevents delayed duplicates.\n\nCLOSED | No connection state; the socket is not being used.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-RdYlGr"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "dark-red",
+                  "index": 0,
+                  "text": "Not Listening"
+                },
+                "1": {
+                  "color": "semi-dark-green",
+                  "index": 1,
+                  "text": "Listening"
+                }
+              },
+              "type": "value"
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1516,22 +2104,223 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 8,
+        "h": 9,
+        "w": 9,
         "x": 0,
-        "y": 36
+        "y": 22
       },
-      "id": 26,
+      "id": 56,
+      "options": {
+        "alignValue": "center",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "alias": "$tag_name - Port=$tag_port",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${InfluxDS}"
+          },
+          "query": "SELECT last(\"listen_state\") \nFROM \"port_listen\" \nWHERE $timeFilter AND host = '$host' and service =~ /^(infra|$service)$/\nGROUP BY time($interval), \"name\", \"host\", \"port\", \"ip\" fill(null)\n",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series"
+        }
+      ],
+      "title": "Listening Port Summary",
+      "type": "state-timeline"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${InfluxDS}"
+      },
+      "description": "LISTEN | Waiting for incoming connections. (Server-side socket)\n\nSYN-SENT | Client has sent a connection request; waiting for a response.\n\nSYN-RECEIVED | Server has received SYN and sent SYN-ACK, waiting for ACK from client.\n\nESTABLISHED | Connection is open and active. Data can be sent both ways.\n\nFIN-WAIT-1 | First step in active close; waiting for FIN-ACK or FIN from other end.\n\nFIN-WAIT-2 | Waiting for the other end to send its FIN.\n\nCLOSE-WAIT | Waiting for the application to close the connection (after receiving FIN).\n\nCLOSING | Both sides have sent FIN, waiting for ACK.\n\nLAST-ACK | Waiting for final ACK after sending own FIN.\n\nTIME-WAIT | Waiting to ensure remote side received final ACK; prevents delayed duplicates.\n\nCLOSED | No connection state; the socket is not being used.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-GrYlRd"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "semi-dark-red",
+                  "index": 0,
+                  "text": "unavailable"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 15,
+        "x": 9,
+        "y": 22
+      },
+      "id": 57,
+      "options": {
+        "alignValue": "center",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "always",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "alias": "$tag_name, IP=$tag_ip-Port=$tag_port",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${InfluxDS}"
+          },
+          "query": "select last(\"estab\") AS \"Estab\" from link_count where $timeFilter and host = '$host' and service =~ /^(infra|$service)$/ and ip != '127.0.0.1' group by time($interval),ip, port, \"name\"",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series"
+        }
+      ],
+      "title": "Established Links Count Summary",
+      "type": "state-timeline"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${InfluxDS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-GrYlRd",
+            "seriesBy": "last"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Resp Time / Sec",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 11,
+            "gradientMode": "hue",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineStyle": {
+              "dash": [
+                10,
+                10
+              ],
+              "fill": "dash"
+            },
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 1,
+          "fieldMinMax": false,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 9,
+        "x": 0,
+        "y": 31
+      },
+      "id": 58,
       "options": {
         "legend": {
           "calcs": [
-            "last"
+            "min",
+            "mean",
+            "max",
+            "sum"
           ],
           "displayMode": "table",
           "placement": "bottom",
-          "showLegend": true,
-          "sortBy": "Last",
-          "sortDesc": true
+          "showLegend": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -1542,18 +2331,18 @@
       "pluginVersion": "12.0.2",
       "targets": [
         {
-          "alias": "$tag_consumergroup",
+          "alias": "Port $tag_port",
           "datasource": {
             "type": "influxdb",
             "uid": "${InfluxDS}"
           },
-          "query": "SELECT mean(\"kafka_consumergroup_lag\") AS \"Debezium Lag\"\nFROM \"kafka_consumergroup_lag\"\nWHERE $timeFilter\n  AND \"host\" =~ /^$host$/\n  AND \"consumergroup\" =~ /debezium/\nGROUP BY time($interval), \"consumergroup\"\n",
+          "query": "SELECT mean(\"response_time\")\nFROM \"portResponsetime\"\nWHERE \"host\" = '$host' and service =~ /^(infra|$service)$/\n  AND $timeFilter\nGROUP BY time($interval), \"port\",ip fill(0)\n",
           "rawQuery": true,
           "refId": "A",
           "resultFormat": "time_series"
         }
       ],
-      "title": "Debezium Connector Lag",
+      "title": "Ports Response Time Trend",
       "type": "timeseries"
     },
     {
@@ -1561,7 +2350,6 @@
         "type": "influxdb",
         "uid": "${InfluxDS}"
       },
-      "description": "🛠️ What This Panel Shows:\n\n    Metric: gauge represents the number of in-sync replicas (ISR) per Kafka topic and partition.\n\n    The query excludes internal Kafka topics (like __consumer_offsets) using topic !~ /^__.*$/.\n\n    Aggregated as last() value over the selected time range and interval.\n\n🎯 Purpose of This Panel:\n\n    To monitor Kafka partition replica health and ensure high availability.\n\n    In-sync replicas are those that are up-to-date and part of the ISR set, ensuring fault tolerance.\n\n    A drop in ISR count may lead to unclean leader elections or data loss risk if the leader fails.\n\n✅ Expected Behavior:\n\n    The number of in-sync replicas should equal the total configured replicas for each partition.\n\n    For example, if replication factor is 3, then ISR should always be 3.\n\n🔧 Troubleshooting Tips:\n\n    Check broker logs for:\n\n        replica.lag.time.max.ms violations.\n\n        Network disconnects or long GC pauses.\n\n    Validate:\n\n        Disk usage and IOPS.\n\n        Network throughput between brokers.\n\n    Confirm replication settings (replication.factor, min.insync.replicas) in topic configs.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1577,7 +2365,7 @@
             "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 2,
-            "gradientMode": "opacity",
+            "gradientMode": "hue",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
@@ -1618,19 +2406,21 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 8,
-        "x": 8,
-        "y": 36
+        "w": 15,
+        "x": 9,
+        "y": 31
       },
-      "id": 27,
+      "id": 59,
       "options": {
         "legend": {
           "calcs": [
-            "last"
+            "lastNotNull"
           ],
           "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Last *",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -1641,413 +2431,30 @@
       "pluginVersion": "12.0.2",
       "targets": [
         {
-          "alias": "$tag_topic, Partition= $tag_partition",
           "datasource": {
             "type": "influxdb",
             "uid": "${InfluxDS}"
           },
-          "query": "SELECT mean(\"kafka_topic_partition_in_sync_replica\") AS \"In-Sync Replicas\"\nFROM \"kafka_topic_partition_in_sync_replica\"\nWHERE $timeFilter\n  AND \"host\" =~ /^$host$/\n--  AND \"topic\" =~ /^$topic$/\nGROUP BY time($interval), \"partition\", \"topic\"\n",
+          "hide": false,
+          "query": "SELECT * FROM netstat\nWHERE $timeFilter and host = '$host'\n",
           "rawQuery": true,
           "refId": "A",
           "resultFormat": "time_series"
-        }
-      ],
-      "title": "Topic_Partition_in_Sync_Replica",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "influxdb",
-        "uid": "${InfluxDS}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "smooth",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
         },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 16,
-        "y": 36
-      },
-      "id": 25,
-      "options": {
-        "legend": {
-          "calcs": [
-            "last"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.0.2",
-      "targets": [
         {
-          "alias": "$tag_consumergroup",
+          "alias": "",
           "datasource": {
             "type": "influxdb",
             "uid": "${InfluxDS}"
           },
-          "query": "SELECT sum(\"kafka_consumergroup_members\") AS \"Consumer Group Members\"\nFROM \"1hrRP\".kafka_consumergroup_members\nWHERE $timeFilter\n  AND \"host\" =~ /^$host$/\n--  AND \"consumergroup\" =~ /^$consumergroup$/\nGROUP BY time($interval), \"consumergroup\"\n",
+          "hide": true,
+          "query": "select last(listen_state) AS \"listen_state\", last(\"estab\") AS \"estab\", last(\"time_wait\") AS \"time_wait\" from port_monitor where $timeFilter and host = '$host' group by time($interval),ip, port, \"name\"",
           "rawQuery": true,
-          "refId": "A",
+          "refId": "B",
           "resultFormat": "time_series"
         }
       ],
-      "title": "Consumer Group Members Panel",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "influxdb",
-        "uid": "${InfluxDS}"
-      },
-      "description": "🧠 What This Metric Shows\n\n    The number of replicas for each partition of a topic.\n\n    Useful to verify:\n\n        Whether replication factor is as expected.\n\n        If all partitions are uniformly replicated.",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 1,
-            "gradientMode": "opacity",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "smooth",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 0,
-        "y": 44
-      },
-      "id": 29,
-      "options": {
-        "legend": {
-          "calcs": [
-            "last"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.0.2",
-      "targets": [
-        {
-          "alias": "$tag_topic, Partition= $tag_partition",
-          "datasource": {
-            "type": "influxdb",
-            "uid": "${InfluxDS}"
-          },
-          "query": "SELECT mean(\"kafka_topic_partition_replicas\") AS \"Replicas\"\nFROM \"kafka_topic_partition_replicas\"\nWHERE $timeFilter\n  AND \"host\" =~ /^$host$/\n--  AND \"topic\" =~ /^$topic$/\nGROUP BY time($interval), \"topic\", \"partition\"\n",
-          "rawQuery": true,
-          "refId": "A",
-          "resultFormat": "time_series"
-        }
-      ],
-      "title": "Topic_Partition_Replicas",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "influxdb",
-        "uid": "${InfluxDS}"
-      },
-      "description": "🧠 What This Metric Means\n\n    This metric indicates whether a partition has all replicas in-sync:\n\n        0 → Healthy (no under-replicated partitions)\n\n        > 0 → Problem (some replicas lagging behind or offline)",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 1,
-            "gradientMode": "opacity",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "smooth",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 8,
-        "y": 44
-      },
-      "id": 30,
-      "options": {
-        "legend": {
-          "calcs": [
-            "last"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.0.2",
-      "targets": [
-        {
-          "alias": "$tag_topic, Partition= $tag_partition",
-          "datasource": {
-            "type": "influxdb",
-            "uid": "${InfluxDS}"
-          },
-          "query": "SELECT mean(\"kafka_topic_partition_under_replicated_partition\") AS \"Under Replicated Partitions\"\nFROM \"kafka_topic_partition_under_replicated_partition\"\nWHERE $timeFilter\n  AND \"host\" =~ /^$host$/\n -- AND \"topic\" =~ /^$topic$/\nGROUP BY time($interval), \"topic\", \"partition\"\n",
-          "rawQuery": true,
-          "refId": "A",
-          "resultFormat": "time_series"
-        }
-      ],
-      "title": "Topic_Partition_Under_Replicated_Partition",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "influxdb",
-        "uid": "${InfluxDS}"
-      },
-      "description": "📋 What This Metric Shows\n\n    The broker ID currently acting as leader for a given topic-partition.\n\n    Helps verify leader distribution across Kafka brokers.\n\n🧠 Use Cases for Monitoring\n\n    Detect if leadership is overly concentrated on one broker.\n\n    Identify if leader election is happening too frequently.\n\n    Validate that leadership has failed over successfully when a broker goes down.",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 1,
-            "gradientMode": "opacity",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "smooth",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 16,
-        "y": 44
-      },
-      "id": 28,
-      "options": {
-        "legend": {
-          "calcs": [
-            "last"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.0.2",
-      "targets": [
-        {
-          "alias": "$tag_topic, Partition= $tag_partition",
-          "datasource": {
-            "type": "influxdb",
-            "uid": "${InfluxDS}"
-          },
-          "query": "SELECT last(\"kafka_topic_partition_leader\") AS \"Leader Broker\"\nFROM \"kafka_topic_partition_leader\"\nWHERE $timeFilter\n  AND \"host\" =~ /^$host$/\n--  AND \"topic\" =~ /^$topic$/\nGROUP BY time($interval), \"topic\", \"partition\"\n",
-          "rawQuery": true,
-          "refId": "A",
-          "resultFormat": "time_series"
-        }
-      ],
-      "title": "Topic_Partition_Leader",
+      "title": "Total Sockets Used",
       "type": "timeseries"
     }
   ],
@@ -2062,6 +2469,7 @@
         "allowCustomValue": false,
         "current": {},
         "description": "Choose the InfluxDB data source",
+        "includeAll": false,
         "label": "Select Data Source",
         "name": "InfluxDS",
         "options": [],
@@ -2077,11 +2485,11 @@
           "type": "influxdb",
           "uid": "${InfluxDS}"
         },
-        "definition": "SHOW TAG VALUES FROM \"app_metrics\" WITH KEY = \"project\" WHERE \"service\" =~ /^kafka$/",
+        "definition": "SHOW TAG VALUES FROM \"thirty_days\".\"app_metrics\" WITH KEY = \"project\" WHERE service = 'kafka'",
         "name": "project",
         "options": [],
         "query": {
-          "query": "SHOW TAG VALUES FROM \"app_metrics\" WITH KEY = \"project\" WHERE \"service\" =~ /^kafka$/",
+          "query": "SHOW TAG VALUES FROM \"thirty_days\".\"app_metrics\" WITH KEY = \"project\" WHERE service = 'kafka'",
           "refId": "InfluxVariableQueryEditor-VariableQuery"
         },
         "refresh": 1,
@@ -2095,66 +2503,12 @@
           "type": "influxdb",
           "uid": "${InfluxDS}"
         },
-        "definition": "SHOW TAG VALUES FROM \"app_metrics\" WITH KEY = \"zone\" WHERE project = '$project' AND service = 'kafka'",
-        "name": "zone",
-        "options": [],
-        "query": {
-          "query": "SHOW TAG VALUES FROM \"app_metrics\" WITH KEY = \"zone\" WHERE project = '$project' AND service = 'kafka'",
-          "refId": "InfluxVariableQueryEditor-VariableQuery"
-        },
-        "refresh": 1,
-        "regex": "",
-        "type": "query"
-      },
-      {
-        "allowCustomValue": false,
-        "current": {},
-        "datasource": {
-          "type": "influxdb",
-          "uid": "${InfluxDS}"
-        },
-        "definition": "SHOW TAG VALUES FROM \"app_metrics\" WITH KEY = \"host\" WHERE project = '$project' AND zone = '$zone' AND service = 'kafka'",
-        "name": "host",
-        "options": [],
-        "query": {
-          "query": "SHOW TAG VALUES FROM \"app_metrics\" WITH KEY = \"host\" WHERE project = '$project' AND zone = '$zone' AND service = 'kafka'",
-          "refId": "InfluxVariableQueryEditor-VariableQuery"
-        },
-        "refresh": 1,
-        "regex": "",
-        "type": "query"
-      },
-      {
-        "allowCustomValue": false,
-        "current": {},
-        "datasource": {
-          "type": "influxdb",
-          "uid": "${InfluxDS}"
-        },
-        "definition": "SHOW TAG VALUES FROM \"app_metrics\" WITH KEY = \"nodeIP\" WHERE project = '$project' AND zone = '$zone' AND host = '$host' AND service = 'kafka'",
-        "name": "IP",
-        "options": [],
-        "query": {
-          "query": "SHOW TAG VALUES FROM \"app_metrics\" WITH KEY = \"nodeIP\" WHERE project = '$project' AND zone = '$zone' AND host = '$host' AND service = 'kafka'",
-          "refId": "InfluxVariableQueryEditor-VariableQuery"
-        },
-        "refresh": 1,
-        "regex": "",
-        "type": "query"
-      },
-      {
-        "allowCustomValue": false,
-        "current": {},
-        "datasource": {
-          "type": "influxdb",
-          "uid": "${InfluxDS}"
-        },
-        "definition": "SHOW TAG VALUES FROM \"app_metrics\" WITH KEY = \"service\" WHERE project = '$project' AND zone = '$zone' AND host = '$host' AND service = 'kafka'",
+        "definition": "SHOW TAG VALUES FROM \"thirty_days\".\"app_metrics\" WITH KEY = \"service\" WHERE project = '$project' AND zone = '$zone' and service = 'kafka'",
         "hide": 2,
         "name": "service",
         "options": [],
         "query": {
-          "query": "SHOW TAG VALUES FROM \"app_metrics\" WITH KEY = \"service\" WHERE project = '$project' AND zone = '$zone' AND host = '$host' AND service = 'kafka'",
+          "query": "SHOW TAG VALUES FROM \"thirty_days\".\"app_metrics\" WITH KEY = \"service\" WHERE project = '$project' AND zone = '$zone' and service = 'kafka'",
           "refId": "InfluxVariableQueryEditor-VariableQuery"
         },
         "refresh": 1,
@@ -2162,18 +2516,53 @@
         "type": "query"
       },
       {
+        "allowCustomValue": false,
         "current": {},
         "datasource": {
           "type": "influxdb",
           "uid": "${InfluxDS}"
         },
-        "definition": "SHOW TAG VALUES FROM \"kafka_topic_partitions\" WITH KEY = \"topic\"",
-        "includeAll": true,
-        "multi": true,
-        "name": "topics",
+        "definition": "SHOW TAG VALUES FROM \"thirty_days\".\"app_metrics\" WITH KEY = \"zone\" WHERE project = '$project' AND service = 'kafka'",
+        "name": "zone",
         "options": [],
         "query": {
-          "query": "SHOW TAG VALUES FROM \"kafka_topic_partitions\" WITH KEY = \"topic\"",
+          "query": "SHOW TAG VALUES FROM \"thirty_days\".\"app_metrics\" WITH KEY = \"zone\" WHERE project = '$project' AND service = 'kafka'",
+          "refId": "InfluxVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 1,
+        "regex": "",
+        "type": "query"
+      },
+      {
+        "allowCustomValue": false,
+        "current": {},
+        "datasource": {
+          "type": "influxdb",
+          "uid": "${InfluxDS}"
+        },
+        "definition": "SHOW TAG VALUES FROM \"app_metrics\" WITH KEY = \"host\" WHERE project='$project' and zone='$zone' and service = 'kafka'",
+        "name": "host",
+        "options": [],
+        "query": {
+          "query": "SHOW TAG VALUES FROM \"app_metrics\" WITH KEY = \"host\" WHERE project='$project' and zone='$zone' and service = 'kafka'",
+          "refId": "InfluxVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 1,
+        "regex": "",
+        "type": "query"
+      },
+      {
+        "allowCustomValue": false,
+        "current": {},
+        "datasource": {
+          "type": "influxdb",
+          "uid": "${InfluxDS}"
+        },
+        "definition": "SHOW TAG VALUES FROM \"app_metrics\" WITH KEY = \"node_IP\" WHERE project='$project' and zone='$zone' and host = '$host' and service = 'kafka'",
+        "name": "IP",
+        "options": [],
+        "query": {
+          "query": "SHOW TAG VALUES FROM \"app_metrics\" WITH KEY = \"node_IP\" WHERE project='$project' and zone='$zone' and host = '$host' and service = 'kafka'",
           "refId": "InfluxVariableQueryEditor-VariableQuery"
         },
         "refresh": 1,
@@ -2194,11 +2583,6 @@
             "selected": true,
             "text": "1m",
             "value": "1m"
-          },
-          {
-            "selected": false,
-            "text": "3m",
-            "value": "3m"
           },
           {
             "selected": false,
@@ -2251,21 +2635,21 @@
             "value": "30d"
           }
         ],
-        "query": "1m,3m,5m,10m,30m,1h,6h,12h,1d,7d,14d,30d",
+        "query": "1m,5m,10m,30m,1h,6h,12h,1d,7d,14d,30d",
         "refresh": 2,
         "type": "interval"
       }
     ]
   },
   "time": {
-    "from": "now-30m",
+    "from": "now-1h",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "Asia/Kolkata",
-  "title": "Kafka",
-  "uid": "777selKafka",
-  "version": 29,
+  "title": "Kafka Metrics",
+  "uid": "777selKafkametrics",
+  "version": 5,
   "weekStart": ""
 }
 }

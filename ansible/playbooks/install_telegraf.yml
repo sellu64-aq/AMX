@@ -1,0 +1,295 @@
+---
+- name: Install Telegraf 1.34.2 with single instance config
+  hosts: "{{ target_group | default('all_servers') }}"
+  become: yes
+  gather_facts: yes
+
+  vars:
+    telegraf_tarball: "telegraf-1.34.2_linux_amd64.tar.gz"
+    telegraf_version_dir: "telegraf-1.34.2"
+    telegraf_remote_path: "{{ telegraf_base_path | default('/opt/airlinq/grafana') }}"
+    telegraf_install_dir: "{{ telegraf_remote_path }}/telegraf/bin"
+    telegraf_local_path: "{{ ansible_folder }}/binaries/{{ telegraf_tarball }}"
+    telegraf_name: ""
+    telegraf_conf_file: ""
+
+  tasks:
+
+    - name: Ensure custom Ansible remote tmp directory exists
+      file:
+        path: /opt/airlinq/grafana/.ansible/tmp
+        state: directory
+        owner: aqadmin
+        group: aqadmin
+        mode: '0755'
+      tags: ansible_tmp_dir
+    
+    - name: Validate required vars
+      assert:
+        that:
+          - telegraf_name != ""
+          - telegraf_conf_file != ""
+        fail_msg: "You must pass -e telegraf_name=<name> -e telegraf_conf_file=<file>"
+      tags: validate
+
+    - name: Include host_vars file explicitly
+      include_vars:
+        file: "{{ ansible_folder | default('/opt/Airlinq/ansible') }}/host_vars/{{ inventory_hostname }}.yml"
+        
+
+    - name: Ensure required directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ telegraf_user }}"
+        group: "{{ telegraf_group }}"
+        mode: '0755'
+      loop:
+        - "{{ telegraf_remote_path }}"
+        - "{{ telegraf_remote_path }}/telegraf"
+        - "{{ telegraf_remote_path }}/telegraf/bin"
+        - "{{ telegraf_remote_path }}/telegraf/logs"
+        - "{{ telegraf_remote_path }}/scripts"
+      tags: directories
+
+    - name: Ensure telegraf log file exists
+      file:
+        path: "{{ telegraf_remote_path }}/telegraf/logs/telegraf_{{ telegraf_name }}.log"
+        state: touch
+        owner: "{{ telegraf_user }}"
+        group: "{{ telegraf_group }}"
+        mode: '0664'
+      tags: directories
+
+    - name: Check if telegraf binary already exists
+      stat:
+        path: "{{ telegraf_install_dir }}/telegraf"
+      register: telegraf_bin_stat
+      tags: install
+
+    - name: Copy telegraf tarball if needed
+      copy:
+        src: "{{ telegraf_local_path }}"
+        dest: "{{ telegraf_remote_path }}/{{ telegraf_tarball }}"
+        mode: '0644'
+      when: not telegraf_bin_stat.stat.exists
+      tags: install
+
+    - name: Extract telegraf tarball if needed
+      unarchive:
+        src: "{{ telegraf_remote_path }}/{{ telegraf_tarball }}"
+        dest: "{{ telegraf_remote_path }}"
+        remote_src: yes
+      when: not telegraf_bin_stat.stat.exists
+      tags: install
+
+    - name: Copy telegraf binary
+      copy:
+        src: "{{ telegraf_remote_path }}/{{ telegraf_version_dir }}/usr/bin/telegraf"
+        dest: "{{ telegraf_install_dir }}/telegraf"
+        owner: "{{ telegraf_user }}"
+        group: "{{ telegraf_group }}"
+        mode: '0755'
+        remote_src: yes
+      when: not telegraf_bin_stat.stat.exists
+      tags: install
+
+    - name: Debug Oracle vars
+      debug:
+        msg:
+          - "oracle_user: {{ oracle_user | default('UNDEFINED') }}"
+          - "oracle_pass: {{ oracle_pass | default('UNDEFINED') }}"
+          - "oracle_db: {{ oracle_db | default('UNDEFINED') }}"
+          - "oracle_home: {{ oracle_home | default('UNDEFINED') }}"
+      tags: oracle_debug
+        
+    - name: Deploy telegraf config
+      template:
+        src: "{{ ansible_folder }}/playbooks/files/{{ telegraf_conf_file }}"
+        dest: "{{ telegraf_remote_path }}/telegraf/{{ telegraf_name }}_tele.conf"
+        owner: "{{ telegraf_user }}"
+        group: "{{ telegraf_group }}"
+        mode: '0644'
+      tags: config
+        
+    - name: Delete ntp_status.sh and port_monitor.sh if they exist
+      file:
+        path: "{{ telegraf_remote_path }}/scripts/{{ item }}"
+        state: absent
+      loop:
+        - ntp_status.sh
+        - dra_port_monitor.sh
+        - infra_port_monitor.sh
+        - bss_ntp_status.sh
+        - bss_port_monitor.sh
+        - bss_REQprocessingTime.sh  
+      tags: cleanup
+
+    - name: Deploy dra_processingTime script
+      template:
+        src: "{{ ansible_folder }}/playbooks/files/dra_processingTime.sh.j2"
+        dest: "{{ telegraf_remote_path }}/scripts/{{ telegraf_name }}_REQprocessingTime.sh"
+        owner: "{{ telegraf_user }}"
+        group: "{{ telegraf_group }}"
+        mode: '0755'
+      when: deploy_dra_process_script | default(false) | bool
+      tags:
+        - config
+        - draprocesstime_script
+
+    - name: Deploy app_metrics.sh script
+      template:
+        src: "files/App_metrics.sh.j2"
+        dest: "{{ telegraf_remote_path }}/scripts/{{ telegraf_name }}_app_metrics.sh"
+        mode: '0755'
+        owner: "{{ telegraf_user }}"
+        group: "{{ telegraf_group }}"
+      when: deploy_app_metrics | default(false) | bool
+      tags: config
+
+    - name: Deploy bssBypass_status.sh script
+      template:
+        src: "files/bssBypass_status.sh.j2"
+        dest: "{{ telegraf_remote_path }}/scripts/bssBypass_status.sh"
+        mode: '0755'
+        owner: "{{ telegraf_user }}"
+        group: "{{ telegraf_group }}"
+      when: deploy_bssBypass_Check | default(false) | bool
+      tags: config
+
+    - name: Deploy input Folder Check script
+      template:
+        src: "{{ ansible_folder }}/playbooks/files/billing_inputFolderCheck.sh.j2"
+        dest: "{{ telegraf_remote_path }}/scripts/billing_inputFolderCheck.sh"
+        mode: '0755'
+        owner: "{{ telegraf_user }}"
+        group: "{{ telegraf_group }}"
+      when: deploy_inputFolderCheck_script | default(false) | bool
+      tags: config
+
+    - name: Deploy mysql slow query script
+      template:
+        src: "{{ ansible_folder }}/playbooks/files/slowQueryMonitor.sh.j2"
+        dest: "{{ telegraf_remote_path }}/scripts/slowQueryMonitor.sh"
+        mode: '0755'
+        owner: "{{ telegraf_user }}"
+        group: "{{ telegraf_group }}"
+      when: deploy_mysql_slowquery_script | default(false) | bool
+      tags: config
+
+    - name: Generate mysql replica status script
+      template:
+        src: "{{ ansible_folder }}/playbooks/files/mysql_replica_status.sh.j2"
+        dest: "{{ telegraf_remote_path }}/scripts/mysql_replica_status.sh"
+        owner: "{{ telegraf_user }}"
+        group: "{{ telegraf_group }}"
+        mode: "0755"
+      when: deploy_mysql_replica_status_monitor | default(false) | bool
+      tags:
+        - config
+        - replicaStatus_script
+
+    - name: Generate mysql replica status script
+      template:
+        src: "{{ ansible_folder }}/playbooks/files/mysql_monitor.sh.j2"
+        dest: "{{ telegraf_remote_path }}/scripts/mysql_monitor.sh"
+        owner: "{{ telegraf_user }}"
+        group: "{{ telegraf_group }}"
+        mode: "0755"
+      when: deploy_mysql_replica_status_monitor | default(false) | bool
+      tags:
+        - config
+        - replicaStatus_script
+
+
+    - name: Deploy Oracle Monitor script
+      template:
+        src: "{{ ansible_folder }}/playbooks/files/{{ telegraf_name }}_DB_Monitor.sh.j2"
+        dest: "{{ telegraf_remote_path }}/scripts/{{ telegraf_name }}_DB_Monitor.sh"
+        mode: '0755'
+        owner: "{{ telegraf_user }}"
+        group: "{{ telegraf_group }}"
+      when: deploy_oracle_Metrics | default(false) | bool
+      tags: config
+
+    - name: Generate port monitor script
+      template:
+        src: "{{ ansible_folder }}/playbooks/files/port_listen_monitor.sh.j2"
+        dest: "{{ telegraf_remote_path }}/scripts/{{ telegraf_name }}_port_listen_monitor.sh"
+        owner: "{{ telegraf_user }}"
+        group: "{{ telegraf_group }}"
+        mode: "0755"
+      when: deploy_port_listen_monitor | default(false) | bool
+      tags:
+        - config
+        - portmonitor_script
+
+    - name: Generate port monitor script
+      template:
+        src: "{{ ansible_folder }}/playbooks/files/port_conn_monitor.sh.j2"
+        dest: "{{ telegraf_remote_path }}/scripts/{{ telegraf_name }}_port_conn_monitor.sh"
+        owner: "{{ telegraf_user }}"
+        group: "{{ telegraf_group }}"
+        mode: "0755"
+      when: deploy_port_conn_monitor | default(false) | bool
+      tags:
+        - config
+        - portmonitor_script
+
+    - name: Generate ntp monitor script
+      template:
+        src: "{{ ansible_folder }}/playbooks/files/ntp_status.sh.j2"
+        dest: "{{ telegraf_remote_path }}/scripts/{{ telegraf_name }}_ntp_status.sh"
+        owner: "{{ telegraf_user }}"
+        group: "{{ telegraf_group }}"
+        mode: "0755"
+      when: deploy_ntp_status | default(false) | bool
+      tags:
+        - config
+        - ntpstatus_script
+
+    - name: Create systemd service
+      copy:
+        dest: "/etc/systemd/system/telegraf-{{ telegraf_name }}.service"
+        content: |
+          [Unit]
+          Description=Telegraf Instance for {{ telegraf_name }}
+          After=network.target
+
+          [Service]
+          ExecStart={{ telegraf_remote_path }}/telegraf/bin/telegraf --config {{ telegraf_remote_path }}/telegraf/{{ telegraf_name }}_tele.conf
+          Restart=on-failure
+          User={{ telegraf_user }}
+          Group={{ telegraf_group }}
+          ExecReload=/bin/kill -HUP $MAINPID
+          LimitNOFILE=65536
+
+          [Install]
+          WantedBy=multi-user.target
+        owner: root
+        group: root
+        mode: '0644'
+      tags: systemd
+
+    - name: Stop telegraf service instance
+      systemd:
+        name: "telegraf-{{ telegraf_name }}"
+        state: stopped
+        enabled: yes
+      tags: telegraf_stop
+
+    - name: Reload systemd and start service
+      systemd:
+        daemon_reload: yes
+        name: "telegraf-{{ telegraf_name }}"
+        enabled: yes
+        state: restarted
+      tags: systemd
+
+    - name: Remove extracted telegraf folder
+      file:
+        path: "{{ telegraf_remote_path }}/{{ telegraf_version_dir }}"
+        state: absent
+
+
+

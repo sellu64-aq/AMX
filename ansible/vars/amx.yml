@@ -1,0 +1,23 @@
+# AMX Project Variables
+
+# Grafana Configuration
+grafana_admin_user: "admin"
+grafana_admin_password: "admin"
+grafana_dashboard_url: "http://10.221.81.31:3000"
+
+# Prometheus Configuration
+prometheus_scrape_interval: "15s"
+prometheus_alertmanager_url: "http://10.221.81.31:9093"
+
+# Loki Configuration
+loki_url: "http://10.221.81.31:3100"
+
+# Exporter Configuration
+exporter_enabled: true
+node_exporter_port: 9100
+mysql_exporter_port: 9104
+
+# Additional Variables
+env: "Prod"
+project: "AMXcmp"
+

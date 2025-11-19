@@ -1,0 +1,51 @@
+---
+- name: Uninstall InfluxDB 1.x installed under standard path using aqadmin user
+  hosts: influxdb
+  become: true
+
+  vars:
+    base_path: "{{ telegraf_remote_path }}"
+    influx_path: "{{ base_path }}/influxdb"
+    influx_conf_dir: "{{ influx_path }}/conf"
+    influx_data_dir: "{{ influx_path }}/data"
+    influx_bin_dir: "{{ influx_path }}/bin"
+    influx_service_path: /etc/systemd/system/influxdb.service
+
+  tasks:
+
+    - name: Stop and disable influxdb service
+      systemd:
+        name: influxdb
+        state: stopped
+        enabled: no
+      ignore_errors: true
+
+    - name: Remove influxdb systemd service file
+      file:
+        path: "{{ influx_service_path }}"
+        state: absent
+
+    - name: Reload systemd to apply changes
+      systemd:
+        daemon_reload: yes
+
+    - name: Remove influxdb binary directory
+      file:
+        path: "{{ influx_bin_dir }}"
+        state: absent
+
+    - name: Remove influxdb conf directory
+      file:
+        path: "{{ influx_conf_dir }}"
+        state: absent
+
+    - name: Remove influxdb data directory
+      file:
+        path: "{{ influx_data_dir }}"
+        state: absent
+
+    - name: Remove base influxdb directory
+      file:
+        path: "{{ influx_path }}"
+        state: absent
+

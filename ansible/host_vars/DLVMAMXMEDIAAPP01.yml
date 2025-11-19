@@ -1,0 +1,66 @@
+# Variables for DLVMAMXMEDIAAPP01
+---
+# Add host-specific variables below
+#
+########## Feature Flags ##########
+deploy_telegraf_redis: false
+deploy_telegraf_postgres: false
+deploy_telegraf_infra: false
+deploy_mysql_replica_status_monitor: false
+deploy_mysql_slowquery_script: false
+deploy_app_metrics: true
+deploy_port_listen_monitor: true
+deploy_port_conn_monitor: true
+deploy_ntp_status: false
+deploy_dra_process_script: false
+deploy_nginx: false
+deploy_inputFolderCheck_script: true
+
+apps:
+  - name: "Usage_Loader"
+    match: "UsageLoaderApplication"
+    type: "pattern"
+  - name: "Conf_Builder"
+    match: "ConfigurationApplication"
+    type: "pattern"
+  - name: "InvoiceProcessor"
+    match: "InvoiceProcessorApplication"
+    type: "pattern"
+  - name: "CSVProcessor"
+    match: "CSVProcessorApp"
+    type: "pattern"
+
+ports:
+####### Listen local #######
+  - ip: 127.0.0.1
+    port: 8181
+    name: unknown
+  - ip: 127.0.0.1
+    port: 8184
+    name: prometheus
+  - ip: 127.0.0.1
+    port: 9080
+    name: java
+  - ip: 127.0.0.1
+    port: 8185
+    name: Java
+####### Remote #######
+  - ip: 10.221.81.48
+    port: 3306
+    name: mysql
+  - ip: 10.221.87.113
+    port: 3306
+    name: mysql
+  - ip: 10.221.81.41
+    port: 6667
+    name: NN1
+  - ip: 10.221.81.42
+    port: 6667
+    name: NN2
+  - ip: 10.221.81.43
+    port: 6667
+    name: NN3
+  - ip: 10.221.82.45
+    port: 1521
+    name: unknown
+

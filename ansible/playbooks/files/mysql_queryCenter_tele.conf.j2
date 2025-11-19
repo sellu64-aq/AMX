@@ -1,0 +1,356 @@
+[global_tags]
+  project = "{{ project }}"
+  zone = "{{ zone }}"
+
+[agent]
+  debug = true
+  quiet = false
+  interval = "59s"
+  flush_interval = "10s"
+  logfile = "{{ telegraf_remote_path }}/telegraf/logs/{{ telegraf_name }}_telegraf.log"
+  hostname = "{{ inventory_hostname }}"
+  omit_hostname = false
+  round_interval = true
+  metric_batch_size = 1000
+  metric_buffer_limit = 10000
+  collection_jitter = "5s"
+  flush_jitter = "5s"
+  precision = "1ms"
+  logfile_rotation_interval = "12h"
+  logfile_rotation_max_size = "100MB"
+  logfile_rotation_max_archives = 5
+
+############### API_Hits ###################
+[[inputs.sql]]
+  driver = "mysql"
+  dsn = "aqadmin:Aqadmin@123@tcp(10.221.87.116:3306)/cmp_amx_interface"
+  timeout = "30s"
+  interval = "5m"  # Run every 5 mins
+
+  [[inputs.sql.query]]
+    query = """
+      SELECT
+        COUNT(DISTINCT tracking_message_header) AS API_Hits
+      FROM audit_log
+      WHERE log_time >= UNIX_TIMESTAMP(NOW() - INTERVAL 5 MINUTE)
+    """
+    measurement = "DB_API_Hits"
+    field_columns_int = ["API_Hits"]
+    # Remove time_column so Telegraf uses current time
+
+########## SouthBound Traffic Trends #############
+[[inputs.sql]]
+  driver = "mysql"
+  dsn = "root:Root@123@tcp(10.221.82.48:3306)/amx_gcontrol"
+  timeout = "30s"
+  interval = "1m"
+
+  [[inputs.sql.query]]
+    query = """
+    SELECT
+      STR_TO_DATE(DATE_FORMAT(auditlog_api_transaction.CREATE_DATE, '%Y-%m-%d %H:%i'), '%Y-%m-%d %H:%i') as time_sec,
+      (SELECT name FROM countries c2 WHERE id = acc.COUNTRIES_ID) AS country_name,
+      COUNT(*) AS tpm
+    FROM
+      auditlog_api_transaction
+    LEFT JOIN
+      accounts acc ON auditlog_api_transaction.ACCOUNT_ID = acc.id
+    WHERE
+      auditlog_api_transaction.CREATE_DATE >= NOW() - INTERVAL 1 MINUTE
+    GROUP BY
+      DATE_FORMAT(auditlog_api_transaction.CREATE_DATE, '%Y-%m-%d %H:%i'),
+      country_name
+    ORDER BY
+      auditlog_api_transaction.CREATE_DATE;
+    """
+    measurement = "DB_SouthBound_Traffic"
+    field_columns_int = ["tpm"]
+
+[[processors.converter]]
+  namepass = ["DB_SouthBound_Traffic"]
+  [processors.converter.fields]
+    tag = ["country_name"]
+
+################# Internal API Stats #####################
+#[[inputs.sql]]
+# driver = "mysql"
+# dsn = "aqadmin:Aqadmin@123@tcp(10.221.87.116:3306)/cmp_amx_interface"
+#  timeout = "30s"
+#  interval = "10m"
+
+
+############### External_API_Stats ###################
+[[inputs.sql]]
+  driver = "mysql"
+  dsn = "root:Root@123@tcp(10.221.82.48:3306)/amx_gcontrol"
+  timeout = "30s"
+  interval = "5m"
+
+  [[inputs.sql.query]]
+    query = """
+SELECT
+    API_NAME AS API,
+    API_NAME AS API_Alias,
+    SUM(
+        CASE
+            WHEN RESULT = 'success'
+              OR message IN (
+                  'Data not found.', 'No Data Usage found for given duration',
+                  'Device Details Not found', 'Error while validating the request parameters.',
+                  'Configuration or connectivity issue found.(null)', 'Invalid ICCID',
+                  'Token is invalid or expired', 'APN old and new is same : 201',
+                  'APN old and new is same : 200', 'APN old and new is same : 202',
+                  'APN is not associated with this asset : 202',
+                  'Operation Not Allowed on single or no APN association on SIM',
+                  'Service plan operation failed.', 'Device plan not found.'
+              )
+            THEN 1 ELSE 0
+        END
+    ) AS success_count,
+    SUM(
+        CASE
+            WHEN RESULT = 'Failed'
+              AND message NOT IN (
+                  'Data not found.', 'No Data Usage found for given duration',
+                  'Device Details Not found', 'Error while validating the request parameters.',
+                  'Configuration or connectivity issue found.(null)', 'Invalid ICCID',
+                  'Token is invalid or expired', 'APN old and new is same : 201',
+                  'APN old and new is same : 200', 'APN old and new is same : 202',
+                  'APN is not associated with this asset : 202',
+                  'Operation Not Allowed on single or no APN association on SIM',
+                  'Service plan operation failed.', 'Device plan not found.'
+              )
+            THEN 1 ELSE 0
+        END
+    ) AS fail_count,
+    COUNT(*) AS total
+FROM auditlog_api_transaction
+WHERE
+    CREATE_DATE >= NOW() - INTERVAL 5 MINUTE
+    AND API_NAME IS NOT NULL
+GROUP BY API_ID, API_NAME
+ORDER BY total DESC;
+    """
+    measurement = "DB_External_API_Stats"
+    field_columns_int = ["success_count", "fail_count", "total"]
+
+[[processors.converter]]
+  namepass = ["DB_External_API_Stats"]
+  [processors.converter.fields]
+    tag = ["API", "API_Alias"]
+
+###############Customer_Device_State###################
+[[inputs.sql]]
+  driver = "mysql"
+  dsn = "root:Root@123@tcp(10.221.82.48:3306)/amx_gcontrol"
+  timeout = "30s"
+  interval = "15m"  # Executes the query once 15m
+
+  [[inputs.sql.query]]
+    query = """
+      SELECT
+        COUNT(DISTINCT accounts.PARENT_ACCOUNT_ID) AS Parent_Accounts,
+        COUNT(DISTINCT accounts.id) AS Total_Accounts,
+        COUNT(DISTINCT assets.IMSI) as Devices,
+        SUM(CASE WHEN assets.STATE='Activated' THEN 1 ELSE 0 END) AS Activated,
+        SUM(CASE WHEN assets.STATE='Warm' THEN 1 ELSE 0 END) AS Warm,
+        SUM(CASE WHEN assets.STATE='Deactivated' THEN 1 ELSE 0 END) AS Deactivated,
+        SUM(CASE WHEN assets.STATE='Suspended' THEN 1 ELSE 0 END) AS Suspended,
+        SUM(CASE WHEN assets.STATE='TestActive' THEN 1 ELSE 0 END) AS TestActive,
+        SUM(CASE WHEN assets.STATE='Terminate' THEN 1 ELSE 0 END) AS Terminate
+      FROM accounts
+      LEFT JOIN assets ON assets.ENT_ACCOUNTID = accounts.ID
+      WHERE accounts.DELETED = 0
+    """
+    measurement = "DB_Customer_Device_State"
+    field_columns_include = ["Parent_Accounts", "Total_Accounts", "Devices", "Activated", "Warm", "Deactivated", "Suspended", "TestActive", "Terminate"]
+    field_columns_int = ["Parent_Accounts", "Total_Accounts", "Devices", "Activated", "Warm", "Deactivated", "Suspended", "TestActive", "Terminate"]
+
+[[inputs.sql]]
+  driver = "mysql"
+  dsn = "root:Root@123@tcp(10.221.82.48:3306)/amx_gcontrol"
+  timeout = "30s"
+  interval = "1h"  # Executes every 3 hours
+
+  [[inputs.sql.query]]
+    query = """
+      SELECT
+        accounts.NAME AS CustomerName,
+        COUNT(DISTINCT accounts.id) AS Accounts,
+        COUNT(DISTINCT assets.IMSI) AS Devices,
+        SUM(CASE WHEN assets.STATE = 'Activated' THEN 1 ELSE 0 END) AS Activated,
+        SUM(CASE WHEN assets.STATE = 'Warm' THEN 1 ELSE 0 END) AS Warm,
+        SUM(CASE WHEN assets.STATE = 'Deactivated' THEN 1 ELSE 0 END) AS Deactivated,
+        SUM(CASE WHEN assets.STATE = 'Suspended' THEN 1 ELSE 0 END) AS Suspended,
+        SUM(CASE WHEN assets.STATE = 'TestActive' THEN 1 ELSE 0 END) AS TestActive,
+        SUM(CASE WHEN assets.STATE = 'Terminate' THEN 1 ELSE 0 END) AS Terminate
+      FROM accounts
+      LEFT JOIN assets ON assets.ENT_ACCOUNTID = accounts.ID
+      WHERE accounts.DELETED = 0
+      GROUP BY accounts.NAME
+    """
+    measurement = "DB_CustomerWise_Device_State"
+
+    field_columns_include = [
+      "CustomerName", "Accounts", "Devices", "Activated", "Warm",
+      "Deactivated", "Suspended", "TestActive", "Terminate"
+    ]
+
+    field_columns_int = [
+      "Accounts", "Devices", "Activated", "Warm",
+      "Deactivated", "Suspended", "TestActive", "Terminate"
+    ]
+[[processors.converter]]
+  namepass = ["CustomerWise_Device_State"]
+  [processors.converter.fields]
+    tag = ["CustomerName"]
+
+######################Customer_UserActivityLog####################################
+[[inputs.sql]]
+  driver = "mysql"
+  dsn = "root:Root@123@tcp(10.221.82.48:3306)/amx_gcontrol"
+  timeout = "30s"
+  interval = "5m"  # Executes the new query once every 15 minute
+
+  [[inputs.sql.query]]
+    query = """
+      SELECT
+        users.LOCKED AS 'is Locked',
+        users.USER_NAME as 'Aircontrol_Users',
+        users.ACCOUNT_ID as 'Acc_ID',
+        accounts.NAME as 'Acc_NAME',
+        users.ROLE_ID,
+        users.LAST_ACTIVE,
+        users.LAST_SESSION_RESET,
+        users.DELETED,
+        users.DELETED_DATE
+      FROM users
+      INNER JOIN accounts ON users.ACCOUNT_ID = accounts.ID
+      WHERE users.CREATE_DATE >= NOW() - INTERVAL 5 MINUTE
+      ORDER BY users.CREATE_DATE DESC
+    """
+    measurement = "DB_Customer_UserActivityLog"
+    field_columns_include = [
+      "is Locked",
+      "Aircontrol_Users",
+      "Acc_ID",
+      "Acc_NAME",
+      "ROLE_ID",
+      "LAST_ACTIVE",
+      "LAST_SESSION_RESET",
+      "DELETED",
+      "DELETED_DATE"
+    ]
+    field_columns_int = [
+      "is Locked",
+      "Aircontrol_Users",
+      "Acc_ID",
+      "Acc_NAME",
+      "ROLE_ID",
+      "LAST_ACTIVE",
+      "LAST_SESSION_RESET",
+      "DELETED",
+      "DELETED_DATE"
+    ]
+
+############ Customer details table ##########
+[[inputs.sql]]
+  driver = "mysql"
+  dsn = "root:Root@123@tcp(10.221.82.48:3306)/amx_gcontrol"
+  timeout = "30s"
+  interval = "1h"  # Run every hour; adjust as needed
+
+  [[inputs.sql.query]]
+    query = """
+      SELECT
+        amx_gcontrol.accounts.CREATE_DATE,
+        amx_gcontrol.accounts.BILL_DATE,
+        amx_gcontrol.assets.ACTIVATION_DATE,
+        amx_gcontrol.assets.STATE AS SIM_State,
+        amx_gcontrol.assets.IMSI AS AC_IMSI,
+        amx_gcontrol.assets.MSISDN,
+        amx_gcontrol.assets.ICCID,
+        amx_gcontrol.assets.IMEI,
+        amx_gcontrol.assets.CURRENT_IMEI,
+        amx_gcontrol.assets.SERVICE_PLAN_ID,
+        amx_gcontrol.assets.DEVICE_PLAN_ID,
+        amx_gcontrol.assets.DATA_USAGE_LIMIT AS DATA_LIMIT,
+        amx_gcontrol.accounts.DELETED,
+        amx_gcontrol.accounts.NAME AS ACC_NAME,
+        amx_gcontrol.accounts.ID AS ACCOUNT_ID,
+        amx_gcontrol.accounts.PARENT_ACCOUNT_ID AS PARENT_ID,
+        amx_gcontrol.accounts.EXTERNAL_ID,
+        amx_gcontrol.accounts.LEGACY_BAN,
+        amx_gcontrol.accounts.BAN_NUMBER,
+        amx_gcontrol.service_plan.SERVICE_PLAN_NAME AS SERVICE_PLAN,
+        amx_gcontrol.device_rate_plan.PLAN_NAME AS DEVICE_PLAN,
+        amx_gcontrol.accounts.NAME AS Given_Name,
+        amx_gcontrol.accounts.ACCOUNT_TYPE AS ACC_TYPE
+      FROM
+        amx_gcontrol.assets
+      LEFT JOIN
+        amx_gcontrol.accounts ON amx_gcontrol.assets.ENT_ACCOUNTID = amx_gcontrol.accounts.ID
+      LEFT JOIN
+        amx_gcontrol.service_plan ON amx_gcontrol.assets.SERVICE_PLAN_ID = amx_gcontrol.service_plan.ID
+      LEFT JOIN
+        amx_gcontrol.device_rate_plan ON amx_gcontrol.assets.DEVICE_PLAN_ID = amx_gcontrol.device_rate_plan.ID
+      WHERE
+        amx_gcontrol.assets.ACTIVATION_DATE >= NOW() - INTERVAL 1 HOUR
+    """
+
+    measurement = "DB_Customer_FullRecords"
+
+    # Define which fields are integers
+    field_columns_int = [
+      "SERVICE_PLAN_ID", "DEVICE_PLAN_ID", "DATA_LIMIT", "ACCOUNT_ID", "PARENT_ID", "BILL_DATE", "DELETED"
+    ]
+
+    # Optional: treat these as strings (InfluxDB fields)
+    field_columns_include = [
+      "SIM_State", "AC_IMSI", "MSISDN", "ICCID", "IMEI", "CURRENT_IMEI",
+      "EXTERNAL_ID", "LEGACY_BAN", "BAN_NUMBER", "SERVICE_PLAN", "DEVICE_PLAN",
+      "ACC_NAME", "Given_Name", "ACC_TYPE"
+    ]
+
+[[processors.converter]]
+  namepass = ["Customer_FullRecords"]
+  [processors.converter.fields]
+    tag = ["ACC_NAME"]
+
+### OUTPUTS Pri #####
+
+[[outputs.influxdb]]
+  urls = ["http://{{ influx_Pri_IP }}:{{ influx_Pri_Port }}"]
+  database = "{{ influx_priDB_name }}"
+  retention_policy = "thirty_days"
+  timeout = "5s"
+  skip_database_creation = true
+  namepass = [
+  "DB_API_Hits",
+  "DB_External_API_Stats",
+  "DB_Internal_API_Stats",
+  "DB_Customer_Device_State",
+  "DB_Customer_UserActivityLog",
+  "DB_Customer_FullRecords",
+  "DB_Customer_Invoice_Summary",
+  "DB_SouthBound_Traffic"]
+
+### OUTPUTS Sec #####
+
+[[outputs.influxdb]]
+  urls = ["http://{{ influx_Sec_IP }}:{{ influx_Sec_Port }}"]
+  database = "{{ influx_secDB_name }}"
+  retention_policy = "thirty_days"
+  timeout = "5s"
+  skip_database_creation = true
+  namepass = [
+  "DB_API_Hits",
+  "DB_External_API_Stats",
+  "DB_Internal_API_Stats",
+  "DB_Customer_Device_State",
+  "DB_Customer_UserActivityLog",
+  "DB_Customer_FullRecords",
+  "DB_Customer_Invoice_Summary",
+  "DB_SouthBound_Traffic"]
+
+

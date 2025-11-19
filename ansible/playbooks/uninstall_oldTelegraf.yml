@@ -1,0 +1,67 @@
+---
+- name: Uninstall Telegraf single instance setup
+  hosts: "{{ target_group | default('all_servers') }}"
+  become: yes
+  gather_facts: yes
+
+  vars:
+    telegraf_binary_path: "/usr/local/bin/telegraf"
+    telegraf_config_path: "/etc/telegraf/telegraf.conf"
+    telegraf_service_name: "telegraf"
+
+  tasks:
+
+    - name: Stop and disable Telegraf service
+      systemd:
+        name: "{{ telegraf_service_name }}"
+        state: stopped
+        enabled: no
+      ignore_errors: yes
+      tags: systemd
+
+    - name: Remove Telegraf systemd service file if exists
+      file:
+        path: "/etc/systemd/system/telegraf.service"
+        state: absent
+      tags: systemd
+      ignore_errors: yes
+
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+      tags: systemd
+
+    - name: Remove Telegraf configuration and binary files
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ telegraf_config_path }}"
+        - "{{ telegraf_binary_path }}"
+      tags: cleanup
+
+    - name: Remove Telegraf directory if empty
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "/etc/telegraf"
+        - "/var/log/telegraf"
+        - "/var/lib/telegraf"
+      ignore_errors: yes
+      tags: cleanup
+
+    - name: Verify Telegraf has been fully removed
+      command: "which telegraf"
+      register: telegraf_check
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Show removal status
+      debug:
+        msg: >-
+          {% if telegraf_check.rc != 0 %}
+          ✅ Telegraf binary successfully removed from {{ inventory_hostname }}.
+          {% else %}
+          ⚠️ Telegraf binary still present at {{ telegraf_check.stdout }}.
+          {% endif %}

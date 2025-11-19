@@ -1,0 +1,170 @@
+[global_tags]
+  project = "{{ project }}"
+  zone = "{{ zone }}"
+  service = "esim"
+
+[agent]
+  debug = true
+  quiet = false
+  interval = "30s"
+  flush_interval = "10s"
+  logfile = "/var/log/telegraf/{{ telegraf_name }}_telegraf.log"
+  hostname = "{{ inventory_hostname }}"
+  omit_hostname = false
+  round_interval = true
+  metric_batch_size = 1000
+  metric_buffer_limit = 10000
+  collection_jitter = "0s"
+  flush_jitter = "0s"
+  precision = "0s"
+  logfile_rotation_interval = "12h"
+  logfile_rotation_max_size = "100MB"
+  logfile_rotation_max_archives = 5
+
+####### Port Status for {{ inventory_hostname }} #######
+{% for item in ports %}
+[[inputs.net_response]]
+  protocol = "tcp"
+  address = "{{ item.ip }}:{{ item.port }}"
+  name_override = "portResponsetime"
+  tags = { linkName="{{ item.name }}", ip="{{ item.ip }}", port="{{ item.port }}", host="{{ inventory_hostname }}" }
+{% endfor %}
+
+############# Link Status #########
+{% for port in ports if port.port is defined %}
+[[inputs.exec]]
+  commands = [
+    "bash -c 'echo -n \"port_status,host={{ inventory_hostname }},name={{ port.name | default('unknown') }},port={{ port.port }} status=\"; (ss -ltn | grep -q {{ port.port }}) && echo 1 || echo 0'"
+  ]
+  timeout = "5s"
+  data_format = "influx"
+  name_override = "IPPort_Status"
+{% endfor %}
+
+{% for p in ports %}
+[[inputs.exec]]
+  commands = [
+    "bash -c 'ss -nt | awk '\\''$4 ~ /:{{ p.port }}$/ { state[$1]++ } END { for (s in state) printf \"ip_listener_status,host={{ inventory_hostname }},name={{ p.name | default('unknown') }},ip={{ p.ip | default('*') }},port={{ p.port }},state=%s connections=%d\\n\", s, state[s] }'\\'''"
+  ]
+  timeout = "5s"
+  data_format = "influx"
+  name_override = "ip_listener_status"
+{% endfor %}
+
+############## Ping Monitoring ################
+[[inputs.ping]]
+  {% set unique_ips = ports | map(attribute='ip') | unique %}
+  urls = [{% for ip in unique_ips %}"{{ ip }}"{% if not loop.last %}, {% endif %}{% endfor %}]
+  count = 2
+  ping_interval = 3.0
+  timeout = 2.0
+  method = "exec"
+
+##### App Metrics ###########
+[[inputs.exec]]
+  commands = ["/opt/grafana/scripts/{{ telegraf_name }}_app_metrics.sh"]
+  data_format = "influx"
+  name_override = "app_metrics"
+  interval = "1m"
+  timeout = "50s"
+
+########## Tails ################
+[[inputs.tail]]
+  files = [
+    "/opt/Roamware/logs/embeddedsimws/traps/ESIMWS-traps.txt"
+  ]
+  name_override = "SNMP"
+  data_format = "grok"
+  watch_method = "inotify"
+  initial_read_offset = "beginning"
+
+  grok_patterns = [
+    '''%{DATA:dra_timestamp},%{DATA:host},%{DATA:device},%{GREEDYDATA:kvdata}'''
+  ]
+
+[[processors.starlark]]
+  namepass = ["SNMP"]
+  source = '''
+def apply(metric):
+    raw_log = metric.fields["kvdata"]
+    parts = raw_log.split(',')
+    key_value_pairs = []
+
+    for part in parts:
+        if "=" in part:
+            key, value = part.split("=", 1)
+            key_value_pairs.append((key.strip(), value.strip()))
+
+    oid_map = {
+        "1.3.6.1.4.1.11150.1.3.10": "AlarmTime",
+        "1.3.6.1.4.1.11150.1.3.1": "severity",
+        "1.3.6.1.4.1.11150.1.3.2": "description",
+        "1.3.6.1.4.1.11150.1.3.13": "ServiceName",
+        "1.3.6.1.4.1.11150.1.3.14": "AlarmType",
+        "1.3.6.1.4.1.11150.1.3.17": "ProbableCause",
+        "1.3.6.1.4.1.11150.1.3.21": "NotificationId",
+        "1.3.6.1.4.1.11150.1.3.23": "SequenceNumber",
+        "1.3.6.1.4.1.11150.1.3.3": "MachineID",
+        "1.3.6.1.4.1.11150.1.3.39": "ResourceName",
+        "1.3.6.1.4.1.11150.1.3.41": "IP",
+        "1.3.6.1.4.1.11150.1.3.8": "Port",
+        "1.3.6.1.4.1.11150.84.1.1.6": "Application",
+        "trapName": "trapName",
+        "trap": "trap",
+        "enterprise": "enterprise"
+    }
+
+    tag_fields = ["MachineID", "ServiceName", "description", "severity"]
+
+    for key, value in key_value_pairs:
+        field_name = oid_map.get(key, key)
+        clean_value = value.replace(" ", "_").replace("\\t", "_")
+        if field_name in tag_fields:
+            metric.tags[field_name] = clean_value
+        else:
+            metric.fields[field_name] = clean_value
+
+    return metric
+  '''
+
+############ Esim Logs ############
+[[inputs.tail]]
+  files = ["/opt/Roamware/logs/embeddedsimws/logs/embeddedsimWS.log"]
+  name_override = "esimws_log"
+  data_format = "grok"
+  initial_read_offset = "beginning"
+  watch_method = "inotify"
+
+  grok_patterns = [
+    '''%{DAY:day} %{MONTH:month} %{MONTHDAY:monthday}\|%{TIME:time}\|%{WORD:log_level}\|%{DATA:thread}\|%{DATA:message}\|%{JAVACLASS:class}\|%{WORD:method}\|%{NUMBER:line:int}'''
+  ]
+
+  grok_custom_patterns = '''
+    JAVACLASS (?:[a-zA-Z_][\w$]*\.)+[A-Za-z_$][\w$]*
+  '''
+
+  tagexclude = []
+  tagpass = {}
+  taginclude = ["log_level", "thread", "class", "method", "project", "zone", "service"]
+
+[[processors.converter]]
+  namepass = ["esimws_log"]
+  [processors.converter.fields]
+    tag = ["log_level", "class", "method"]
+
+### OUTPUTS
+
+[[outputs.influxdb]]
+  urls = ["http://{{ influx_ip }}:8086"]
+  database = "{{ influx_DB_name }}"
+  retention_policy = "thirty_days"
+  timeout = "5s"
+  namepass = ["app_metrics","IPPort_Status","portResponsetime","ip_listener_status","ping","SNMP"]
+
+
+[[outputs.influxdb]]
+  urls = ["http://{{ influx_ip }}:8086"]
+  database = "{{ influx_DB_name }}"
+  retention_policy = "1hrRP"
+  timeout = "5s"
+  namepass = ["esimws_log"]

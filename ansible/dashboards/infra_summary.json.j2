@@ -5,43 +5,35 @@
     "overwrite": true,
     "__inputs": [
       {
-        "name": "DS_{{ influx_priDS_name | upper | replace(' ', '_') }}",
-        "label": "{{ influx_priDS_name }}",
-        "description": "",
-        "type": "datasource",
-        "pluginId": "influxdb",
-        "pluginName": "InfluxDB"
+        "name"       : "influx_DS",
+        "label"      : "Select InfluxDB Source",
+        "description": "Choose the InfluxDB data source (Pri/Sec)",
+        "type"       : "datasource",
+        "pluginId"   : "influxdb",
+        "pluginName" : "InfluxDB"
       }
     ],
     "__elements": {},
     "__requires": [
       {
-        "type": "grafana",
-        "id": "grafana",
-        "name": "Grafana",
+        "type"   : "grafana",
+        "id"     : "grafana",
+        "name"   : "Grafana",
         "version": "12.0.2"
       },
       {
-        "type": "datasource",
-        "id": "influxdb",
-        "name": "InfluxDB",
+        "type"   : "datasource",
+        "id"     : "influxdb",
+        "name"   : "InfluxDB",
         "version": "1.0.0"
       },
-      {
-        "type": "panel",
-        "id": "table",
-        "name": "Table",
-        "version": ""
-      }
+      {"type": "panel", "id": "table", "name": "Table", "version": ""}
     ],
     "annotations": {
       "list": [
         {
           "builtIn": 1,
-          "datasource": {
-            "type": "grafana",
-            "uid": "-- Grafana --"
-          },
+          "datasource": {"type": "grafana", "uid": "-- Grafana --"},
           "enable": true,
           "hide": true,
           "iconColor": "rgba(0, 211, 255, 1)",
@@ -58,21 +50,14 @@
     "liveNow": true,
     "panels": [
       {
-        "datasource": {
-          "type": "influxdb",
-          "uid": "${influxdb}"
-        },
+        "datasource": {"type": "influxdb", "uid": "${influxdb}"},
         "description": "Partition utilization, disk read, disk write, download bandwidth, upload bandwidth, if there are multiple network cards or multiple partitions, it is the value of the network card or partition with the highest utilization rate collected.\n\nCurrEstab:  Currently Established TCP connections\nTCP_tw:   the TCP_TW_REUSE flag to allow reusing sockets in TIME_WAIT state for new connections.",
         "fieldConfig": {
           "defaults": {
-            "color": {
-              "mode": "thresholds"
-            },
+            "color": {"mode": "thresholds"},
             "custom": {
               "align": "center",
-              "cellOptions": {
-                "type": "color-background"
-              },
+              "cellOptions": {"type": "color-background"},
               "inspect": false
             },
             "decimals": 0,
@@ -81,562 +66,226 @@
             "thresholds": {
               "mode": "absolute",
               "steps": [
-                {
-                  "color": "#127405"
-                },
-                {
-                  "color": "#7e6013",
-                  "value": 250
-                },
-                {
-                  "color": "#a74708",
-                  "value": 500
-                },
-                {
-                  "color": "#640d17",
-                  "value": 1000
-                }
+                {"color": "#127405"               },
+                {"color": "#7e6013", "value":  250},
+                {"color": "#a74708", "value":  500},
+                {"color": "#640d17", "value": 1000}
               ]
             },
             "unit": "none"
           },
           "overrides": [
             {
-              "matcher": {
-                "id": "byName",
-                "options": "host"
-              },
+              "matcher": {"id": "byName", "options": "host"},
               "properties": [
-                {
-                  "id": "custom.width",
-                  "value": 198
-                },
+                {"id": "custom.width", "value": 198},
                 {
                   "id": "custom.cellOptions",
-                  "value": {
-                    "type": "color-background"
-                  }
+                  "value": {"type": "color-background"}
                 },
                 {
                   "id": "color",
-                  "value": {
-                    "fixedColor": "#36086b",
-                    "mode": "shades"
-                  }
+                  "value": {"fixedColor": "#36086b", "mode": "shades"}
                 },
-                {
-                  "id": "custom.align",
-                  "value": "left"
-                },
+                {"id": "custom.align", "value": "left"},
                 {
                   "id": "links",
                   "value": [
                     {
                       "targetBlank": true,
                       "title": "Detailed_Server_Analysis",
-                      "url": "{{ grafana_api_url }}/d/777selvamServerInsight/serverinsight?var-interval=1m&orgId={{ grafana_org_id }}&from=now-1h&to=now&timezone=browser&var-host=${__value.text}"
+                      "url": "/d/777selvamServerInsight/serverinsight?var-interval=1m&orgId=1&from=now-1h&to=now&timezone=browser&var-host=${__value.text}&influx_DS=${__value.text}"
                     }
                   ]
                 },
-                {
-                  "id": "custom.filterable",
-                  "value": true
-                }
+                {"id": "custom.filterable", "value": true}
               ]
             },
             {
-              "matcher": {
-                "id": "byName",
-                "options": "upTime"
-              },
+              "matcher": {"id": "byName", "options": "upTime"},
               "properties": [
-                {
-                  "id": "unit",
-                  "value": "s"
-                },
+                {"id": "unit", "value": "s"},
                 {
                   "id": "custom.cellOptions",
-                  "value": {
-                    "applyToRow": false,
-                    "type": "color-background"
-                  }
+                  "value": {"applyToRow": false, "type": "color-background"}
                 },
                 {
                   "id": "color",
                   "value": {
                     "fixedColor": "semi-dark-blue",
-                    "mode": "thresholds"
+                    "mode"      : "thresholds"
                   }
                 },
-                {
-                  "id": "decimals",
-                  "value": 0
-                },
-                {
-                  "id": "custom.width",
-                  "value": 90
-                },
+                {"id": "decimals", "value": 0},
+                {"id": "custom.width", "value": 90},
                 {
                   "id": "thresholds",
                   "value": {
                     "mode": "absolute",
                     "steps": [
-                      {
-                        "color": "#5a0b15"
-                      },
-                      {
-                        "color": "#116906",
-                        "value": 1000
-                      },
-                      {
-                        "color": "#96731b",
-                        "value": 10000000
-                      },
-                      {
-                        "color": "#843501",
-                        "value": 80000000
-                      },
-                      {
-                        "color": "#ce0b1a",
-                        "value": 100000000
-                      }
+                      {"color": "#5a0b15"                    },
+                      {"color": "#116906", "value":      1000},
+                      {"color": "#96731b", "value":  10000000},
+                      {"color": "#843501", "value":  80000000},
+                      {"color": "#ce0b1a", "value": 100000000}
                     ]
                   }
                 }
               ]
             },
             {
-              "matcher": {
-                "id": "byName",
-                "options": "CPUs"
-              },
+              "matcher": {"id": "byName", "options": "CPUs"},
               "properties": [
-                {
-                  "id": "custom.width",
-                  "value": 145
-                },
+                {"id": "custom.width", "value": 145},
                 {
                   "id": "custom.cellOptions",
-                  "value": {
-                    "type": "color-background"
-                  }
+                  "value": {"type": "color-background"}
                 },
+                { "id": "color", "value": {"mode": "thresholds"} },
+                {"id": "max", "value": 10},
+                {"id": "min", "value": 0}
+              ]
+            },
+            {
+              "matcher": {"id": "byName", "options": "load5m"},
+              "properties": [
+                {"id": "custom.width", "value": 76},
+                { "id": "color", "value": {"mode": "continuous-GrYlRd"} },
+                {"id": "min", "value": 0},
+                {"id": "max", "value": 7},
                 {
-                  "id": "color",
-                  "value": {
-                    "mode": "thresholds"
-                  }
-                },
-                {
-                  "id": "max",
-                  "value": 10
-                },
-                {
-                  "id": "min",
-                  "value": 0
+                  "id": "custom.cellOptions",
+                  "value": {"type": "color-background"}
                 }
               ]
             },
             {
-              "matcher": {
-                "id": "byName",
-                "options": "load5m"
-              },
+              "matcher": {"id": "byName", "options": "cpu%"},
               "properties": [
-                {
-                  "id": "custom.width",
-                  "value": 76
-                },
-                {
-                  "id": "color",
-                  "value": {
-                    "mode": "continuous-GrYlRd"
-                  }
-                },
-                {
-                  "id": "min",
-                  "value": 0
-                },
-                {
-                  "id": "max",
-                  "value": 7
-                },
+                {"id": "unit", "value": "percent"},
                 {
                   "id": "custom.cellOptions",
                   "value": {
-                    "type": "color-background"
-                  }
-                }
-              ]
-            },
-            {
-              "matcher": {
-                "id": "byName",
-                "options": "cpu%"
-              },
-              "properties": [
-                {
-                  "id": "unit",
-                  "value": "percent"
-                },
-                {
-                  "id": "custom.cellOptions",
-                  "value": {
-                    "mode": "gradient",
-                    "type": "gauge",
+                    "mode"            : "gradient",
+                    "type"            : "gauge",
                     "valueDisplayMode": "color"
                   }
                 },
-                {
-                  "id": "custom.width",
-                  "value": 113
-                },
-                {
-                  "id": "fieldMinMax",
-                  "value": true
-                },
-                {
-                  "id": "max",
-                  "value": 100
-                },
+                {"id": "custom.width", "value": 113},
+                {"id": "fieldMinMax", "value": true},
+                {"id": "max", "value": 100},
                 {
                   "id": "thresholds",
                   "value": {
                     "mode": "percentage",
                     "steps": [
-                      {
-                        "color": "green"
-                      },
-                      {
-                        "color": "#EAB839",
-                        "value": 50
-                      },
-                      {
-                        "color": "#EF843C",
-                        "value": 75
-                      },
-                      {
-                        "color": "red",
-                        "value": 90
-                      }
+                      {"color": "green"               },
+                      {"color": "#EAB839", "value": 50},
+                      {"color": "#EF843C", "value": 75},
+                      {"color": "red",     "value": 90}
                     ]
                   }
                 }
               ]
             },
             {
-              "matcher": {
-                "id": "byName",
-                "options": "memory"
-              },
+              "matcher": {"id": "byName", "options": "memory"},
               "properties": [
-                {
-                  "id": "unit",
-                  "value": "decbytes"
-                },
-                {
-                  "id": "custom.width",
-                  "value": 86
-                },
-                {
-                  "id": "min",
-                  "value": 8
-                },
-                {
-                  "id": "max",
-                  "value": 100
-                }
+                {"id": "unit",         "value": "decbytes"},
+                {"id": "custom.width", "value": 86        },
+                {"id": "min",          "value": 8         },
+                {"id": "max",          "value": 100       }
               ]
             },
             {
-              "matcher": {
-                "id": "byName",
-                "options": "mem%"
-              },
+              "matcher": {"id": "byName", "options": "mem%"},
               "properties": [
-                {
-                  "id": "custom.width",
-                  "value": 120
-                },
+                {"id": "custom.width", "value": 120},
                 {
                   "id": "custom.cellOptions",
                   "value": {
-                    "mode": "gradient",
-                    "type": "gauge",
+                    "mode"            : "gradient",
+                    "type"            : "gauge",
                     "valueDisplayMode": "color"
                   }
                 },
-                {
-                  "id": "unit",
-                  "value": "percent"
-                },
-                {
-                  "id": "fieldMinMax",
-                  "value": true
-                },
-                {
-                  "id": "max",
-                  "value": 100
-                },
+                {"id": "unit", "value": "percent"},
+                {"id": "fieldMinMax", "value": true},
+                {"id": "max", "value": 100},
                 {
                   "id": "thresholds",
                   "value": {
                     "mode": "percentage",
                     "steps": [
-                      {
-                        "color": "green"
-                      },
-                      {
-                        "color": "#EAB839",
-                        "value": 75
-                      },
-                      {
-                        "color": "#EF843C",
-                        "value": 85
-                      },
-                      {
-                        "color": "red",
-                        "value": 90
-                      }
+                      {"color": "green"               },
+                      {"color": "#EAB839", "value": 75},
+                      {"color": "#EF843C", "value": 85},
+                      {"color": "red",     "value": 90}
                     ]
                   }
                 }
               ]
             },
             {
-              "matcher": {
-                "id": "byName",
-                "options": "memCache"
-              },
+              "matcher": {"id": "byName", "options": "memCache"},
               "properties": [
-                {
-                  "id": "unit",
-                  "value": "decbytes"
-                },
-                {
-                  "id": "custom.width",
-                  "value": 93
-                },
-                {
-                  "id": "color",
-                  "value": {
-                    "mode": "continuous-GrYlRd"
-                  }
-                }
+                {"id": "unit", "value": "decbytes"},
+                {"id": "custom.width", "value": 93},
+                { "id": "color", "value": {"mode": "continuous-GrYlRd"} }
               ]
             },
             {
-              "matcher": {
-                "id": "byName",
-                "options": "disk%"
-              },
+              "matcher": {"id": "byName", "options": "discRead"},
               "properties": [
-                {
-                  "id": "unit",
-                  "value": "percent"
-                },
-                {
-                  "id": "color"
-                },
-                {
-                  "id": "thresholds",
-                  "value": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "color": "#218d12"
-                      },
-                      {
-                        "color": "#ced044",
-                        "value": 75
-                      },
-                      {
-                        "color": "#b15f28",
-                        "value": 85
-                      },
-                      {
-                        "color": "#a82434",
-                        "value": 90
-                      }
-                    ]
-                  }
-                }
+                {"id": "unit", "value": "decbytes"},
+                {"id": "custom.width", "value": 82},
+                { "id": "color", "value": {"mode": "continuous-GrYlRd"} },
+                { "id": "custom.cellOptions", "value": {"type": "color-text"} }
               ]
             },
             {
-              "matcher": {
-                "id": "byName",
-                "options": "discRead"
-              },
+              "matcher": {"id": "byName", "options": "discWrite"},
               "properties": [
-                {
-                  "id": "unit",
-                  "value": "decbytes"
-                },
-                {
-                  "id": "custom.width",
-                  "value": 82
-                },
-                {
-                  "id": "color",
-                  "value": {
-                    "mode": "continuous-GrYlRd"
-                  }
-                },
-                {
-                  "id": "custom.cellOptions",
-                  "value": {
-                    "type": "color-text"
-                  }
-                }
+                {"id": "unit", "value": "decbytes"},
+                {"id": "custom.width", "value": 82},
+                { "id": "color", "value": {"mode": "continuous-GrYlRd"} },
+                { "id": "custom.cellOptions", "value": {"type": "color-text"} }
               ]
             },
             {
-              "matcher": {
-                "id": "byName",
-                "options": "discWrite"
-              },
+              "matcher": {"id": "byName", "options": "total-CPU"},
+              "properties": [ {"id": "custom.width", "value": 92} ]
+            },
+            {
+              "matcher": {"id": "byName", "options": "ioWait"},
+              "properties": [ {"id": "custom.width", "value": 63} ]
+            },
+            {
+              "matcher": {"id": "byName", "options": "user%"},
               "properties": [
-                {
-                  "id": "unit",
-                  "value": "decbytes"
-                },
-                {
-                  "id": "custom.width",
-                  "value": 82
-                },
-                {
-                  "id": "color",
-                  "value": {
-                    "mode": "continuous-GrYlRd"
-                  }
-                },
-                {
-                  "id": "custom.cellOptions",
-                  "value": {
-                    "type": "color-text"
-                  }
-                }
+                {"id": "custom.width", "value": 65       },
+                {"id": "unit",         "value": "percent"}
               ]
             },
             {
-              "matcher": {
-                "id": "byName",
-                "options": "disk%"
-              },
+              "matcher": {"id": "byName", "options": "system%"},
               "properties": [
-                {
-                  "id": "custom.width",
-                  "value": 113
-                },
-                {
-                  "id": "unit",
-                  "value": "percent"
-                }
+                {"id": "custom.width", "value": 89       },
+                {"id": "unit",         "value": "percent"}
               ]
             },
             {
-              "matcher": {
-                "id": "byName",
-                "options": "total-CPU"
-              },
-              "properties": [
-                {
-                  "id": "custom.width",
-                  "value": 92
-                }
-              ]
+              "matcher": {"id": "byName", "options": "currESTAB"},
+              "properties": [ {"id": "custom.width", "value": 82} ]
             },
             {
-              "matcher": {
-                "id": "byName",
-                "options": "ioWait"
-              },
-              "properties": [
-                {
-                  "id": "custom.width",
-                  "value": 63
-                }
-              ]
+              "matcher": {"id": "byName", "options": "TimeWait"},
+              "properties": [ {"id": "custom.width", "value": 92} ]
             },
             {
-              "matcher": {
-                "id": "byName",
-                "options": "user%"
-              },
+              "matcher": {"id": "byName", "options": "RAM Total"},
               "properties": [
-                {
-                  "id": "custom.width",
-                  "value": 65
-                },
-                {
-                  "id": "unit",
-                  "value": "percent"
-                }
-              ]
-            },
-            {
-              "matcher": {
-                "id": "byName",
-                "options": "system%"
-              },
-              "properties": [
-                {
-                  "id": "custom.width",
-                  "value": 64
-                },
-                {
-                  "id": "unit",
-                  "value": "percent"
-                }
-              ]
-            },
-            {
-              "matcher": {
-                "id": "byName",
-                "options": "disk%"
-              },
-              "properties": [
-                {
-                  "id": "custom.width",
-                  "value": 67
-                }
-              ]
-            },
-            {
-              "matcher": {
-                "id": "byName",
-                "options": "currESTAB"
-              },
-              "properties": [
-                {
-                  "id": "custom.width",
-                  "value": 82
-                }
-              ]
-            },
-            {
-              "matcher": {
-                "id": "byName",
-                "options": "TimeWait"
-              },
-              "properties": [
-                {
-                  "id": "custom.width",
-                  "value": 92
-                }
-              ]
-            },
-            {
-              "matcher": {
-                "id": "byName",
-                "options": "RAM Total"
-              },
-              "properties": [
-                {
-                  "id": "custom.width",
-                  "value": 87
-                },
+                {"id": "custom.width", "value": 87},
                 {
                   "id": "custom.cellOptions",
                   "value": {
@@ -646,336 +295,237 @@
                     "wrapText": false
                   }
                 },
-                {
-                  "id": "color",
-                  "value": {
-                    "mode": "continuous-RdYlGr"
-                  }
-                },
+                { "id": "color", "value": {"mode": "continuous-RdYlGr"} },
                 {
                   "id": "thresholds",
                   "value": {
                     "mode": "absolute",
                     "steps": [
-                      {
-                        "color": "#106805"
-                      },
-                      {
-                        "color": "#8a0413",
-                        "value": 80
-                      }
+                      {"color": "#106805"             },
+                      {"color": "#8a0413", "value": 80}
                     ]
                   }
                 }
               ]
             },
             {
-              "matcher": {
-                "id": "byName",
-                "options": "CPUs"
-              },
-              "properties": [
-                {
-                  "id": "custom.width",
-                  "value": 60
-                }
-              ]
+              "matcher": {"id": "byName", "options": "CPUs"},
+              "properties": [ {"id": "custom.width", "value": 60} ]
             },
             {
-              "matcher": {
-                "id": "byName",
-                "options": "Estab"
-              },
-              "properties": [
-                {
-                  "id": "custom.width",
-                  "value": 60
-                }
-              ]
+              "matcher": {"id": "byName", "options": "Estab"},
+              "properties": [ {"id": "custom.width", "value": 60} ]
             },
             {
-              "matcher": {
-                "id": "byName",
-                "options": "TWait"
-              },
-              "properties": [
-                {
-                  "id": "custom.width",
-                  "value": 60
-                }
-              ]
+              "matcher": {"id": "byName", "options": "TWait"},
+              "properties": [ {"id": "custom.width", "value": 60} ]
             },
             {
-              "matcher": {
-                "id": "byName",
-                "options": "IP"
-              },
+              "matcher": {"id": "byName", "options": "IP"},
               "properties": [
-                {
-                  "id": "custom.width",
-                  "value": 118
-                },
+                {"id": "custom.width", "value": 118},
                 {
                   "id": "color",
-                  "value": {
-                    "fixedColor": "#726565",
-                    "mode": "shades"
-                  }
+                  "value": {"fixedColor": "#726565", "mode": "shades"}
                 },
-                {
-                  "id": "custom.filterable",
-                  "value": true
-                }
+                {"id": "custom.filterable", "value": true}
               ]
             },
             {
-              "matcher": {
-                "id": "byName",
-                "options": "nodeIP"
-              },
+              "matcher": {"id": "byName", "options": "nodeIP"},
               "properties": [
+                {"id": "custom.width", "value": 116 },
+                {"id": "displayName",  "value": "IP"}
+              ]
+            },
+            {
+              "matcher": {"id": "byName", "options": "path"},
+              "properties": [
+                {"id": "custom.width", "value": 118   },
+                {"id": "custom.align", "value": "left"}
+              ]
+            },
+            {
+              "matcher": {"id": "byName", "options": "Disk Usage%"},
+              "properties": [
+                {"id": "custom.width", "value": 135},
                 {
-                  "id": "custom.width",
-                  "value": 116
+                  "id": "custom.cellOptions",
+                  "value": {"type": "gauge", "valueDisplayMode": "color"}
                 },
-                {
-                  "id": "displayName",
-                  "value": "IP"
-                }
+                {"id": "fieldMinMax", "value": true},
+                {"id": "max", "value": 100},
+                {"id": "unit", "value": "percent"},
+                { "id": "color", "value": {"mode": "continuous-GrYlRd"} }
               ]
             }
           ]
         },
-        "gridPos": {
-          "h": 17,
-          "w": 24,
-          "x": 0,
-          "y": 0
-        },
+        "gridPos": {"h": 15, "w": 24, "x": 0, "y": 0},
         "id": 3,
         "options": {
           "cellHeight": "sm",
           "footer": {
             "countRows": false,
-            "enablePagination": false,
-            "fields": [
-              "Value #D"
-            ],
-            "reducer": [
-              "count"
-            ],
+            "enablePagination": true,
+            "fields": ["Value #D"],
+            "reducer": ["count"],
             "show": false
           },
           "showHeader": true,
-          "sortBy": [
-            {
-              "desc": true,
-              "displayName": "upTime"
-            }
-          ]
+          "sortBy": [ {"desc": true, "displayName": "upTime"} ]
         },
         "pluginVersion": "12.0.2",
         "targets": [
           {
             "alias": "upTime",
-            "datasource": {
-              "type": "influxdb",
-              "uid": ""
-            },
+            "datasource": {"type": "influxdb", "uid": "${influxdb}"},
             "hide": false,
-            "query": "SELECT last(uptime) AS \"upTime\" FROM system where $timeFilter and zone =~ /^$Zone$/ group by \"host\",time($interval)",
+            "query": "SELECT last(uptime) AS \"upTime\" FROM system where $timeFilter and zone =~ /^$zone$/ group by \"host\",time($interval)",
             "rawQuery": true,
             "refId": "A",
             "resultFormat": "table"
           },
           {
             "alias": "load5",
-            "datasource": {
-              "type": "influxdb",
-              "uid": "${influxdb}"
-            },
+            "datasource": {"type": "influxdb", "uid": "${influxdb}"},
             "hide": false,
-            "query": "SELECT mean(load5) AS \"load5m\" FROM system where $timeFilter and zone =~ /^$Zone$/ group by host, time($interval)\n",
+            "query": "SELECT mean(load5) AS \"load5m\" FROM system where $timeFilter and zone =~ /^$zone$/ group by host, time($interval)\n",
             "rawQuery": true,
             "refId": "C",
             "resultFormat": "table"
           },
           {
             "alias": "cpu",
-            "datasource": {
-              "type": "influxdb",
-              "uid": ""
-            },
+            "datasource": {"type": "influxdb", "uid": "${influxdb}"},
             "hide": false,
-            "query": "SELECT last(n_cpus) AS \"total-CPU\" FROM system where $timeFilter and zone =~ /^$Zone$/ group by host, time($interval)\n",
+            "query": "SELECT last(n_cpus) AS \"total-CPU\" FROM system where $timeFilter and zone =~ /^$zone$/ group by host, time($interval)\n",
             "rawQuery": true,
             "refId": "B",
             "resultFormat": "table"
           },
           {
             "alias": "cpu%",
-            "datasource": {
-              "type": "influxdb",
-              "uid": "${influxdb}"
-            },
+            "datasource": {"type": "influxdb", "uid": "${influxdb}"},
             "hide": false,
-            "query": "SELECT mean(\"usage_active\") AS \"cpu%\"\nFROM \"cpu\"\nWHERE $timeFilter AND \"cpu\" = 'cpu-total' AND zone =~ /^$Zone$/\nGROUP BY host, time($interval) fill(null)\n",
+            "query": "SELECT mean(\"usage_active\") AS \"cpu%\"\nFROM \"cpu\"\nWHERE $timeFilter AND \"cpu\" = 'cpu-total' AND zone =~ /^$zone$/\nGROUP BY host, time($interval) fill(null)\n",
             "rawQuery": true,
             "refId": "D",
             "resultFormat": "table"
           },
           {
             "alias": "",
-            "datasource": {
-              "type": "influxdb",
-              "uid": ""
-            },
+            "datasource": {"type": "influxdb", "uid": "${influxdb}"},
             "hide": false,
-            "query": "SELECT mean(total) AS \"memory\" FROM mem where $timeFilter and zone =~ /^$Zone$/ group by host, time($interval)\n",
+            "query": "SELECT mean(total) AS \"memory\" FROM mem where $timeFilter and zone =~ /^$zone$/ group by host, time($interval)\n",
             "rawQuery": true,
             "refId": "E",
             "resultFormat": "table"
           },
           {
             "alias": "",
-            "datasource": {
-              "type": "influxdb",
-              "uid": "${influxdb}"
-            },
+            "datasource": {"type": "influxdb", "uid": "${influxdb}"},
             "hide": false,
-            "query": "SELECT (mean(\"total\") - mean(\"available\")) / mean(\"total\") * 100 AS \"mem%\"\nFROM \"mem\"\nWHERE $timeFilter\n  AND zone =~ /^$Zone$/\nGROUP BY host, time($interval) fill(null)\n",
+            "query": "SELECT (mean(\"total\") - mean(\"available\")) / mean(\"total\") * 100 AS \"mem%\"\nFROM \"mem\"\nWHERE $timeFilter\n  AND zone =~ /^$zone$/\nGROUP BY host, time($interval) fill(null)\n",
             "rawQuery": true,
             "refId": "F",
             "resultFormat": "table"
           },
           {
             "alias": "MemCache %",
-            "datasource": {
-              "type": "influxdb",
-              "uid": ""
-            },
+            "datasource": {"type": "influxdb", "uid": "${influxdb}"},
             "hide": false,
-            "query": "SELECT mean(cached) AS \"memCache\" FROM mem where $timeFilter and zone =~ /^$Zone$/ group by host, time($interval)\n",
+            "query": "SELECT mean(cached) AS \"memCache\" FROM mem where $timeFilter and zone =~ /^$zone$/ group by host, time($interval)\n",
             "rawQuery": true,
             "refId": "G",
             "resultFormat": "table"
           },
           {
-            "alias": "discUsed %",
-            "datasource": {
-              "type": "influxdb",
-              "uid": "${influxdb}"
-            },
+            "alias": "",
+            "datasource": {"type": "influxdb", "uid": "${influxdb}"},
             "hide": false,
-            "query": "SELECT last(used) / last(total) * 100 AS \"disk_usage%\"\nFROM disk\n where $timeFilter and zone =~ /^$Zone$/  \nGROUP BY host, time($interval)\n",
+            "query": "SELECT TOP(used_percent, 1) AS \"disk_usage%\"\nFROM (\n  SELECT LAST(used_percent) AS used_percent\n  FROM disk\n  WHERE $timeFilter\n   AND path !~ /^\\/(boot|sys|run|efi|dev|proc|snap|tmp|mnt|bkup*|dlnfs*|var\\/lib\\/docker)/\n  GROUP BY host, path\n)\nGROUP BY host\n",
             "rawQuery": true,
             "refId": "H",
             "resultFormat": "table"
           },
           {
             "alias": "discRead",
-            "datasource": {
-              "type": "influxdb",
-              "uid": ""
-            },
+            "datasource": {"type": "influxdb", "uid": "${influxdb}"},
             "hide": false,
-            "query": "SELECT last(read_bytes) AS \"discRead\" FROM diskio where $timeFilter and zone =~ /^$Zone$/ group by host, time($interval)\n",
+            "query": "SELECT last(read_bytes) AS \"discRead\" FROM diskio where $timeFilter and zone =~ /^$zone$/ group by host, time($interval)\n",
             "rawQuery": true,
             "refId": "I",
             "resultFormat": "table"
           },
           {
             "alias": "discWrite",
-            "datasource": {
-              "type": "influxdb",
-              "uid": "${influxdb}"
-            },
+            "datasource": {"type": "influxdb", "uid": "${influxdb}"},
             "hide": false,
-            "query": "SELECT last(write_bytes) AS \"discWrite\" FROM diskio where $timeFilter and zone =~ /^$Zone$/ group by host, time($interval)\n",
+            "query": "SELECT last(write_bytes) AS \"discWrite\" FROM diskio where $timeFilter and zone =~ /^$zone$/ group by host, time($interval)\n",
             "rawQuery": true,
             "refId": "J",
             "resultFormat": "table"
           },
           {
             "alias": "CurrESTAB",
-            "datasource": {
-              "type": "influxdb",
-              "uid": ""
-            },
+            "datasource": {"type": "influxdb", "uid": "${influxdb}"},
             "hide": false,
-            "query": "SELECT last(tcp_established) AS \"currESTAB\" FROM netstat where $timeFilter and zone =~ /^$Zone$/ group by host, time($interval)\n",
+            "query": "SELECT last(tcp_established) AS \"currESTAB\" FROM netstat where $timeFilter and zone =~ /^$zone$/ group by host, time($interval)\n",
             "rawQuery": true,
             "refId": "K",
             "resultFormat": "table"
           },
           {
             "alias": "timeWait",
-            "datasource": {
-              "type": "influxdb",
-              "uid": "${influxdb}"
-            },
+            "datasource": {"type": "influxdb", "uid": "${influxdb}"},
             "hide": false,
-            "query": "SELECT last(tcp_time_wait) AS \"TimeWait\" FROM netstat where $timeFilter and zone =~ /^$Zone$/ group by host, time($interval)\n",
+            "query": "SELECT last(tcp_time_wait) AS \"TimeWait\" FROM netstat where $timeFilter and zone =~ /^$zone$/ group by host, time($interval)\n",
             "rawQuery": true,
             "refId": "L",
             "resultFormat": "table"
           },
           {
             "alias": "",
-            "datasource": {
-              "type": "influxdb",
-              "uid": ""
-            },
+            "datasource": {"type": "influxdb", "uid": "${influxdb}"},
             "hide": false,
-            "query": "SELECT mean(usage_user) AS \"cpu-User%\" FROM cpu where $timeFilter and zone =~ /^$Zone$/ group by host, time($interval)\n",
+            "query": "SELECT mean(usage_user) AS \"cpu-User%\" FROM cpu where $timeFilter and zone =~ /^$zone$/ group by host, time($interval)\n",
             "rawQuery": true,
             "refId": "M",
             "resultFormat": "table"
           },
           {
             "alias": "",
-            "datasource": {
-              "type": "influxdb",
-              "uid": "${influxdb}"
-            },
+            "datasource": {"type": "influxdb", "uid": "${influxdb}"},
             "hide": false,
-            "query": "SELECT mean(usage_system) AS \"cpu-system%\" FROM cpu where $timeFilter and zone =~ /^$Zone$/ group by host, time($interval)\n",
+            "query": "SELECT mean(usage_system) AS \"cpu-system%\" FROM cpu where $timeFilter and zone =~ /^$zone$/ group by host, time($interval)\n",
             "rawQuery": true,
             "refId": "O",
             "resultFormat": "table"
           },
           {
             "alias": "load5",
-            "datasource": {
-              "type": "influxdb",
-              "uid": ""
-            },
+            "datasource": {"type": "influxdb", "uid": "${influxdb}"},
             "hide": false,
-            "query": "SELECT mean(usage_iowait) AS \"cpu-ioWait%\" FROM cpu where $timeFilter and zone =~ /^$Zone$/ group by host, time($interval)\n",
+            "query": "SELECT mean(usage_iowait) AS \"cpu-ioWait%\" FROM cpu where $timeFilter and zone =~ /^$zone$/ group by host, time($interval)\n",
             "rawQuery": true,
             "refId": "N",
             "resultFormat": "table"
           },
           {
             "alias": "",
-            "datasource": {
-              "type": "influxdb",
-              "uid": "${influxdb}"
-            },
+            "datasource": {"type": "influxdb", "uid": "${influxdb}"},
             "hide": false,
-            "query": "select last(lclIP) AS \"nodeIP\" from host_IP where $timeFilter and zone =~ /^$Zone$/ group by \"host\",time($interval)",
+            "query": "select last(lclIP) AS \"nodeIP\" from host_IP where $timeFilter and zone =~ /^$zone$/ group by \"host\",time($interval)",
             "rawQuery": true,
             "refId": "P",
             "resultFormat": "table"
           },
           {
             "alias": "",
-            "datasource": {
-              "type": "influxdb",
-              "uid": ""
-            },
+            "datasource": {"type": "influxdb", "uid": "${influxdb}"},
             "hide": false,
-            "query": "select last(os_description) AS \"OS\" from os_info where $timeFilter and zone =~ /^$Zone$/ group by \"host\",time($interval)",
+            "query": "select last(os_description) AS \"OS\" from os_info where $timeFilter and zone =~ /^$zone$/ group by \"host\",time($interval)",
             "rawQuery": true,
             "refId": "Q",
             "resultFormat": "table"
@@ -984,64 +534,64 @@
         "transformations": [
           {
             "id": "joinByField",
-            "options": {
-              "byField": "host",
-              "mode": "outer"
-            }
+            "options": {"byField": "host", "mode": "outer"}
           },
           {
             "id": "organize",
             "options": {
               "excludeByName": {
-                "Time": true,
-                "Time disk": true,
-                "Time diskio": false,
+                "Time"        : true,
+                "Time disk"   : true,
+                "Time diskio" : false,
                 "Time host_IP": true,
-                "Time mem": true,
+                "Time mem"    : true,
                 "Time os_info": true,
-                "last": true,
-                "nodeIP": false
+                "last"        : true,
+                "nodeIP"      : false
               },
               "includeByName": {},
               "indexByName": {
-                "Time cpu": 11,
-                "Time disk": 22,
-                "Time diskio": 25,
-                "Time mem": 18,
-                "Time netstat": 30,
-                "Time os_info": 32,
-                "Time system": 3,
-                "TimeWait": 31,
-                "cpu%": 12,
-                "cpu-User%": 14,
-                "cpu-ioWait%": 13,
-                "cpu-system%": 15,
-                "currESTAB": 28,
-                "discRead": 26,
-                "discWrite": 27,
-                "disk_usage%": 23,
-                "host": 0,
-                "last": 33,
-                "load5m": 6,
-                "mem%": 20,
-                "memCache": 21,
-                "memory": 19,
-                "nodeIP": 4,
-                "total-CPU": 7,
-                "upTime": 5
+                "OS"          : 36,
+                "Time cpu"    : 11,
+                "Time disk"   : 24,
+                "Time diskio" : 26,
+                "Time host_IP": 35,
+                "Time mem"    : 21,
+                "Time netstat": 31,
+                "Time os_info": 33,
+                "Time system" :  3,
+                "TimeWait"    : 32,
+                "cpu%"        : 12,
+                "cpu-User%"   : 17,
+                "cpu-ioWait%" : 16,
+                "cpu-system%" : 18,
+                "currESTAB"   : 29,
+                "device"      : 34,
+                "discRead"    : 27,
+                "discWrite"   : 28,
+                "disk_usage%" : 14,
+                "host"        :  0,
+                "load5m"      :  6,
+                "mem%"        : 13,
+                "memCache"    : 23,
+                "memory"      : 22,
+                "nodeIP"      :  4,
+                "path"        : 15,
+                "total-CPU"   :  7,
+                "upTime"      :  5
               },
               "renameByName": {
-                "TimeWait": "TWait",
-                "cpu%": "CPU Usage%",
-                "cpu-User%": "user%",
+                "TimeWait"   : "TWait",
+                "cpu%"       : "CPU Usage%",
+                "cpu-User%"  : "user%",
                 "cpu-ioWait%": "ioWait",
                 "cpu-system%": "system%",
-                "currESTAB": "Estab",
-                "disk_usage%": "disk%",
-                "last": "",
-                "mem%": "Mem Usage%",
-                "memory": "RAM Total",
-                "total-CPU": "CPUs"
+                "currESTAB"  : "Estab",
+                "disk_usage%": "Disk Usage%",
+                "last"       : "",
+                "mem%"       : "Mem Usage%",
+                "memory"     : "RAM Total",
+                "total-CPU"  : "CPUs"
               }
             }
           }
@@ -1051,9 +601,7 @@
     ],
     "refresh": "5m",
     "schemaVersion": 41,
-    "tags": [
-      "infra"
-    ],
+    "tags": ["infra"],
     "templating": {
       "list": [
         {
@@ -1066,11 +614,9 @@
           "type": "datasource"
         },
         {
+          "allowCustomValue": false,
           "current": {},
-          "datasource": {
-            "type": "influxdb",
-            "uid": "${influxdb}"
-          },
+          "datasource": {"type": "influxdb", "uid": "${influxdb}"},
           "definition": "SHOW TAG VALUES FROM \"system\" WITH KEY = \"project\" WHERE service = 'infra'",
           "name": "project",
           "options": [],
@@ -1083,14 +629,12 @@
           "type": "query"
         },
         {
+          "allowCustomValue": false,
           "current": {},
-          "datasource": {
-            "type": "influxdb",
-            "uid": ""
-          },
+          "datasource": {"type": "influxdb", "uid": "${influxdb}"},
           "definition": "SHOW TAG VALUES FROM \"system\" WITH KEY = \"zone\" WHERE project = '$project' AND service = 'infra'",
           "includeAll": true,
-          "name": "Zone",
+          "name": "zone",
           "options": [],
           "query": {
             "query": "SHOW TAG VALUES FROM \"system\" WITH KEY = \"zone\" WHERE project = '$project' AND service = 'infra'",
@@ -1104,72 +648,21 @@
           "auto": false,
           "auto_count": 30,
           "auto_min": "10s",
-          "current": {
-            "text": "10m",
-            "value": "10m"
-          },
+          "current": {"text": "5m", "value": "5m"},
           "name": "interval",
           "options": [
-            {
-              "selected": false,
-              "text": "1m",
-              "value": "1m"
-            },
-            {
-              "selected": false,
-              "text": "3m",
-              "value": "3m"
-            },
-            {
-              "selected": false,
-              "text": "5m",
-              "value": "5m"
-            },
-            {
-              "selected": true,
-              "text": "10m",
-              "value": "10m"
-            },
-            {
-              "selected": false,
-              "text": "30m",
-              "value": "30m"
-            },
-            {
-              "selected": false,
-              "text": "1h",
-              "value": "1h"
-            },
-            {
-              "selected": false,
-              "text": "6h",
-              "value": "6h"
-            },
-            {
-              "selected": false,
-              "text": "12h",
-              "value": "12h"
-            },
-            {
-              "selected": false,
-              "text": "1d",
-              "value": "1d"
-            },
-            {
-              "selected": false,
-              "text": "7d",
-              "value": "7d"
-            },
-            {
-              "selected": false,
-              "text": "14d",
-              "value": "14d"
-            },
-            {
-              "selected": false,
-              "text": "30d",
-              "value": "30d"
-            }
+            {"selected": false, "text": "1m",  "value": "1m" },
+            {"selected": false, "text": "3m",  "value": "3m" },
+            {"selected": true,  "text": "5m",  "value": "5m" },
+            {"selected": false, "text": "10m", "value": "10m"},
+            {"selected": false, "text": "30m", "value": "30m"},
+            {"selected": false, "text": "1h",  "value": "1h" },
+            {"selected": false, "text": "6h",  "value": "6h" },
+            {"selected": false, "text": "12h", "value": "12h"},
+            {"selected": false, "text": "1d",  "value": "1d" },
+            {"selected": false, "text": "7d",  "value": "7d" },
+            {"selected": false, "text": "14d", "value": "14d"},
+            {"selected": false, "text": "30d", "value": "30d"}
           ],
           "query": "1m,3m,5m,10m,30m,1h,6h,12h,1d,7d,14d,30d",
           "refresh": 2,
@@ -1177,26 +670,15 @@
         }
       ]
     },
-    "time": {
-      "from": "now-15m",
-      "to": "now"
-    },
+    "time": {"from": "now-15m", "to": "now"},
     "timepicker": {
       "hidden": true,
-      "refresh_intervals": [
-        "1m",
-        "5m",
-        "15m",
-        "30m",
-        "1h",
-        "2h",
-        "1d"
-      ]
+      "refresh_intervals": ["1m", "5m", "15m", "30m", "1h", "2h", "1d"]
     },
     "timezone": "Asia/Kolkata",
     "title": "Infra Summary",
-    "uid": "bdn4g76hlxu68b",
-    "version": 62,
+    "uid": "777selInfra",
+    "version": 2,
     "weekStart": ""
   }
 }

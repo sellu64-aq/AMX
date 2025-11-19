@@ -1,0 +1,347 @@
+[global_tags]
+  service = "ocs"
+  project = "{{ project }}"
+  zone = "{{ zone }}"
+  nodeIP = "{{ ansible_host }}"
+
+[agent]
+  debug = true
+  quiet = false
+  interval = "30s"
+  flush_interval = "30s"
+  logfile = "{{ telegraf_remote_path }}/telegraf/logs/{{ telegraf_name }}_telegraf.log"
+  hostname = "{{ inventory_hostname }}"
+  omit_hostname = false
+  round_interval = true
+  metric_batch_size = 1000
+  metric_buffer_limit = 20000
+  collection_jitter = "0s"
+  flush_jitter = "0s"
+  precision = "0s"
+  logfile_rotation_interval = "12h"
+  logfile_rotation_max_size = "100MB"
+  logfile_rotation_max_archives = 5
+
+####### Port Status for {{ inventory_hostname }} #######
+{% for item in ports %}
+[[inputs.net_response]]
+  protocol = "tcp"
+  address = "{{ item.ip }}:{{ item.port }}"
+  name_override = "portResponsetime"
+  tags = { linkName="{{ item.name }}", ip="{{ item.ip }}", port="{{ item.port }}", host="{{ inventory_hostname }}" }
+{% endfor %}
+
+############# Link Count #############
+[[inputs.exec]]
+  commands = ["{{ telegraf_remote_path }}/scripts/{{ telegraf_name }}_port_conn_monitor.sh"]
+  timeout = "10s"
+  data_format = "influx"
+  name_override = "link_count"
+
+############# Port Monitor #############
+[[inputs.exec]]
+  commands = ["{{ telegraf_remote_path }}/scripts/{{ telegraf_name }}_port_listen_monitor.sh"]
+  timeout = "10s"
+  data_format = "influx"
+  name_override = "port_listen"
+
+############## Ping Monitoring ################
+[[inputs.ping]]
+  {% set unique_ips = ports | map(attribute='ip') | unique %}
+  urls = [{% for ip in unique_ips %}"{{ ip }}"{% if not loop.last %}, {% endif %}{% endfor %}]
+  count = 2
+  ping_interval = 3.0
+  timeout = 2.0
+  method = "exec"
+
+##### App Metrics ###########
+[[inputs.exec]]
+  commands = ["{{ telegraf_remote_path }}/scripts/{{ telegraf_name }}_app_metrics.sh"]
+  data_format = "influx"
+  name_override = "app_metrics"
+  interval = "1m"
+  timeout = "50s"
+
+##### BSS ByPass Status Check ###########
+[[inputs.exec]]
+  commands = ["{{ telegraf_remote_path }}/scripts/bssBypass_status.sh"]
+  name_override = "BSS_Status"
+  data_format = "influx"
+  interval = "1m"
+  timeout = "50s"
+
+############# ocs Queue ########
+[[inputs.exec]]
+  commands = [
+    "/bin/bash -c 'host=$(hostname | tr '[:lower:]' '[:upper:]'); cd /opt/Roamware/scripts/operations || exit 1; current=$(/opt/rwperl/bin/perl get-int.pl 127.0.0.1 16272 1.3.6.1.4.1.11150.84.4.1.2.0); capacity=$(/opt/rwperl/bin/perl get-int.pl 127.0.0.1 16272 1.3.6.1.4.1.11150.84.4.1.3.0); enQueue=$(/opt/rwperl/bin/perl get-int.pl 127.0.0.1 16272 1.3.6.1.4.1.11150.84.4.2.1.0); deQueue=$(/opt/rwperl/bin/perl get-int.pl 127.0.0.1 16272 1.3.6.1.4.1.11150.84.4.2.2.0); if [[ -n $current && -n $capacity && -n $enQueue && -n $deQueue ]]; then echo \"OcsQueue,host=$host,queue=current value=$current\"; echo \"OcsQueue,host=$host,queue=capacity value=$capacity\"; echo \"OcsQueue,host=$host,queue=enQueue value=$enQueue\"; echo \"OcsQueue,host=$host,queue=deQueue value=$deQueue\"; fi'"
+  ]
+  timeout = "5s"
+  name_override = "OcsQueue"
+  data_format = "influx"
+  interval = "60s"
+
+########## Tails ################
+
+[[inputs.tail]]
+  files = ["/opt/Roamware/logs/airocs/GyCDR-*.xls"]
+  initial_read_offset = "end"
+  name_override = "Gylog"
+  grok_patterns = ["%{CUSTOM_LOG}"]
+  grok_custom_patterns = '''
+    CUSTOM_TIMESTAMP %{MONTHDAY}-%{MONTH}-%{YEAR} %{HOUR}:%{MINUTE}:%{SECOND}\.%{INT:millisecond}
+    CUSTOM_LOG %{CUSTOM_TIMESTAMP:timestamp},%{DATA},%{NUMBER},%{DATA},%{DATA},%{NUMBER:RequestType},%{DATA},%{DATA},%{DATA},%{DATA},%{DATA},%{NUMBER:IMSI},%{NUMBER},%{DATA},%{DATA},%{NUMBER},%{NUMBER},%{NUMBER},%{NUMBER},%{NUMBER},%{NUMBER},%{DATA},%{DATA},%{DATA},%{IP},%{IP},%{WORD},%{NUMBER},%{NUMBER},%{NUMBER},%{DATA:APN},%{DATA},%{NUMBER},%{NUMBER},%{DATA},%{DATA},%{DATA},%{DATA:RATType},%{NUMBER},%{DATA},%{DATA},%{DATA},%{DATA},%{DATA},%{NUMBER},%{NUMBER};%{DATA}\|%{DATA}\|%{DATA}\|%{DATA}\|%{DATA}\|%{DATA}\|%{DATA}\|%{DATA}\|%{DATA}\|%{NUMBER:TotalOctets}\|%{NUMBER:InputOctets}\|%{NUMBER:OutputOctets}\|%{DATA}\|%{DATA}\|%{DATA},%{DATA},%{DATA},%{DATA},%{DATA},%{DATA},%{NUMBER:AccountId}
+  '''
+  data_format = "grok"
+
+[[processors.regex]]
+  [[processors.regex.fields]]
+    key = "RequestType"
+    pattern = "^(1)$"
+    replacement = "Initial"
+  [[processors.regex.fields]]
+    key = "RequestType"
+    pattern = "^(2)$"
+    replacement = "Update"
+  [[processors.regex.fields]]
+    key = "RequestType"
+    pattern = "^(3)$"
+    replacement = "Terminate"
+
+  [[processors.regex.fields]]
+    key = "RATType"
+    pattern = "^(01)$"
+    replacement = "3G"
+
+  [[processors.regex.fields]]
+    key = "RATType"
+    pattern = "^(02)$"
+    replacement = "2G"
+
+  [[processors.regex.fields]]
+    key = "RATType"
+    pattern = "^(04)$"
+    replacement = "3G"
+
+  [[processors.regex.fields]]
+    key = "RATType"
+    pattern = "^(05)$"
+    replacement = "3G"
+
+  [[processors.regex.fields]]
+    key = "RATType"
+    pattern = "^(06)$"
+    replacement = "4G"
+
+  [[processors.regex.fields]]
+    key = "RATType"
+    pattern = "^(08)$"
+    replacement = "4G_IoT"
+
+  [[processors.regex.fields]]
+    key = "RATType"
+    pattern = "^(10)$"
+    replacement = "5G"
+
+[[processors.converter]]
+  namepass = ["Gylog"]
+  [processors.converter.fields]
+    integer = ["TotalOctets","InputOctets","OutputOctets"]
+    tag = ["RequestType", "APN", "RATType", "AccountId"]
+
+######## Gx Log #########
+[[inputs.tail]]
+  files = ["/opt/Roamware/logs/airocs/GxCDR-*.xls"]
+  initial_read_offset = "end"
+  name_override = "Gxlog"
+  data_format = "grok"
+  grok_patterns = ["%{GXLOG}"]
+
+  grok_custom_patterns = '''
+    CUSTOM_TIMESTAMP %{MONTHDAY}-%{MONTH}-%{YEAR} %{HOUR}:%{MINUTE}:%{SECOND}\.%{INT:millisecond}
+    NOT_COMMA [^,]*
+    GXLOG %{CUSTOM_TIMESTAMP:gx_timestamp},%{NOT_COMMA:system},%{NOT_COMMA:some_number},%{NOT_COMMA:session_id},%{NOT_COMMA:subs_id},%{INT:ccr_type},%{NOT_COMMA:diameter_ids},%{NOT_COMMA:pcef},%{NOT_COMMA:pcrf},%{NOT_COMMA:ocs},%{NOT_COMMA:destination},%{NUMBER:imsi},%{NUMBER:msisdn},%{GREEDYDATA:rest}
+  '''
+
+[[processors.rename]]
+  [[processors.rename.replace]]
+    field = "ccr_type"
+    dest = "request_type"
+
+[[processors.converter]]
+  [processors.converter.fields]
+    integer = ["request_type", "imsi", "msisdn"]
+
+# Optional, choose to keep only certain fields
+[[processors.override]]
+  namepass = ["Gxlog"]
+  fieldinclude = ["session_id", "imsi", "request_type"]
+
+################ SNMP ####################
+[[inputs.tail]]
+  files = [
+  "/opt/Roamware/logs/dra/traps/Traps-DRA-*.csv",
+    "/opt/Roamware/logs/csvprocessor/traps/csvp-alarms.txt",
+    "/opt/Roamware/logs/diameternode/traps/sds-alarms.txt"
+]
+  name_override = "SNMP"
+  data_format = "grok"
+  watch_method = "inotify"
+  initial_read_offset = "end"
+
+  grok_patterns = [
+    '''%{DATA:dra_timestamp},%{DATA:host},%{DATA:device},%{GREEDYDATA:kvdata}'''
+  ]
+
+[[processors.starlark]]
+  namepass = ["SNMP"]
+  source = '''
+def apply(metric):
+    raw_log = metric.fields["kvdata"]
+    parts = raw_log.split(',')
+    key_value_pairs = []
+
+    for part in parts:
+        if "=" in part:
+            key, value = part.split("=", 1)
+            key_value_pairs.append((key.strip(), value.strip()))
+
+    oid_map = {
+        "1.3.6.1.4.1.11150.1.3.10": "AlarmTime",
+        "1.3.6.1.4.1.11150.1.3.1": "severity",
+        "1.3.6.1.4.1.11150.1.3.2": "description",
+        "1.3.6.1.4.1.11150.1.3.13": "ServiceName",
+        "1.3.6.1.4.1.11150.1.3.14": "AlarmType",
+        "1.3.6.1.4.1.11150.1.3.17": "ProbableCause",
+        "1.3.6.1.4.1.11150.1.3.21": "NotificationId",
+        "1.3.6.1.4.1.11150.1.3.23": "SequenceNumber",
+        "1.3.6.1.4.1.11150.1.3.3": "MachineID",
+        "1.3.6.1.4.1.11150.1.3.39": "ResourceName",
+        "1.3.6.1.4.1.11150.1.3.27": "KPIName",
+        "trap": "trap",
+        "trapName": "trapName",
+        "enterprise": "enterprise"
+    }
+
+    tag_fields = ["MachineID", "description", "severity", "trapName"]
+
+    for key, value in key_value_pairs:
+        field_name = oid_map.get(key, key)
+        clean_value = value.replace(" ", "_").replace("\\t", "_")
+        if field_name in tag_fields:
+            metric.tags[field_name] = clean_value
+        else:
+            metric.fields[field_name] = clean_value
+
+    return metric
+'''
+
+########## Airocs Logs ############
+[[inputs.tail]]
+  files = ["/opt/Roamware/logs/airocs/logs/airocs-??.log"]
+  name_override = "ocs_logs"
+  data_format = "grok"
+  grok_patterns = ['%{OCSLOG}']
+  grok_custom_patterns = '''
+    OCSLOG %{DAY:day} %{MONTH:month} %{MONTHDAY:monthday}\|%{TIME:time}\|%{WORD:level}\|%{DATA:thread}\|%{DATA:session_id}:%{GREEDYDATA:message}\|%{DATA:class}\|%{DATA:method}\|%{INT:line}
+  '''
+  initial_read_offset = "end"
+
+[[processors.regex]]
+  namepass = ["ocs_logs"]
+  [[processors.regex.tags]]
+    key = "session_id"
+    pattern = "^([^:]+)"
+    replacement = "${1}"
+
+[[processors.converter]]
+  namepass = ["ocs_logs"]
+  [processors.converter.fields]
+    tag = ["level", "class", "method"]
+
+[[processors.enum]]
+  namepass = ["ocs_logs"]
+  [[processors.enum.mapping]]
+    field = "level"
+    dest = "level_code"
+    default = -1
+    [processors.enum.mapping.value_mappings]
+      E = 3
+      W = 2
+      I = 1
+      D = 0
+
+############ Restart Log ###########
+[[inputs.tail]]
+  files = ["/opt/Roamware/logs/restart.log"]
+  initial_read_offset = "end"
+  name_override = "RestartLog"
+  data_format = "grok"
+  grok_patterns = ["%{DRA_LOG_LINE}"]
+
+  grok_custom_patterns = '''
+    DRA_LOG_LINE %{DRA_TIMESTAMP:timestamp} %{WORD:event_type} %{DRA_MESSAGE:message} \[%{WORD:application}\]
+    DRA_TIMESTAMP %{DAY} %{MONTH} +%{MONTHDAY} %{TIME} %{YEAR}
+    DRA_MESSAGE (?:/[^ ]+|[^ ]+ ?[^ ]*)
+  '''
+
+[[processors.converter]]
+  namepass = ["RestartLog"]
+  [processors.converter.fields]
+    tag = ["event_type", "application"]
+[[processors.regex]]
+  namepass = ["RestartLog"]
+  [[processors.regex.fields]]
+    key = "timestamp"
+    pattern = " "
+    replacement = "_"
+    result_key = "timestamp"
+
+########  Outputs Pri #########
+[[outputs.influxdb]]
+  urls = ["http://{{ influx_Pri_IP }}:{{ influx_Pri_Port }}"]
+  database = "{{ influx_priDB_name }}"
+  retention_policy = "thirty_days"
+  timeout = "5s"
+  skip_database_creation = true
+  namepass = ["BSS_Status","RestartLog","OcsQueue","link_count","port_listen","IPPort_Status","portResponsetime","ping","app_metrics"]
+
+[[outputs.influxdb]]
+  urls = ["http://{{ influx_Pri_IP }}:{{ influx_Pri_Port }}"]
+  database = "{{ influx_priDB_name }}"
+  retention_policy = "1hrRP"
+  timeout = "5s"
+  skip_database_creation = true
+  namepass = ["Gxlog","Gylog","ocs_logs"]
+
+[[outputs.influxdb]]
+  urls = ["http://{{ influx_Pri_IP }}:{{ influx_Pri_Port }}"]
+  database = "{{ influx_priDB_name }}"
+  retention_policy = "one_day"
+  timeout = "5s"
+  skip_database_creation = true
+  namepass = ["SNMP"]
+
+  ########  Outputs Sec #########
+[[outputs.influxdb]]
+  urls = ["http://{{ influx_Sec_IP }}:{{ influx_Sec_Port }}"]
+  database = "{{ influx_secDB_name }}"
+  retention_policy = "thirty_days"
+  timeout = "5s"
+  skip_database_creation = true
+  namepass =["BSS_Status","RestartLog","OcsQueue","link_count","port_listen","IPPort_Status","portResponsetime","ping","app_metrics"]
+
+[[outputs.influxdb]]
+  urls = ["http://{{ influx_Sec_IP }}:{{ influx_Sec_Port }}"]
+  database = "{{ influx_secDB_name }}"
+  retention_policy = "1hrRP"
+  timeout = "5s"
+  skip_database_creation = true
+  namepass = ["Gxlog","Gylog","ocs_logs"]
+
+[[outputs.influxdb]]
+  urls = ["http://{{ influx_Sec_IP }}:{{ influx_Sec_Port }}"]
+  database = "{{ influx_secDB_name }}"
+  retention_policy = "one_day"
+  timeout = "5s"
+  skip_database_creation = true
+  namepass = ["SNMP"]

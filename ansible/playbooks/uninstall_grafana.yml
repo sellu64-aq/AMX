@@ -1,0 +1,40 @@
+---
+- name: Uninstall only grafana-v12.0.2
+  hosts: grafana
+  become: true
+
+  vars:
+    grafana_install_base: "/opt/airlinq/grafana"
+    grafana_version_dir: "{{ grafana_install_base }}/grafana-v12.0.2"
+    grafana_symlink: "{{ grafana_install_base }}/current"
+    grafana_service_file: "/etc/systemd/system/grafana-server.service"
+
+  tasks:
+    - name: Stop and disable Grafana service
+      systemd:
+        name: grafana-server
+        state: stopped
+        enabled: no
+
+    - name: Remove Grafana systemd service file
+      file:
+        path: "{{ grafana_service_file }}"
+        state: absent
+
+    - name: Reload systemd to reflect service removal
+      systemd:
+        daemon_reload: yes
+
+    - name: Remove Grafana version directory
+      file:
+        path: "{{ grafana_version_dir }}"
+        state: absent
+
+    - name: Remove 'current' symlink only if it points to grafana-v12.0.2
+      file:
+        path: "{{ grafana_symlink }}"
+        state: absent
+      when: >
+        ansible_facts['devices'] is defined and
+        lookup('pipe', 'readlink -f ' ~ grafana_symlink) == grafana_version_dir
+

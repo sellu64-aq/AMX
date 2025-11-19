@@ -1,0 +1,41 @@
+---
+- name: Remove Monitoring Services
+  hosts: all_servers
+  become: yes
+  vars:
+    services_to_remove:
+      - promtail
+      - pushgateway
+      - promtail_Testing
+      - node_exporter
+      - snmp-exporter
+      - mysql_exporter
+
+  tasks:
+
+    - name: Stop services
+      ansible.builtin.systemd:
+        name: "{{ item }}.service"
+        state: stopped
+        enabled: no
+      loop: "{{ services_to_remove }}"
+      ignore_errors: yes  # In case service doesn't exist
+
+    - name: Remove systemd service files
+      ansible.builtin.file:
+        path: "/etc/systemd/system/{{ item }}.service"
+        state: absent
+      loop: "{{ services_to_remove }}"
+      ignore_errors: yes
+
+    - name: Remove binaries from /usr/local/bin
+      ansible.builtin.file:
+        path: "/usr/local/bin/{{ item }}"
+        state: absent
+      loop: "{{ services_to_remove }}"
+      ignore_errors: yes
+
+    - name: Reload systemd to reflect changes
+      ansible.builtin.systemd:
+        daemon_reload: yes
+

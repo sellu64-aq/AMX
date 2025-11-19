@@ -1,0 +1,32 @@
+# Variables for DLVMAMXNC01
+---
+# Add host-specific variables below
+#
+########## Feature Flags ##########
+deploy_telegraf_redis: false
+deploy_telegraf_postgres: false
+deploy_telegraf_infra: false
+deploy_mysql_replica_status_monitor: false
+deploy_mysql_slowquery_script: false
+deploy_app_metrics: true
+deploy_port_listen_monitor: true
+deploy_port_conn_monitor: true
+deploy_ntp_status: false
+deploy_dra_process_script: false
+deploy_nginx: false
+
+apps:
+  - name: "downloadcenter"
+    match: "downloadcenter.jar"
+    type: "pattern"
+  - name: "apache-tomcat"
+    match: "apache-tomcat"
+    type: "pattern"	
+
+ports:
+  - ip: 127.0.0.1
+    port: 8005
+    name: Java
+  - ip: 10.221.86.226
+    port: 9999
+    name: Java

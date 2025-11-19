@@ -1,0 +1,83 @@
+{
+  "uid": "{{ alert_uid }}",
+  "title": "Disk IO Wait Time Alert",
+  "folderUID": "{{ folder_uid }}",
+  "ruleGroup": "{{ rulegroup }}",
+  "condition": "C",
+  "data": [
+    {
+      "refId": "A",
+      "relativeTimeRange": {
+        "from": 900,
+        "to": 0
+      },
+      "datasourceUid": "{{ datasourceUid }}",
+      "model": {
+        "refId": "A",
+        "query": "SELECT last(\"io_await\") AS \"IO Wait\" FROM \"diskio\" WHERE $timeFilter GROUP BY time(5m), project, zone, host, \"name\" fill(0)",
+        "rawQuery": true
+      }
+    },
+    {
+      "refId": "B",
+      "relativeTimeRange": {
+        "from": 0,
+        "to": 0
+      },
+      "datasourceUid": "__expr__",
+      "model": {
+        "type": "reduce",
+        "expression": "A",
+        "reducer": "last"
+      }
+    },
+    {
+      "refId": "C",
+      "relativeTimeRange": {
+        "from": 0,
+        "to": 0
+      },
+      "datasourceUid": "__expr__",
+      "model": {
+        "type": "threshold",
+        "expression": "B",
+        "conditions": [
+          {
+            "evaluator": {
+              "type": "gt",
+              "params": [100]
+            },
+            "operator": {
+              "type": "and"
+            },
+            "query": {
+              "params": ["C"]
+            },
+            "reducer": {
+              "type": "last",
+              "params": []
+            },
+            "type": "query"
+          }
+        ]
+      }
+    }
+  ],
+  "interval": "1m",
+  "for": "5m",
+  "noDataState": "OK",
+  "execErrState": "Error",
+  "labels": {
+    "platform": "{{ project }}",
+    "zone": "{{ zone }}",
+    "severity": "CRITICAL",
+        "type": "{{ (rulegroup | string).split('_')[0] }}"
+  },
+  "annotations": {
+    "summary": "Disk IO wait time is high (>50ms).",
+    "description": "🧐 **Why This Happens**\n- High disk IO wait indicates potential bottlenecks in storage subsystem.\n- Could be caused by heavy disk operations, slow storage, or overloaded I/O.\n\n🔍 **Impact**\n- Applications may experience latency or timeout.\n- Database and file operations could slow down.\n- Overall system performance may degrade.\n\n✅ **Immediate Actions for Ops**\n1. **Check current disk IO:**\n   ```\n   iostat -x 1 10\n   ```\n2. **Identify processes causing high IO:**\n   ```\n   pidstat -d 1 10\n   iotop -o\n   ```\n3. **Check disk usage and health:**\n   ```\n   df -h\n   smartctl -a /dev/sdX\n   ```\n4. **If persistent high IO:**\n   - Investigate application load.\n   - Consider moving heavy workloads to other disks.\n   - Check storage subsystem for errors or saturation.\n5. Document the issue and notify relevant teams for remediation.\n\n⚠ **Note:** This alert triggers if `io_await` exceeds **50ms** continuously for **5 minutes**, indicating a possible disk performance bottleneck."
+  },
+  "isPaused": false
+}
+
+

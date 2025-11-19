@@ -1,0 +1,13 @@
+[Unit]
+Description=Promtail
+After=network.target
+
+[Service]
+User=root
+ExecStart=/opt/promtail/promtail -config.file=/opt/promtail/promtail.conf.yml
+Restart=on-failure
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+

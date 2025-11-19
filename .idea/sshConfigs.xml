@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SshConfigs">
+    <configs>
+      <sshConfig authType="PASSWORD" connectionConfig="{&quot;serverAliveInterval&quot;:300}" host="10.221.92.106" id="7362aa53-d786-4955-bd66-49fa04cdd70e" port="22" customName="AMX_Dl_ops1_106" nameFormat="CUSTOM" username="selvamk" useOpenSSHConfig="true">
+        <option name="customName" value="AMX_Dl_ops1_106" />
+      </sshConfig>
+    </configs>
+  </component>
+</project>

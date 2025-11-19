@@ -1,0 +1,45 @@
+# Variables for DLVMAMXHNN02
+---
+# Add host-specific variables below
+#
+########## Feature Flags ##########
+deploy_telegraf_redis: false
+deploy_telegraf_postgres: false
+deploy_telegraf_infra: false
+deploy_mysql_replica_status_monitor: false
+deploy_mysql_slowquery_script: false
+deploy_app_metrics: true
+deploy_port_listen_monitor: true
+deploy_port_conn_monitor: true
+deploy_ntp_status: false
+deploy_dra_process_script: false
+deploy_nginx: false
+
+########## Application Monitoring ##########
+apps:
+  - name: "zookeeper"
+    match: "zookeeper.properties"
+    type: "pattern"
+  - name: "Kafka"
+    match: "server.properties"
+    type: "pattern"
+
+########## Port Monitoring ##########
+ports:
+  - ip: 127.0.0.1
+    port: 6667
+    name: kafka
+  - ip: 127.0.0.1
+    port: 2181
+    name: Zookeeper
+  - ip: 127.0.0.1
+    port: 3306
+    name: Mysql
+
+######## Remote #######
+  - ip: 10.221.81.40
+    port: 3888
+    name: Ambari_Server
+  - ip: 10.221.81.40
+    port: 8188
+    name: Yarn_UI

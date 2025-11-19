@@ -1,0 +1,119 @@
+[global_tags]
+  service = "downloadCentre"
+  project = "{{ project }}"
+  zone = "{{ zone }}"
+  nodeIP = "{{ ansible_host }}"
+
+
+[agent]
+  debug = true
+  quiet = false
+  interval = "30s"
+  flush_interval = "30s"
+  logfile = "{{ telegraf_remote_path }}/telegraf/logs/{{ telegraf_name }}_telegraf.log"
+  hostname = "{{ inventory_hostname }}"
+  omit_hostname = false
+  round_interval = true
+  metric_batch_size = 1000
+  metric_buffer_limit = 10000
+  collection_jitter = "0s"
+  flush_jitter = "0s"
+  precision = "0s"
+  logfile_rotation_interval = "12h"
+  logfile_rotation_max_size = "100MB"
+  logfile_rotation_max_archives = 5
+
+####### Port Status for {{ inventory_hostname }} #######
+{% for item in ports %}
+[[inputs.net_response]]
+  protocol = "tcp"
+  address = "{{ item.ip }}:{{ item.port }}"
+  name_override = "portResponsetime"
+  tags = { linkName="{{ item.name }}", ip="{{ item.ip }}", port="{{ item.port }}", host="{{ inventory_hostname }}" }
+{% endfor %}
+
+############# Port Listen #############
+[[inputs.exec]]
+  commands = ["{{ telegraf_remote_path }}/scripts/{{ telegraf_name }}_port_listen_monitor.sh"]
+  timeout = "10s"
+  data_format = "influx"
+  name_override = "port_listen"
+
+############# Link Monitor #############
+[[inputs.exec]]
+  commands = ["{{ telegraf_remote_path }}/scripts/{{ telegraf_name }}_port_conn_monitor.sh"]
+  timeout = "10s"
+  data_format = "influx"
+  name_override = "link_count"
+
+############## Ping Monitoring ################
+[[inputs.ping]]
+  {% set unique_ips = ports | map(attribute='ip') | unique %}
+  urls = [{% for ip in unique_ips %}"{{ ip }}"{% if not loop.last %}, {% endif %}{% endfor %}]
+  count = 2
+  ping_interval = 3.0
+  timeout = 2.0
+  method = "exec"
+
+##### App Metrics ###########
+[[inputs.exec]]
+  commands = ["{{ telegraf_remote_path }}/scripts/{{ telegraf_name }}_app_metrics.sh"]
+  data_format = "influx"
+  name_override = "app_metrics"
+  interval = "1m"
+  timeout = "50s"
+
+
+######## Tails ########
+[[inputs.tail]]
+  files = ["/opt/airlinq/apache-tomcat-*/logs/catalina.out"]
+  initial_read_offset = "end"
+  name_override = "NC_Catalina_logs"
+  tags = { app = "nc" }
+  data_format = "grok"
+  grok_patterns = ["%{SPRINGBOOT_LOG}"]
+  grok_custom_patterns = '''
+SPRINGBOOT_LOG %{TIMESTAMP_ISO8601:log_time}\s+%{LOGLEVEL:log_level}\s+%{NUMBER:pid}\s+---\s+\[%{DATA:thread}\]\s+%{DATA:class}\s+:\s+%{GREEDYDATA:message}
+'''
+
+[[processors.converter]]
+  namepass = ["NC_Catalina_logs"]
+  [processors.converter.fields]
+    tag = ["class","log_level"]
+
+
+### OUTPUTS Pri #####
+[[outputs.influxdb]]
+  urls = ["http://{{ influx_Pri_IP }}:{{ influx_Pri_Port }}"]
+  database = "{{ influx_priDB_name }}"
+  retention_policy = "thirty_days"
+  timeout = "5s"
+  skip_database_creation = true
+  namepass = ["link_count","port_listen","portResponsetime","ping","app_metrics"]
+
+[[outputs.influxdb]]
+  urls = ["http://{{ influx_Pri_IP }}:{{ influx_Pri_Port }}"]
+  database = "{{ influx_priDB_name }}"
+  retention_policy = "1hrRP"
+  timeout = "5s"
+  skip_database_creation = true
+  namepass = ["NC_Catalina_logs"]
+
+
+### OUTPUTS Sec #####
+[[outputs.influxdb]]
+  urls = ["http://{{ influx_Sec_IP }}:{{ influx_Sec_Port }}"]
+  database = "{{ influx_secDB_name }}"
+  retention_policy = "thirty_days"
+  timeout = "5s"
+  skip_database_creation = true
+  namepass = ["link_count","port_listen","portResponsetime","ping","app_metrics"]
+
+[[outputs.influxdb]]
+  urls = ["http://{{ influx_Sec_IP }}:{{ influx_Sec_Port }}"]
+  database = "{{ influx_secDB_name }}"
+  retention_policy = "1hrRP"
+  timeout = "5s"
+  skip_database_creation = true
+  namepass = ["NC_Catalina_logs"]
+

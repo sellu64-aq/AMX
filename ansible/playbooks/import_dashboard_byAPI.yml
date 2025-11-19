@@ -1,0 +1,130 @@
+---
+- hosts: grafana
+  gather_facts: no
+  vars:
+#    grafana_api_url: "{{ grafana_api_url }}"
+#    grafana_api_key: "{{ grafana_api_key }}"
+ #   grafana_user: "admin"
+ #   grafana_password: "admin"
+    folder_name: "App"
+    dashboard_file: "{{ ansible_folder }}/dashboards/{{ dashboard_name }}"
+  tasks:
+    - name: Debug to confirm dashboard file
+      debug:
+        msg: "Importing dashboard from {{ dashboard_file }}"
+
+  tasks:
+    - name: Get list of folders to find App folder
+      uri:
+        url: "{{ grafana_api_url }}/api/folders"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ grafana_api_key }}"
+        return_content: yes
+        status_code: 200
+        validate_certs: no        # Since using IP with self-signed cert
+        follow_redirects: all     # Allow following the redirect
+      register: folder_list
+
+    - name: Find App folder case-insensitive by title
+      set_fact:
+        app_folder: >-
+          {{
+            folder_list.json
+            | selectattr('title', 'search', '(?i)^' + folder_name + '$')
+            | list
+          }}
+
+
+    - name: Debug existing found folder
+      debug:
+        var: app_folder
+
+    - name: Set found folder UID if exists
+      set_fact:
+        folder_uid: "{{ app_folder[0].uid }}"
+      when: app_folder | length > 0
+
+    - name: Create folder if it does not exist
+      uri:
+        url: "{{ grafana_api_url }}/api/folders"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ grafana_api_key }}"
+          Content-Type: "application/json"
+        status_code: 200,409
+        body_format: json
+        body:
+          title: "{{ folder_name }}"
+          validate_certs: no        # Since using IP with self-signed cert
+          follow_redirects: all     # Allow following the redirect
+      register: create_folder_response
+      when: app_folder | length == 0
+
+    - name: Set folder UID from created folder
+      set_fact:
+        folder_uid: "{{ create_folder_response.json.uid }}"
+      when: app_folder | length == 0
+
+    - name: Debug final folder UID to confirm
+      debug:
+        msg: "Using folderUid={{ folder_uid }}"
+
+    - name: Ensure dashboards directory exists on target
+      file:
+        path: "{{ telegraf_remote_path }}/dashboards/"
+        state: directory
+        owner: "{{ telegraf_user }}" 
+        group: "{{ telegraf_group }}"
+        mode: '0755'
+
+    - name: Copy dashboard JSON to remote
+      copy:
+        src: "{{ dashboard_file }}"
+        dest: "{{ telegraf_remote_path }}/dashboards/{{ dashboard_file | basename }}"        
+        mode: '0644'
+
+    - name: Load dashboard JSON from remote file
+      slurp:
+        src: "{{ telegraf_remote_path }}/dashboards/{{ dashboard_file | basename }}"        
+      register: dashboard_content
+
+    - name: Inject folderUid & overwrite into JSON on remote host
+      set_fact:
+        import_payload:
+          dashboard: "{{ (dashboard_content.content | b64decode | from_json).dashboard }}"
+          folderUid: "{{ folder_uid }}"
+          overwrite: true
+          inputs:
+            - name: DS_INFLUXDB_PRI
+              type: datasource
+              pluginId: influxdb
+              value: influxdb_pri
+
+    - name: Show only changed portion before import
+      debug:
+        msg:
+          - "folderUid: {{ import_payload.folderUid }}"
+          - "overwrite: {{ import_payload.overwrite }}"
+
+    - name: Show dashboard title from loaded JSON
+      debug:
+        msg: "Dashboard title is: {{ import_payload.dashboard.title }}"
+
+    - name: Import dashboard into Grafana
+      uri:
+        url: "{{ grafana_api_url }}/api/dashboards/import"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ grafana_api_key }}"
+          Content-Type: "application/json"
+        body: "{{ import_payload }}"
+        body_format: json
+        status_code: 200
+        validate_certs: no        # Since using IP with self-signed cert
+        follow_redirects: all     # Allow following the redirect
+      register: grafana_import_response
+
+    - name: Show response from Grafana
+      debug:
+        var: grafana_import_response.json
