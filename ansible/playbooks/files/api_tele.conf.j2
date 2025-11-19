@@ -177,6 +177,7 @@
   skip_database_creation = true
   namepass = ["http_response", "API_catalina_logs"]
 
+{% if influx_Sec_IP is defined and influx_Sec_IP|length > 0 %}
 ############## OUTPUTS Sec ##############
 [[outputs.influxdb]]
   urls = ["http://{{ influx_Sec_IP }}:{{ influx_Sec_Port }}"]
@@ -200,3 +201,4 @@
   timeout = "10s"
   skip_database_creation = true
   namepass = ["http_response", "API_catalina_logs"]
+{% endif %}

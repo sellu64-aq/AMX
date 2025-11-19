@@ -184,6 +184,7 @@ HTTPDATE %{MONTHDAY}/%{MONTH}/%{YEAR}:%{TIME} %{ISO8601_TIMEZONE}
   skip_database_creation = true
   namepass = ["access_log","nginx_upstream_errors"]
 
+{% if influx_Sec_IP is defined and influx_Sec_IP|length > 0 %}
 ### OUTPUTS Sec #####
 [[outputs.influxdb]]
   urls = ["http://{{ influx_Sec_IP }}:{{ influx_Sec_Port }}"]
@@ -200,3 +201,4 @@ HTTPDATE %{MONTHDAY}/%{MONTH}/%{YEAR}:%{TIME} %{ISO8601_TIMEZONE}
   timeout = "5s"
   skip_database_creation = true
   namepass = ["access_log","nginx_upstream_errors"]
+{% endif %}

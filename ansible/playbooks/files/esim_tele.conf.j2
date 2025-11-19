@@ -152,19 +152,39 @@ def apply(metric):
   [processors.converter.fields]
     tag = ["log_level", "class", "method"]
 
-### OUTPUTS
-
+############## OUTPUTS Pri ##############
 [[outputs.influxdb]]
-  urls = ["http://{{ influx_ip }}:8086"]
-  database = "{{ influx_DB_name }}"
+  urls = ["http://{{ influx_Pri_IP }}:{{ influx_Pri_Port }}"]
+  database = "{{ influx_priDB_name }}"
   retention_policy = "thirty_days"
-  timeout = "5s"
+  timeout = "50s"
+  skip_database_creation = true
   namepass = ["app_metrics","IPPort_Status","portResponsetime","ip_listener_status","ping","SNMP"]
 
+[[outputs.influxdb]]
+  urls = ["http://{{ influx_Pri_IP }}:{{ influx_Pri_Port }}"]
+  database = "{{ influx_priDB_name }}"
+  retention_policy = "1hrRP"
+  timeout = "10s"
+  skip_database_creation = true
+  namepass = ["esimws_log"]
+
+{% if influx_Sec_IP is defined and influx_Sec_IP|length > 0 %}
+############## OUTPUTS Sec ##############
+[[outputs.influxdb]]
+  urls = ["http://{{ influx_Sec_IP }}:{{ influx_Sec_Port }}"]
+  database = "{{ influx_secDB_name }}"
+  retention_policy = "thirty_days"
+  timeout = "50s"
+  skip_database_creation = true
+  namepass = ["app_metrics","IPPort_Status","portResponsetime","ip_listener_status","ping","SNMP"]
 
 [[outputs.influxdb]]
-  urls = ["http://{{ influx_ip }}:8086"]
-  database = "{{ influx_DB_name }}"
+  urls = ["http://{{ influx_Sec_IP }}:{{ influx_Sec_Port }}"]
+  database = "{{ influx_secDB_name }}"
   retention_policy = "1hrRP"
-  timeout = "5s"
+  timeout = "10s"
+  skip_database_creation = true
   namepass = ["esimws_log"]
+{% endif %}
+

@@ -321,6 +321,7 @@ def apply(metric):
   skip_database_creation = true
   namepass = ["SNMP"]
 
+{% if influx_Sec_IP is defined and influx_Sec_IP|length > 0 %}
   ########  Outputs Sec #########
 [[outputs.influxdb]]
   urls = ["http://{{ influx_Sec_IP }}:{{ influx_Sec_Port }}"]
@@ -345,3 +346,4 @@ def apply(metric):
   timeout = "5s"
   skip_database_creation = true
   namepass = ["SNMP"]
+{% endif %}

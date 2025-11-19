@@ -104,9 +104,11 @@
   timeout = "5s"
   namepass = ["os_info","cpu","disk","diskio","mem","net","system","host_IP","portResponsetime","ip_listener_status","ping","app_metrics","kernel","linux_sysctl_fs","netstat","ntp_sync_status"]
 
+{% if influx_Sec_IP is defined and influx_Sec_IP|length > 0 %}
 [[outputs.influxdb]]
   urls = ["http://{{ influx_Sec_IP }}:{{ influx_Sec_Port }}"]
   database = "{{ influx_secDB_name }}"
   retention_policy = "thirty_days"
   timeout = "5s"
   namepass = ["os_info","cpu","disk","diskio","mem","net","system","host_IP","portResponsetime","ip_listener_status","ping","app_metrics","kernel","linux_sysctl_fs","netstat","ntp_sync_status"]
+{% endif %}

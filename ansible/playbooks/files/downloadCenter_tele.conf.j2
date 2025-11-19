@@ -99,7 +99,7 @@ SPRINGBOOT_LOG %{TIMESTAMP_ISO8601:log_time}\s+%{LOGLEVEL:log_level}\s+%{NUMBER:
   skip_database_creation = true
   namepass = ["NC_Catalina_logs"]
 
-
+{% if influx_Sec_IP is defined and influx_Sec_IP|length > 0 %}
 ### OUTPUTS Sec #####
 [[outputs.influxdb]]
   urls = ["http://{{ influx_Sec_IP }}:{{ influx_Sec_Port }}"]
@@ -116,4 +116,4 @@ SPRINGBOOT_LOG %{TIMESTAMP_ISO8601:log_time}\s+%{LOGLEVEL:log_level}\s+%{NUMBER:
   timeout = "5s"
   skip_database_creation = true
   namepass = ["NC_Catalina_logs"]
-
+{% endif %}

@@ -541,8 +541,8 @@ def apply(metric):
   skip_database_creation = true
   namepass = ["kafka_consumergroup_members"]
 
+{% if influx_Sec_IP is defined and influx_Sec_IP|length > 0 %}
 ### OUTPUTS Sec #####
-
 [[outputs.influxdb]]
   urls = ["http://{{ influx_Sec_IP }}:{{ influx_Sec_Port }}"]
   database = "{{ influx_secDB_name }}"
@@ -566,6 +566,7 @@ def apply(metric):
     "kafka_topic_partition_under_replicated_partition"
   ]
 
+
 [[outputs.influxdb]]
   urls = ["http://{{ influx_Sec_IP }}:{{ influx_Sec_Port }}"]
   database = "{{ influx_secDB_name }}"
@@ -573,3 +574,4 @@ def apply(metric):
   timeout = "5s"
   skip_database_creation = true
   namepass = ["kafka_consumergroup_members"]
+{% endif %}

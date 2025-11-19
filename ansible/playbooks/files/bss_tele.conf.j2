@@ -275,6 +275,7 @@ JAVACLASS (?:[A-Za-z0-9_$\.]+)
  # namepass = ["access_log", "Catalina_logs"]
   namepass = [Catalina_logs"]
 
+{% if influx_Sec_IP is defined and influx_Sec_IP|length > 0 %}
 ### OUTPUTS Sec #####
 [[outputs.influxdb]]
   urls = ["http://{{ influx_Sec_IP }}:{{ influx_Sec_Port }}"]
@@ -292,3 +293,4 @@ JAVACLASS (?:[A-Za-z0-9_$\.]+)
   skip_database_creation = true
  # namepass = ["access_log", "Catalina_logs"]
   namepass = [Catalina_logs"]
+{% endif %}
