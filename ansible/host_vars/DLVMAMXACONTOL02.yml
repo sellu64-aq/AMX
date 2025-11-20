@@ -14,4 +14,4 @@ deploy_ntp_status: false
 deploy_dra_process_script: false
 deploy_mysql_slowquery_script: false
 deploy_nginx: false
-
+deploy_bssBypass_Check: false
