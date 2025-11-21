@@ -30,11 +30,11 @@ apps:
 ports:
   - ip: "190.110.144.5"
     port: 3886
-    name: "java"
+    name: "Link1"
 
   - ip: "190.110.144.4"
     port: 3886
-    name: "java"
+    name: "Link2"
    
   - ip: "10.221.87.229"
     port: 1521

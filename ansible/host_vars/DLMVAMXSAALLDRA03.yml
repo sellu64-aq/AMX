@@ -14,8 +14,8 @@ deploy_port_conn_monitor: true
 deploy_ntp_status: false
 deploy_dra_process_script: false
 deploy_nginx: false
-deploy_oracle_Metrics: false
 deploy_bssBypass_Check: false
+deploy_oracle_Metrics: false
 
 oracle_user: "RWUSER"
 oracle_pass: "ROAMWARE"
@@ -23,7 +23,7 @@ oracle_db: "RWDB"
 oracle_home: "/u01/app/oracle/product/11.2.4/client_1"
 
 apps:
-  - name: "ArgDRA2"
+  - name: "ARG_DRA2"
     match: "DiameterRoutingAgent"
     type: "pattern"
 
@@ -31,11 +31,11 @@ apps:
 ports:
   - ip: "190.110.144.5"
     port: 3886
-    name: "dra"
+    name: "java"
 
   - ip: "190.110.144.4"
     port: 3886
-    name: "dra"
+    name: "java"
 
   - ip: "10.221.87.229"
     port: 1521

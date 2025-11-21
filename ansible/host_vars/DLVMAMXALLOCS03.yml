@@ -43,3 +43,15 @@ ports:
   - ip: "127.0.0.1"
     port: 4803
     name: "spread"
+
+  - ip: "10.221.87.229"
+    port: 1521
+    name: "oracle"
+
+  - ip: "10.221.93.52"
+    port: 20131
+    name: "DRASouth"
+    
+  - ip: "10.221.86.224"
+    port: 20131
+    name: "DRANorth"

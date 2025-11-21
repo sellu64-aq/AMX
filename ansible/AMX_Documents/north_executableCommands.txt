@@ -8,8 +8,8 @@ ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/install_telegraf.ym
 
 ---> this will specific to given 'target_group'
 ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/install_telegraf.yml -e "telegraf_conf_file=api_tele.conf.j2" -e "telegraf_name=api" --limit api
-ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/install_telegraf.yml -e "telegraf_conf_file=dra_tele.conf.j2" -e "telegraf_name=dra" --limit dra
 ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/install_telegraf.yml -e "telegraf_conf_file=ocs_tele.conf.j2" -e "telegraf_name=ocs" --limit ocs
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/install_telegraf.yml -e "telegraf_conf_file=dra_tele.conf.j2" -e "telegraf_name=dra" --limit dra
 ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/install_telegraf.yml -e "telegraf_conf_file=bss_tele.conf.j2" -e "telegraf_name=bss" --limit bss
 ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/install_telegraf.yml -e "telegraf_conf_file=mysql_tele.conf.j2" -e "telegraf_name=mysql" --limit mysql
 ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/install_telegraf.yml -e "telegraf_conf_file=mysql_queryCenter_tele.conf.j2" -e "telegraf_name=mysqlCenter" --limit DLVMTMAMXOPS01
