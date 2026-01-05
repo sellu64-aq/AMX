@@ -1,0 +1,24 @@
+# Variables for DLVMTMAMXPOSTGDB01
+# IP 10.221.92.155
+---
+# Add host-specific variables below
+deploy_app_metrics: true
+deploy_port_listen_monitor: true
+deploy_port_conn_monitor: true
+deploy_ntp_status: false
+deploy_dra_process_script: false
+
+apps:
+  - name: "postgres"
+    match: "postgres"
+    type: "pattern"
+ 
+# Application ports for DLVMTMAMXPOSTGDB01
+ports:
+  - ip: "127.0.0.1"
+    port: 5432
+    name: "postgres"
+
+  - ip: "10.221.92.155"
+    port: 37062
+    name: "MXPOSTGDB01"

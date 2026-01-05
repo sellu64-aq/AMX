@@ -1,0 +1,86 @@
+{
+  "uid": "{{ alert_uid }}",
+  "folderUID": "{{ folder_uid }}",
+  "ruleGroup": "{{ rulegroup }}",
+  "title": "DRA Brazil SUCCESS Count Dropped Below Previous Day",
+  "condition": "C",
+  "data": [
+    {
+      "refId": "A",
+      "relativeTimeRange": {"from": 259200, "to": 0},
+      "datasourceUid": "{{ datasourceUid }}",
+      "model": {
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "query": "SELECT sum(ResponseCount) FROM \"CQ_DRASuccessFailure1mAggr\" WHERE $timeFilter and host =~ /^DLVMAMXOCSDRA03|DLVMAMXSABRDRA02/ and ResultCode = 'DIAMETER_SUCCESS' group by time(24h, 0h),\"ResultCode\"",
+        "rawQuery": true,
+        "refId": "A",
+        "resultFormat": "time_series"
+      }
+    },
+    {
+      "refId": "B",
+      "relativeTimeRange": {"from": 0, "to": 0},
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": { "params": [0, 0], "type": "gt" },
+            "operator": {"type": "and"},
+            "query": {"params": []},
+            "reducer": {"params": [], "type": "avg"},
+            "type": "query"
+          }
+        ],
+        "datasource": {
+          "name": "Expression",
+          "type": "__expr__",
+          "uid" : "__expr__"
+        },
+        "expression": "A",
+        "hide": false,
+        "reducer": "median",
+        "refId": "B",
+        "type": "reduce"
+      }
+    },
+    {
+      "refId": "C",
+      "relativeTimeRange": {"from": 0, "to": 0},
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": { "params": [0, 0], "type": "gt" },
+            "operator": {"type": "and"},
+            "query": {"params": []},
+            "reducer": {"params": [], "type": "avg"},
+            "type": "query"
+          }
+        ],
+        "datasource": {
+          "name": "Expression",
+          "type": "__expr__",
+          "uid" : "__expr__"
+        },
+        "expression": "$B \u003c 25000000",
+        "hide": false,
+        "refId": "C",
+        "type": "math"
+      }
+    }
+  ],
+  "noDataState": "OK",
+  "execErrState": "Error",
+  "annotations": {
+  {% raw %}
+    "description": "Yesterday's Diameter SUCCESS traffic for {{ $labels.project }} \ndropped below the configured threshold.\n\nObserved: {{ $values.A }} \nThreshold: {{ if eq $labels.project \"Brazil\" }}25M{{ else }}25M{{ end }}\n\nPlease investigate."
+  {% endraw %}
+  },
+  "labels": {
+    "platform": "{{ project }}",
+    "severity": "CRITICAL",
+    "type"    : "{{ (rulegroup | string).split('_')[0] }}"
+  },
+  "isPaused": false
+}

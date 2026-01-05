@@ -14,7 +14,7 @@
         "instant": true,
         "intervalMs": 1000,
         "maxDataPoints": 43200,
-        "query": "SELECT mean(\"orchestrationstreamingapi_gmsa_streamingmetrics_streaming_lastcompletedbatch_processingdelay_value\") FROM \"Spark_OrchestrationStreamingAPI\" WHERE $timeFilter group by host, project,zone, time(1m) fill(0)",
+        "query": "SELECT mean(/orchestrationstreamingapi_gmsa_streamingmetrics_streaming_lastcompletedbatch_processingdelay_value$/) FROM \"spark_streaming\" WHERE $timeFilter group by host, project,zone, time(1m) fill(0)",
         "rawQuery": true,
         "refId": "A",
         "resultFormat": "time_series"

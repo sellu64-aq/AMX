@@ -1,0 +1,126 @@
+{
+  "uid": "{{ alert_uid }}",
+  "folderUID": "{{ folder_uid }}",
+  "ruleGroup": "{{ rulegroup }}",
+  "title": "Spark LiveListenerBus - Multi-Queue Failure",
+  "condition": "E",
+  "data": [
+    {
+      "refId": "A",
+      "relativeTimeRange": {"from": 600, "to": 0},
+      "datasourceUid": "{{ datasourceUid }}",
+      "model": {
+        "datasource": {"type": "influxdb", "uid": "{{ datasourceUid }}"},
+        "instant": true,
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "query": "SELECT mean(\"livelistenerbus_queue_appstatus_size_value\") \nFROM \"spark_livelistenerbus\" \nWHERE $timeFilter \nGROUP BY project, zone, host, nodeIP, time(1m)",
+        "rawQuery": true,
+        "refId": "A",
+        "resultFormat": "time_series"
+      }
+    },
+    {
+      "refId": "B",
+      "relativeTimeRange": {"from": 600, "to": 0},
+      "datasourceUid": "fexo9rlesu6f4a",
+      "model": {
+        "datasource": {"type": "influxdb", "uid": "fexo9rlesu6f4a"},
+        "hide": false,
+        "query": "SELECT mean(\"livelistenerbus_queue_executormanagement_size_value\") \nFROM \"spark_livelistenerbus\" \nWHERE $timeFilter \nGROUP BY time(1m),project, zone,host, nodeIP",
+        "rawQuery": true,
+        "refId": "B",
+        "resultFormat": "time_series"
+      }
+    },
+    {
+      "refId": "C",
+      "relativeTimeRange": {"from": 0, "to": 0},
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": { "params": [0, 0], "type": "gt" },
+            "operator": {"type": "and"},
+            "query": {"params": []},
+            "reducer": {"params": [], "type": "avg"},
+            "type": "query"
+          }
+        ],
+        "datasource": {
+          "name": "Expression",
+          "type": "__expr__",
+          "uid" : "__expr__"
+        },
+        "expression": "A",
+        "hide": false,
+        "reducer": "last",
+        "refId": "C",
+        "type": "reduce"
+      }
+    },
+    {
+      "refId": "D",
+      "relativeTimeRange": {"from": 0, "to": 0},
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": { "params": [0, 0], "type": "gt" },
+            "operator": {"type": "and"},
+            "query": {"params": []},
+            "reducer": {"params": [], "type": "avg"},
+            "type": "query"
+          }
+        ],
+        "datasource": {
+          "name": "Expression",
+          "type": "__expr__",
+          "uid" : "__expr__"
+        },
+        "expression": "B",
+        "hide": false,
+        "reducer": "last",
+        "refId": "D",
+        "type": "reduce"
+      }
+    },
+    {
+      "refId": "E",
+      "relativeTimeRange": {"from": 0, "to": 0},
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": { "params": [0, 0], "type": "gt" },
+            "operator": {"type": "and"},
+            "query": {"params": []},
+            "reducer": {"params": [], "type": "avg"},
+            "type": "query"
+          }
+        ],
+        "datasource": {
+          "name": "Expression",
+          "type": "__expr__",
+          "uid" : "__expr__"
+        },
+        "expression": "($C \u003e 100) \u0026\u0026 ($D \u003e 100)",
+        "hide": false,
+        "refId": "E",
+        "type": "math"
+      }
+    }
+  ],
+  "noDataState": "OK",
+  "execErrState": "Error",
+  "annotations": {
+    "description": "Description:\nMultiple LiveListenerBus queues are simultaneously degraded. System-wide \nevent processing issue. Driver is likely severely overloaded.\n\nAction to Take:\n1. IMMEDIATE: This indicates severe driver overload\n2. Check driver CPU/memory/disk immediately\n3. Review all processing latency metrics\n4. Check for dropped events\n5. Consider emergency application restart\n6. Increase driver resources before restart\n7. Review driver logs for root cause\n8. Engage platform team if infrastructure issue"
+  },
+  "labels": {
+    "platform": "{{ project }}",
+    "zone"    : "{{ zone }}",
+    "severity": "CRITICAL",
+    "type"    : "{{ (rulegroup | string).split('_')[0] }}"
+  },
+  "isPaused": false
+}

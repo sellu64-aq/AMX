@@ -25,7 +25,13 @@ apps:
 ports:
   - ip: 10.221.92.106
     port: 8086
-    name: telegraf
+    name: influx_Dallas1
   - ip: 10.221.92.107
     port: 8086
-    name: telegraf
+    name: influx_Dallas2
+  - ip: 10.121.69.170
+    port: 8086
+    name: influx_Miami1
+  - ip: 10.121.69.180
+    port: 8086
+    name: influx_Miami2

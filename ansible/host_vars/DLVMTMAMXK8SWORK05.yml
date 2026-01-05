@@ -1,0 +1,44 @@
+# Variables for DLVMTMAMXK8SWORK05
+# IP 10.221.92.186
+---
+# Add host-specific variables below
+deploy_app_metrics: true
+deploy_port_listen_monitor: true
+deploy_port_conn_monitor: true
+deploy_ntp_status: false
+deploy_dra_process_script: false
+
+apps:
+  - name: "nginx-ingress-controller"
+    match: "nginx-ingress-controller"
+    type: "pattern"
+  - name: "nginx.conf"
+    match: "nginx.conf"
+    type: "pattern"
+  - name: "kubelet"
+    match: "kubelet"
+    type: "pattern"
+  - name: "kube-proxy"
+    match: "kube-proxy"
+    type: "pattern"
+  - name: "containerd"
+    match: "containerd"
+    type: "pattern"
+
+# Application ports for DLVMTMAMXK8SWORK05
+ports:
+  - ip: "127.0.0.1"
+    port: 10249
+    name: "kube-proxy"
+
+  - ip: "127.0.0.1"
+    port: 10248
+    name: "kubelet"
+
+  - ip: "127.0.0.1"
+    port: 10256
+    name: "kube-proxy"
+
+  - ip: "10.221.93.179"
+    port: 6443
+    name: "rke2 agent"

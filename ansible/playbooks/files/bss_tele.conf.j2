@@ -71,69 +71,69 @@
   name_override = "link_count"
 
 ###### LOCALHOST ACCESS LOGS ########
+################
 [[inputs.tail]]
   files = ["/opt/webservers/bss_1/logs/localhost_access_log.*.txt"]
   name_override = "access_log"
   data_format = "grok"
   initial_read_offset = "end"
   tags = { app = "bss1" }
-
   grok_patterns = [
-    # Split path and query string properly
-    '%{IP:client_ip} - - \[%{HTTPDATE:timestamp}\] "%{WORD:method} %{URIPATH:message}(?:\?(?<querystring>[^\"]+))? HTTP/%{NUMBER:http_version}" %{INT:response_code} %{INT:response_size}(?:\s*\[%{INT:request_duration}\])?'
+    '%{IP:client_ip} - - \[%{HTTPDATE:timestamp}\] "%{WORD:method} %{DATA:full_path} HTTP/%{NUMBER:http_version}" %{INT:response_code} %{INT:response_size}(?:\s*\[%{INT:request_duration}\])?'
   ]
-
   grok_custom_patterns = '''
 HTTPDATE %{MONTHDAY}/%{MONTH}/%{YEAR}:%{TIME} %{ISO8601_TIMEZONE}
 '''
 
 #######################
-# Processor: Remove quotes from message (if any)
+# Processor: Extract API name from path (before the ?)
 #######################
 [[processors.regex]]
   namepass = ["access_log"]
+  order = 1
   [[processors.regex.fields]]
-    key = "message"
-    pattern = '^"(.*)"$'
+    key = "full_path"
+    # Extract everything before the query string
+    pattern = '^([^\?]+)'
     replacement = '${1}'
+    result_key = "path_only"
 
 #######################
-# Processor: Extract only API name from path
+# Processor: Extract the last segment as API name
 #######################
 [[processors.regex]]
   namepass = ["access_log"]
+  order = 2
   [[processors.regex.fields]]
-    key = "message"
-    pattern = '.*/([^/?]+)'
+    key = "path_only"
+    # Extract last segment: /backend/st/json/UserRequest -> UserRequest
+    pattern = '.*/([^/]+)$'
     replacement = '${1}'
     result_key = "api_name"
 
 #######################
-# Processor (Optional): Tag static assets
+# Processor: Extract query string for additional parsing if needed
+#######################
+[[processors.regex]]
+  namepass = ["access_log"]
+  order = 3
+  [[processors.regex.fields]]
+    key = "full_path"
+    # Extract query string
+    pattern = '\?(.+)$'
+    replacement = '${1}'
+    result_key = "querystring"
+
+#######################
+# Processor: Tag static assets
 #######################
 [[processors.regex]]
   namepass = ["access_log"]
   [[processors.regex.fields]]
-    key = "message"
-    pattern = '.*\.(js|css|png|jpg|jpeg|ico|svg|woff2?|action|html|gif|map|ttf|otf)(\?.*)?$'
+    key = "path_only"
+    pattern = '.*\.(js|css|png|jpg|jpeg|ico|svg|woff2?|action|html|gif|map|ttf|otf)$'
     replacement = "static"
     result_key = "asset_type"
-
-#######################
-# Processor: Parse query strings into logfmt fields
-#######################
-[[processors.regex]]
-  namepass = ["access_log"]
-  [[processors.regex.fields]]
-    key = "querystring"
-    pattern = "([^=&]+)=([^&]*)"
-    replacement = "${1}:${2}"
-    result_key = "parsed_kv"
-
-[[processors.parser]]
-  namepass = ["access_log"]
-  parse_fields = ["parsed_kv"]
-  data_format = "logfmt"
 
 #######################
 # Processor: Convert fields to tags and integers
@@ -141,9 +141,16 @@ HTTPDATE %{MONTHDAY}/%{MONTH}/%{YEAR}:%{TIME} %{ISO8601_TIMEZONE}
 [[processors.converter]]
   namepass = ["access_log"]
   [processors.converter.fields]
-    tag = ["api_name", "client_ip", "method", "response_code"]
+    tag = ["api_name", "method", "response_code", "asset_type"]
     integer = ["response_size", "request_duration"]
 
+#######################
+# Processor: Drop the temporary fields
+#######################
+[[processors.strings]]
+  namepass = ["access_log"]
+  [[processors.strings.trim]]
+    field = "api_name"
 
 ################
 [[inputs.tail]]
@@ -152,63 +159,62 @@ HTTPDATE %{MONTHDAY}/%{MONTH}/%{YEAR}:%{TIME} %{ISO8601_TIMEZONE}
   data_format = "grok"
   initial_read_offset = "end"
   tags = { app = "bss2" }
-
   grok_patterns = [
-    # Split path and query string properly
-    '%{IP:client_ip} - - \[%{HTTPDATE:timestamp}\] "%{WORD:method} %{URIPATH:message}(?:\?(?<querystring>[^\"]+))? HTTP/%{NUMBER:http_version}" %{INT:response_code} %{INT:response_size}(?:\s*\[%{INT:request_duration}\])?'
+    '%{IP:client_ip} - - \[%{HTTPDATE:timestamp}\] "%{WORD:method} %{DATA:full_path} HTTP/%{NUMBER:http_version}" %{INT:response_code} %{INT:response_size}(?:\s*\[%{INT:request_duration}\])?'
   ]
-
   grok_custom_patterns = '''
 HTTPDATE %{MONTHDAY}/%{MONTH}/%{YEAR}:%{TIME} %{ISO8601_TIMEZONE}
 '''
 
 #######################
-# Processor: Remove quotes from message (if any)
+# Processor: Extract API name from path (before the ?)
 #######################
 [[processors.regex]]
   namepass = ["access_log"]
+  order = 1
   [[processors.regex.fields]]
-    key = "message"
-    pattern = '^"(.*)"$'
+    key = "full_path"
+    # Extract everything before the query string
+    pattern = '^([^\?]+)'
     replacement = '${1}'
+    result_key = "path_only"
 
 #######################
-# Processor: Extract only API name from path
+# Processor: Extract the last segment as API name
 #######################
 [[processors.regex]]
   namepass = ["access_log"]
+  order = 2
   [[processors.regex.fields]]
-    key = "message"
-    pattern = '.*/([^/?]+)'
+    key = "path_only"
+    # Extract last segment: /backend/st/json/UserRequest -> UserRequest
+    pattern = '.*/([^/]+)$'
     replacement = '${1}'
     result_key = "api_name"
 
 #######################
-# Processor (Optional): Tag static assets
+# Processor: Extract query string for additional parsing if needed
+#######################
+[[processors.regex]]
+  namepass = ["access_log"]
+  order = 3
+  [[processors.regex.fields]]
+    key = "full_path"
+    # Extract query string
+    pattern = '\?(.+)$'
+    replacement = '${1}'
+    result_key = "querystring"
+
+#######################
+# Processor: Tag static assets
 #######################
 [[processors.regex]]
   namepass = ["access_log"]
   [[processors.regex.fields]]
-    key = "message"
-    pattern = '.*\.(js|css|png|jpg|jpeg|ico|svg|woff2?|action|html|gif|map|ttf|otf)(\?.*)?$'
+    key = "path_only"
+    pattern = '.*\.(js|css|png|jpg|jpeg|ico|svg|woff2?|action|html|gif|map|ttf|otf)$'
     replacement = "static"
     result_key = "asset_type"
-
-#######################
-# Processor: Parse query strings into logfmt fields
-#######################
-[[processors.regex]]
-  namepass = ["access_log"]
-  [[processors.regex.fields]]
-    key = "querystring"
-    pattern = "([^=&]+)=([^&]*)"
-    replacement = "${1}:${2}"
-    result_key = "parsed_kv"
-
-[[processors.parser]]
-  namepass = ["access_log"]
-  parse_fields = ["parsed_kv"]
-  data_format = "logfmt"
 
 #######################
 # Processor: Convert fields to tags and integers
@@ -216,8 +222,16 @@ HTTPDATE %{MONTHDAY}/%{MONTH}/%{YEAR}:%{TIME} %{ISO8601_TIMEZONE}
 [[processors.converter]]
   namepass = ["access_log"]
   [processors.converter.fields]
-    tag = ["api_name", "client_ip", "method", "response_code"]
+    tag = ["api_name", "method", "response_code", "asset_type"]
     integer = ["response_size", "request_duration"]
+
+#######################
+# Processor: Drop the temporary fields
+#######################
+[[processors.strings]]
+  namepass = ["access_log"]
+  [[processors.strings.trim]]
+    field = "api_name"
 
 
 ### TAIL catalina.out logs
@@ -273,7 +287,7 @@ JAVACLASS (?:[A-Za-z0-9_$\.]+)
   timeout = "5s"
   skip_database_creation = true
  # namepass = ["access_log", "Catalina_logs"]
-  namepass = [Catalina_logs"]
+  namepass = ["Catalina_logs"]
 
 {% if influx_Sec_IP is defined and influx_Sec_IP|length > 0 %}
 ### OUTPUTS Sec #####
@@ -292,5 +306,5 @@ JAVACLASS (?:[A-Za-z0-9_$\.]+)
   timeout = "5s"
   skip_database_creation = true
  # namepass = ["access_log", "Catalina_logs"]
-  namepass = [Catalina_logs"]
+  namepass = ["Catalina_logs"]
 {% endif %}

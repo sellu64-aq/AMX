@@ -101,6 +101,43 @@ ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -
 ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="Oracle Spike in Total Sessions"' --limit DLVMTMAMXOPS01
 ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="Redis Database Service Down"' --limit DLVMTMAMXOPS01
 
+
+## spark ##
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="Spark AppStatusListener - High Latency"' --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="Spark Heartbeat Receiver - High Latency"' --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="Spark High Processing Delay"' --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="Spark High Records Per Batch Observed"' --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="Spark High Scheduling Delay"' --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="Spark Kafka Consumer Lag"' --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="Spark LiveListenerBus - Events Dropped"' --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="Spark LiveListenerBus - Processing Spike"' --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="Spark LiveListenerBus - CRITICAL Queue Size"' --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="Spark LiveListenerBus - HIGH Queue Size"' --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="Spark LiveListenerBus - Event Storm"' --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="Spark LiveListenerBus - Multi-Queue Failure"' --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="Spark Received vs Processed (throughput mismatch)"' --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="Spark Total Batch Delay"' --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="Spark Unprocessed vs Waiting Batches (queue length)"' --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="DRA Brazil SUCCESS Count Dropped Below Previous Day"' --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="DRA Mexico SUCCESS Count Dropped Below Previous Day"' --limit DLVMTMAMXOPS01
+
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="SNMP traps received."' --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="Spark LiveListenerBus - CRITICAL Queue Size "' --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="Spark LiveListenerBus - CRITICAL Queue Size "' --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="Spark LiveListenerBus - HIGH Queue Size "' --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="Spark LiveListenerBus - CRITICAL Queue Size"' --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete="Spark AppStatusListener - High Latency [WARNING]"' --limit DLVMTMAMXOPS01
+
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete=""' --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete=""' --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete=""' --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete=""' --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete=""' --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete=""' --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete=""' --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete=""' --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete=""' --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete=""' --limit DLVMTMAMXOPS01
 ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete=""' --limit DLVMTMAMXOPS01
 ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete=""' --limit DLVMTMAMXOPS01
 ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_delete.yml -e 'alert_title_to_delete=""' --limit DLVMTMAMXOPS01

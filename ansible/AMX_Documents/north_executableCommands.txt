@@ -23,6 +23,7 @@ ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/install_telegraf.ym
 ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/install_telegraf.yml -e "telegraf_conf_file=kafka_tele.conf.j2" -e "telegraf_name=kafkaNN2" --limit DLVMAMXHNN02
 ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/install_telegraf.yml -e "telegraf_conf_file=kafka_tele.conf.j2" -e "telegraf_name=kafkaNN3" --limit DLVMAMXHNN03
 ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/install_telegraf.yml -e "telegraf_conf_file=downloadCenter_tele.conf.j2" -e "telegraf_name=downloadCenter" --limit download_center
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/install_telegraf.yml -e "telegraf_conf_file=smsc_tele.conf.j2" -e "telegraf_name=smsc" --limit smsc
 
 --- dashbaords----
 ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/import_dashboard_byAPInew.yml   -e "dashboard_name=infra_summary.json.j2" -e "folder_name=Infra" --limit DLVMTMAMXOPS01

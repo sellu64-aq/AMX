@@ -1,0 +1,87 @@
+{
+  "uid": "{{ alert_uid }}",
+  "folderUID": "{{ folder_uid }}",
+  "ruleGroup": "{{ rulegroup }}",
+  "title": "Spark Heartbeat Receiver - High Latency",
+  "condition": "C",
+  "data": [
+    {
+      "refId": "A",
+      "relativeTimeRange": {"from": 900, "to": 0},
+      "datasourceUid": "{{ datasourceUid }}",
+      "model": {
+        "datasource": {"type": "influxdb", "uid": "{{ datasourceUid }}"},
+        "instant": true,
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "query": "SELECT mean(\"livelistenerbus_listenerprocessingtime_org_apache_spark_heartbeatreceiver_99thpercentile\") \nFROM \"spark_livelistenerbus\" \nWHERE $timeFilter \nGROUP BY project, zone,host, nodeIP, time(1m)",
+        "rawQuery": true,
+        "refId": "A",
+        "resultFormat": "time_series"
+      }
+    },
+    {
+      "refId": "B",
+      "relativeTimeRange": {"from": 0, "to": 0},
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": { "params": [0, 0], "type": "gt" },
+            "operator": {"type": "and"},
+            "query": {"params": []},
+            "reducer": {"params": [], "type": "avg"},
+            "type": "query"
+          }
+        ],
+        "datasource": {
+          "name": "Expression",
+          "type": "__expr__",
+          "uid" : "__expr__"
+        },
+        "expression": "A",
+        "hide": false,
+        "reducer": "last",
+        "refId": "B",
+        "type": "reduce"
+      }
+    },
+    {
+      "refId": "C",
+      "relativeTimeRange": {"from": 0, "to": 0},
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": { "params": [0, 0], "type": "gt" },
+            "operator": {"type": "and"},
+            "query": {"params": []},
+            "reducer": {"params": [], "type": "avg"},
+            "type": "query"
+          }
+        ],
+        "datasource": {
+          "name": "Expression",
+          "type": "__expr__",
+          "uid" : "__expr__"
+        },
+        "expression": "$B > 25",
+        "hide": false,
+        "refId": "C",
+        "type": "math"
+      }
+    }
+  ],
+  "noDataState": "OK",
+  "execErrState": "Error",
+  "annotations": {
+    "description": "Description:\nHeartbeatReceiver p99 processing time is critically high. This can cause \nfalse executor failures as heartbeats are delayed. Cluster stability at risk.\n\nAction to Take:\n1. CRITICAL: This can cause cascading executor failures\n2. Check driver CPU utilization immediately\n3. Review driver system metrics (load, I/O wait)\n4. Check for driver-side bottlenecks\n5. Increase driver cores/memory if constrained\n6. Review spark.executor.heartbeatInterval (default 10s)\n7. Processing time MUST be << heartbeat interval\n8. Consider emergency driver resource scaling"
+  },
+  "labels": {
+    "platform": "{{ project }}",
+    "zone"    : "{{ zone }}",
+    "severity": "WARN",
+    "type"    : "{{ (rulegroup | string).split('_')[0] }}"
+  },
+  "isPaused": false
+}

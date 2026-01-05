@@ -14,7 +14,7 @@
         "instant": true,
         "intervalMs": 1000,
         "maxDataPoints": 43200,
-        "query": "SELECT difference(mean(\"orchestrationstreamingapi_gmsa_streamingmetrics_streaming_totalreceivedrecords_value\")) AS \"Received\", difference(mean(\"orchestrationstreamingapi_gmsa_streamingmetrics_streaming_totalprocessedrecords_value\")) AS \"Processed\" FROM \"Spark_OrchestrationStreamingAPI\" WHERE $timeFilter group by host, project,zone, time(5m)",
+        "query": "SELECT difference(mean(/streamingmetrics_streaming_totalreceivedrecords_value$/)) AS \"Received\", difference(mean(/streamingmetrics_streaming_totalprocessedrecords_value$/)) AS \"Processed\" FROM \"spark_streaming\" WHERE $timeFilter group by host, project,zone, time(5m)",
         "rawQuery": true,
         "refId": "A",
         "resultFormat": "time_series"

@@ -14,7 +14,7 @@
         "instant": true,
         "intervalMs": 1000,
         "maxDataPoints": 43200,
-        "query": "SELECT mean(\"kafka_consumer_consumer_fetch_manager_metrics_records_lag_max\") FROM \"Spark_kafka_consumer_metrics\" WHERE $timeFilter group by host, client_id, project,zone, time(5m)",
+        "query": "SELECT mean(/kafka_consumer_consumer_fetch_manager_metrics_records_lag_max$/) FROM \"spark_kafka\" WHERE $timeFilter group by host, client_id, project,zone, time(5m)",
         "rawQuery": true,
         "refId": "A",
         "resultFormat": "time_series"

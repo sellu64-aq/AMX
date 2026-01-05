@@ -1,0 +1,24 @@
+# Variables for DDLVMTMAMXETCD01
+# IP 10.221.92.192
+---
+# Add host-specific variables below
+deploy_app_metrics: true
+deploy_port_listen_monitor: true
+deploy_port_conn_monitor: true
+deploy_ntp_status: false
+deploy_dra_process_script: false
+
+apps:
+  - name: "etcd"
+    match: "etcd"
+    type: "pattern"
+
+# Application ports for DDLVMTMAMXETCD01
+ports:
+  - ip: "10.221.93.192"
+    port: 2379
+    name: "etcd"
+
+  - ip: "10.221.93.193"
+    port: 2380
+    name: "etcd"

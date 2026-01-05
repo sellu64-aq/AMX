@@ -1,0 +1,22 @@
+# Variables for DLVMAMXAAADB01
+# IP 10.221.86.118
+
+---
+# Add host-specific variables below
+deploy_app_metrics: true
+deploy_port_listen_monitor: true
+deploy_port_conn_monitor: true
+deploy_ntp_status: false
+deploy_dra_process_script: false
+
+apps:
+  - name: "telegraf"
+    match: "telegraf"
+    type: "pattern"
+
+
+# Application ports for DLVMAMXAAADB01
+ports:
+  - ip: "10.221.86.118"
+    port: 9100
+    name: "AAADB01"

@@ -48,4 +48,3 @@ ports:
   - ip: 10.221.93.107
     port: 8086
     name: influxdb2
-

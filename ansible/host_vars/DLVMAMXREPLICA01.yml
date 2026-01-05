@@ -1,44 +1,28 @@
 # Variables for DLVMAMXREPLICA01
+# IP 10.221.81.49
+
 ---
 # Add host-specific variables below
-#
-########## Feature Flags ##########
-deploy_telegraf_redis: false
-deploy_telegraf_postgres: false
-deploy_telegraf_infra: false
-deploy_mysql_replica_status_monitor: true
-deploy_mysql_slowquery_script: true
 deploy_app_metrics: true
 deploy_port_listen_monitor: true
 deploy_port_conn_monitor: true
 deploy_ntp_status: false
 deploy_dra_process_script: false
-deploy_nginx: false
 
-########## MySQL Input Plugin ##########
-mysql_servers:
-  - user: grafana
-    password: Grafana@123
-    host: 10.221.82.49
-    port: 3306
-
-########## Application Monitoring ##########
 apps:
-  - name: "MySQL"
+  - name: "mysqld"
     match: "mysqld"
     type: "pattern"
 
-########## Port Monitoring ##########
+
+  
+# Application ports for DLVMAMXREPLICA01
 ports:
-  - ip: 127.0.0.1
-    port: 3306
-    name: mysql
-  - ip: 127.0.0.1
+  - ip: "127.0.0.1"
     port: 33060
-    name: unknown
-  - ip: 10.221.93.106
-    port: 8086
-    name: influxdb1
-  - ip: 10.221.93.107
-    port: 8086
-    name: influxdb2
+    name: "mysqld"
+    
+  - ip: "127.0.0.1"
+    port: 3306
+    name: "mysqld"    
+	

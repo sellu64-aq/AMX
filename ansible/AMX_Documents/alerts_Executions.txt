@@ -74,7 +74,9 @@ ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.ym
 ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_5m" -e "influxDS_name=Dallas_Pri" -e "alert_file=app/"
 ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_5m" -e "influxDS_name=Dallas_Pri" -e "alert_file=app/"
 
-
+#-----app_24h -----------
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_24h" -e "influxDS_name=Dallas_Pri" -e "alert_file=app/DRA_Brazil_SuccessCount_Dropped_Previous_day.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_24h" -e "influxDS_name=Dallas_Pri" -e "alert_file=app/DRA_Mexico_SuccessCount_Dropped_Previous_day.json.j2" --limit DLVMTMAMXOPS01
 
 
 #----- mysql_1m--------
@@ -121,6 +123,29 @@ ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.ym
 ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=sms_30m" -e "influxDS_name=Dallas_Pri" -e "alert_file=sms/High_SMS_Failure_in_Last_30mins.json.j2" --limit DLVMTMAMXOPS01
 ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=sms_5m" -e "influxDS_name=Dallas_Pri" -e "alert_file=sms/High_SMS_Error_Logs_in_last_5mins.json.j2" --limit DLVMTMAMXOPS01
 
+
+#------ Spark ---------
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/spark_high_processing_delay.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/spark_LiveListenerBus_QueueCritical.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/spark_high_records_per_batch.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/spark_high_sceduling_delay.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/spark_kafka_consumer_lag.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/spark_live_listenersBus_Event_Dropped.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/spark_recieved_vs_processed.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/spark_total_batch_delay.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/spark_unprocessed_vs_waiting.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/spark_LiveListenerBus_QueueHigh.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/spark_LiveListenerBus_QueueCritical.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/spark_appListeners_highLatency.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/spark_HeartbeatReceiver_highLatency.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/Spark_LiveListenerBus_Processing_Spike.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/spark_liveListeners_event_storm.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/spark_liveListeners_multi_queue_failure.jsonj2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/"
 
 
 
