@@ -6,7 +6,7 @@ deploy_port_listen_monitor: true
 deploy_port_conn_monitor: true
 deploy_ntp_status: false
 deploy_telegraf_postgres: false
-deploy_telegraf_redis: true
+deploy_telegraf_redis: false
 deploy_mysql_slowquery_script: false
 deploy_mysql_replica_status_monitor: false
 deploy_nginx: false

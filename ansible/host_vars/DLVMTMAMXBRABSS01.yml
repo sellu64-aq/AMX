@@ -5,8 +5,8 @@
 deploy_telegraf_redis: false
 deploy_telegraf_postgres: false
 deploy_telegraf_infra: false
-deploy_mysql_replica_status_monitor: true
-deploy_mysql_slowquery_script: true
+deploy_mysql_replica_status_monitor: false
+deploy_mysql_slowquery_script: false
 deploy_app_metrics: true
 deploy_port_listen_monitor: true
 deploy_port_conn_monitor: true
