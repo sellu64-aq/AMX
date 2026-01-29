@@ -1,8 +1,0 @@
----
-- name: Test host_vars loading
-  hosts: dra
-  gather_facts: no
-  tasks:
-    - debug:
-        var: oracle_user
-
