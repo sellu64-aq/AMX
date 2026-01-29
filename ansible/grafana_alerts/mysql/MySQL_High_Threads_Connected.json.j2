@@ -1,0 +1,91 @@
+{
+  "uid": "{{ alert_uid }}",
+  "folderUID": "{{ folder_uid }}",
+  "ruleGroup": "{{ rulegroup }}",
+  "title": "MySQL High Threads Connected",
+  "condition": "C",
+  "data": [
+    {
+      "refId": "A",
+      "relativeTimeRange": {"from": 300, "to": 0},
+      "datasourceUid": "{{ datasourceUid }}",
+      "model": {
+        "adhocFilters": [],
+        "alias": "",
+        "datasource": {"type": "influxdb", "uid": "{{ datasourceUid }}"},
+        "instant": false,
+        "intervalMs": 1000,
+        "limit": "",
+        "maxDataPoints": 43200,
+        "measurement": "",
+        "policy": "",
+        "query": "SELECT mean(\"threads_connected\") \nFROM \"mysql_connections\" \nWHERE $timeFilter \nGROUP BY time(1m),project, zone, host, nodeIP fill(null)",
+        "range": true,
+        "rawQuery": true,
+        "rawSql": "",
+        "refId": "A",
+        "resultFormat": "time_series",
+        "slimit": "",
+        "tz": ""
+      }
+    },
+    {
+      "refId": "B",
+      "relativeTimeRange": {"from": 300, "to": 0},
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": {"params": [], "type": "gt"},
+            "operator": {"type": "and"},
+            "query": { "params": ["B"] },
+            "reducer": {"params": [], "type": "last"},
+            "type": "query"
+          }
+        ],
+        "datasource": {"type": "__expr__", "uid": "__expr__"},
+        "expression": "A",
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "reducer": "last",
+        "refId": "B",
+        "type": "reduce"
+      }
+    },
+    {
+      "refId": "C",
+      "relativeTimeRange": {"from": 300, "to": 0},
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": { "params": [250], "type": "gt" },
+            "operator": {"type": "and"},
+            "query": { "params": ["C"] },
+            "reducer": {"params": [], "type": "last"},
+            "type": "query"
+          }
+        ],
+        "datasource": {"type": "__expr__", "uid": "__expr__"},
+        "expression": "B",
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "refId": "C",
+        "type": "threshold"
+      }
+    }
+  ],
+  "noDataState": "OK",
+  "execErrState": "OK",
+  "annotations": {
+    "description": "1. threads_connected\n\n    Total number of currently open connections to the MySQL server.\n\n    Includes both active and idle connections.\n\n    A sudden or sustained increase might indicate:\n\n        Application connection leaks\n\n        Traffic surge\n\n        Resource exhaustion (risk of hitting max_connections)"
+  },
+  "labels": {
+    "platform": "{{ project }}",
+    "zone"    : "{{ zone }}",
+    "severity": "CRITICAL",
+    "type"    : "{{ (rulegroup | string).split('_')[0] }}"
+  },
+  "isPaused": false
+}
+

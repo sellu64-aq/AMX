@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: telegraf-redis
+  namespace: monitoring
+  labels:
+    app: telegraf-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: telegraf-redis
+  template:
+    metadata:
+      labels:
+        app: telegraf-redis
+    spec:
+      containers:
+        - name: telegraf
+          image: telegraf:1.27-alpine
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: config
+              mountPath: /etc/telegraf/telegraf.conf
+              subPath: telegraf.conf
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 50m
+              memory: 64Mi
+      volumes:
+        - name: config
+          configMap:
+            name: telegraf-redis-config
+            items:
+              - key: telegraf.conf
+                path: telegraf.conf
+

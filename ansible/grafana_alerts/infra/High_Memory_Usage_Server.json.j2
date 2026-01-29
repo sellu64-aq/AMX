@@ -1,0 +1,79 @@
+{
+  "uid": "{{ alert_uid }}",
+  "title": "High Memory Usage Server",
+  "folderUID": "{{ folder_uid }}",
+  "ruleGroup": "{{ rulegroup }}",
+  "condition": "C",
+  "data": [
+    {
+      "refId": "A",
+      "relativeTimeRange": {
+        "from": 600,
+        "to": 0
+      },
+      "datasourceUid": "{{ datasourceUid }}",
+      "model": {
+        "refId": "A",
+        "query": "SELECT last(\"used_percent\") FROM \"mem\" WHERE $timeFilter GROUP BY time(1m), host, project, zone, service fill(0)",
+        "rawQuery": true
+      }
+    },
+    {
+      "refId": "B",
+      "relativeTimeRange": {
+        "from": 0,
+        "to": 0
+      },
+      "datasourceUid": "__expr__",
+      "model": {
+        "type": "reduce",
+        "expression": "A",
+        "reducer": "last"
+      }
+    },
+    {
+      "refId": "C",
+      "relativeTimeRange": {
+        "from": 0,
+        "to": 0
+      },
+      "datasourceUid": "__expr__",
+      "model": {
+        "type": "threshold",
+        "expression": "B",
+        "conditions": [
+          {
+            "evaluator": {
+              "type": "gt",
+              "params": [90]
+            },
+            "operator": {
+              "type": "and"
+            },
+            "query": {
+              "params": ["C"]
+            },
+            "reducer": {
+              "type": "last",
+              "params": []
+            },
+            "type": "query"
+          }
+        ]
+      }
+    }
+  ],
+  "interval": "1m",
+  "for": "2m",
+  "noDataState": "OK",
+  "execErrState": "Error",
+  "labels": {
+    "platform": "{{ project }}",
+    "zone": "{{ zone }}",
+    "severity": "CRITICAL",
+        "type": "{{ (rulegroup | string).split('_')[0] }}"
+  },
+  "annotations": {},
+  "isPaused": false
+}
+

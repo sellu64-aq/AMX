@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telegraf-infra-config
+  namespace: monitoring
+data:
+  telegraf.conf: |
+    [global_tags]
+      project = "{{ project }}"
+      zone = "{{ zone }}"
+      nodeIP = "{{ ansible_host }}"
+      service = "infra"
+    [agent]
+      debug = true
+      quiet = false
+      interval = "50s"
+      flush_interval = "30s"
+      logfile = "/var/log/telegraf/telegraf.log"
+      hostname = "{{ inventory_hostname }}"
+      omit_hostname = false
+      round_interval = true
+      metric_batch_size = 1000
+      metric_buffer_limit = 10000
+      collection_jitter = "0s"
+      flush_jitter = "0s"
+      precision = "0s"
+      logfile_rotation_interval = "12h"
+      logfile_rotation_max_size = "100MB"
+      logfile_rotation_max_archives = 5
+
+    ############### Infra Inputs ################
+    [[inputs.netstat]]
+    [[inputs.kernel]]
+    [[inputs.linux_sysctl_fs]]
+    [[inputs.exec]]
+      commands = ["/bin/bash -c 'cat /etc/os-release | grep PRETTY_NAME'"]
+      timeout = "5s"
+      data_format = "grok"
+      name_override = "os_info"
+      grok_patterns = ['PRETTY_NAME="%{GREEDYDATA:os_description}"']
+    [[inputs.cpu]]
+      percpu = true
+      totalcpu = true
+      report_active = true
+    [[inputs.mem]]
+    [[inputs.disk]]
+      ignore_fs = ["tmpfs", "devtmpfs", "devfs", "iso9660", "overlay", "aufs", "squashfs"]
+    [[inputs.diskio]]
+    [[inputs.system]]
+      fieldpass = ["uptime", "load1", "load5", "load15", "n_cpus"]
+    [[inputs.net]]
+      interfaces = ["*"]
+    # Add ping, port checks, app metrics, NTP monitoring here like in your config
+
+    ############### Outputs ################
+    [[outputs.influxdb]]
+      urls = ["http://{{ influx_Pri_IP }}:{{ influx_Pri_Port }}"]
+      database = "{{ influx_priDB_name }}"
+      retention_policy = "thirty_days"
+      timeout = "5s"
+    [[outputs.influxdb]]
+      urls = ["http://{{ influx_Sec_IP }}:{{ influx_Sec_Port }}"]
+      database = "{{ influx_secDB_name }}"
+      retention_policy = "thirty_days"
+      timeout = "5s"
+

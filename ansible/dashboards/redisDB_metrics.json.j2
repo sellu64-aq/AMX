@@ -1,0 +1,1137 @@
+{
+  "dashboard": {
+    "folderUid": "db777Sel",
+    "message": "deployment",
+    "overwrite": true,
+    "__inputs": [
+      {
+        "name"       : "influx_DS",
+        "label"      : "Select InfluxDB Source",
+        "description": "Choose the InfluxDB data source (Pri/Sec)",
+        "type"       : "datasource",
+        "pluginId"   : "influxdb",
+        "pluginName" : "InfluxDB"
+      }
+    ],
+    "__elements": {},
+    "__requires": [
+      {
+        "type"   : "grafana",
+        "id"     : "grafana",
+        "name"   : "Grafana",
+        "version": "12.0.2"
+      },
+      {
+        "type"   : "datasource",
+        "id"     : "influxdb",
+        "name"   : "InfluxDB",
+        "version": "1.0.0"
+      },
+      {"type": "panel", "id": "stat", "name": "Stat", "version": ""},
+      {
+        "type"   : "panel",
+        "id"     : "timeseries",
+        "name"   : "Time series",
+        "version": ""
+      }
+    ],
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {"type": "grafana", "uid": "-- Grafana --"},
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": null,
+    "links": [],
+    "liveNow": true,
+    "panels": [
+      {
+        "collapsed": false,
+        "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0},
+        "id": 11,
+        "panels": [],
+        "title": "overview",
+        "type": "row"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "mappings": [
+              {
+                "options": {
+                  "0": {"color": "semi-dark-red", "index": 1, "text": "Down"},
+                  "1": {"color": "semi-dark-green", "index": 0, "text": "UP"}
+                },
+                "type": "value"
+              }
+            ],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [ {"color": "green"}, {"color": "red", "value": 80} ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 2, "w": 3, "x": 0, "y": 1},
+        "id": 6,
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "percentChangeColorMode": "standard",
+          "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "fields": "",
+            "values": false
+          },
+          "showPercentChange": false,
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "Radis ",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT mean(\"redis_up\") FROM \"redis_up\" WHERE $timeFilter AND \"host\" =~ /^$host$/ GROUP BY time($interval), \"host\" fill(null)",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series"
+          }
+        ],
+        "type": "stat"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "continuous-RdYlGr"},
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [ {"color": "green"}, {"color": "red", "value": 80} ]
+            },
+            "unit": "s"
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 2, "w": 3, "x": 3, "y": 1},
+        "id": 7,
+        "options": {
+          "colorMode": "background",
+          "graphMode": "none",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "percentChangeColorMode": "standard",
+          "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "fields": "",
+            "values": false
+          },
+          "showPercentChange": false,
+          "text": {"valueSize": 16},
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "Uptime",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT mean(\"redis_uptime_in_seconds\") FROM \"redis_up\" WHERE $timeFilter AND \"host\" =~ /^$host$/ GROUP BY time($interval), \"host\" fill(null)",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series"
+          }
+        ],
+        "type": "stat"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "continuous-RdYlGr"},
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "semi-dark-green"             },
+                {"color": "red",             "value": 80}
+              ]
+            },
+            "unit": "bytes"
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 2, "w": 3, "x": 6, "y": 1},
+        "id": 8,
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "percentChangeColorMode": "standard",
+          "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "fields": "",
+            "values": false
+          },
+          "showPercentChange": false,
+          "text": {"valueSize": 16},
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT mean(\"redis_memory_used_bytes\") AS \"Memory Used\" FROM \"redis_memory\" WHERE $timeFilter AND \"host\" =~ /^$host$/ GROUP BY time($interval), \"host\" fill(null)",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "table"
+          }
+        ],
+        "type": "stat"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "fieldConfig": {
+          "defaults": {
+            "color": {"fixedColor": "semi-dark-green", "mode": "shades"},
+            "decimals": 0,
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "green"                               },
+                {"color": "yellow",           "value": 100000000},
+                {"color": "semi-dark-orange", "value": 300000020},
+                {"color": "semi-dark-red",    "value": 500000010}
+              ]
+            },
+            "unit": "short"
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 2, "w": 3, "x": 9, "y": 1},
+        "id": 22,
+        "options": {
+          "colorMode": "background",
+          "graphMode": "none",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "percentChangeColorMode": "standard",
+          "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "fields": "",
+            "values": false
+          },
+          "showPercentChange": false,
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT mean(\"redis_commands_processed_total\") AS \"Total Operations\" FROM \"redis_operations\" WHERE $timeFilter AND \"host\" =~ /^$host$/ GROUP BY time($interval), \"host\" fill(null)",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "table"
+          }
+        ],
+        "type": "stat"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "decimals": 0,
+            "mappings": [
+              {
+                "options": {
+                  "0": {"color": "semi-dark-green", "index": 1, "text": "Yes"},
+                  "1": {"color": "semi-dark-orange", "index": 0, "text": "No"}
+                },
+                "type": "value"
+              }
+            ],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "green"                               },
+                {"color": "yellow",           "value": 100000000},
+                {"color": "semi-dark-orange", "value": 300000020},
+                {"color": "semi-dark-red",    "value": 500000010}
+              ]
+            },
+            "unit": "short"
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 2, "w": 3, "x": 12, "y": 1},
+        "id": 17,
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "percentChangeColorMode": "standard",
+          "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "fields": "",
+            "values": false
+          },
+          "showPercentChange": false,
+          "text": {"titleSize": 14, "valueSize": 16},
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT mean(\"redis_rdb_bgsave_in_progress\") AS \"RDB BGSAVE in Progress\" FROM \"redis_persistence\" WHERE $timeFilter AND \"host\" =~ /^$host$/ GROUP BY time($interval), \"host\" fill(null)",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "table"
+          }
+        ],
+        "type": "stat"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "description": "",
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "decimals": 0,
+            "mappings": [
+              {
+                "options": {
+                  "0": {
+                    "color": "semi-dark-green",
+                    "index": 0,
+                    "text": "success"
+                  },
+                  "1": {"color": "semi-dark-red", "index": 1, "text": "Error"}
+                },
+                "type": "value"
+              }
+            ],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "green"                               },
+                {"color": "yellow",           "value": 100000000},
+                {"color": "semi-dark-orange", "value": 300000020},
+                {"color": "semi-dark-red",    "value": 500000010}
+              ]
+            },
+            "unit": "short"
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 2, "w": 3, "x": 15, "y": 1},
+        "id": 20,
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "percentChangeColorMode": "standard",
+          "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "fields": "",
+            "values": false
+          },
+          "showPercentChange": false,
+          "text": {"titleSize": 14, "valueSize": 18},
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT mean(\"redis_aof_last_bgrewrite_status\") AS \"AOF Last Rewrite Status\" FROM \"redis_persistence\" WHERE $timeFilter AND \"host\" =~ /^$host$/ GROUP BY time($interval), \"host\" fill(null)",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "table"
+          }
+        ],
+        "type": "stat"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "description": "Shows if AOF persistence is enabled",
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "decimals": 0,
+            "mappings": [
+              {
+                "options": {
+                  "0": {"color": "#808080", "index": 0, "text": "Disabled"},
+                  "1": {
+                    "color": "semi-dark-green",
+                    "index": 1,
+                    "text": "Enabled"
+                  }
+                },
+                "type": "value"
+              }
+            ],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "green"                               },
+                {"color": "yellow",           "value": 100000000},
+                {"color": "semi-dark-orange", "value": 300000020},
+                {"color": "semi-dark-red",    "value": 500000010}
+              ]
+            },
+            "unit": "short"
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 2, "w": 3, "x": 18, "y": 1},
+        "id": 18,
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "percentChangeColorMode": "standard",
+          "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "fields": "",
+            "values": false
+          },
+          "showPercentChange": false,
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT mean(\"redis_aof_enabled\") AS \"AOF\" FROM \"redis_persistence\" WHERE $timeFilter AND \"host\" =~ /^$host$/ GROUP BY time($interval), \"host\" fill(null)",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "table"
+          }
+        ],
+        "type": "stat"
+      },
+      {
+        "collapsed": false,
+        "gridPos": {"h": 1, "w": 24, "x": 0, "y": 3},
+        "id": 2,
+        "panels": [],
+        "title": "Commands",
+        "type": "row"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "description": "Shows per-node Redis command throughput rate. High throughput = busy Redis node.",
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "barWidthFactor": 0.6,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+              "insertNulls": false,
+              "lineInterpolation": "smooth",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {"type": "linear"},
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {"group": "A", "mode": "none"},
+              "thresholdsStyle": {"mode": "off"}
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [ {"color": "green"}, {"color": "red", "value": 80} ]
+            },
+            "unit": "ops"
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+        "id": 1,
+        "options": {
+          "legend": {
+            "calcs": ["min", "mean", "max", "lastNotNull"],
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {"hideZeros": false, "mode": "single", "sort": "none"}
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "Commands Proceess",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT DERIVATIVE(mean(\"redis_commands_processed_total\"), 1s)\nFROM \"redis_commands\"\nWHERE $timeFilter\n  AND \"host\" =~ /^$host$/\nGROUP BY time($interval), \"host\", \"nodeIP\" fill(null)\n",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series"
+          }
+        ],
+        "title": "Redis Commands/sec",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "description": "Average execution time for each Redis command over time",
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "barWidthFactor": 0.6,
+              "drawStyle": "line",
+              "fillOpacity": 19,
+              "gradientMode": "opacity",
+              "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+              "insertNulls": false,
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {"type": "linear"},
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {"group": "A", "mode": "none"},
+              "thresholdsStyle": {"mode": "off"}
+            },
+            "mappings": [],
+            "noValue": "0",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [ {"color": "green"}, {"color": "red", "value": 80} ]
+            },
+            "unit": "s"
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+        "id": 3,
+        "options": {
+          "legend": {
+            "calcs": ["min", "mean", "max", "lastNotNull"],
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {"hideZeros": false, "mode": "single", "sort": "none"}
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "Command = $tag_cmd",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT mean(\"redis_commands_duration_seconds_total\") FROM \"redis_commands\" WHERE $timeFilter AND \"host\" =~ /^$host$/ GROUP BY time($interval), \"host\" fill(null)",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series"
+          }
+        ],
+        "title": "Average Command Duration per Command Type",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "description": "",
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "barWidthFactor": 0.6,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+              "insertNulls": false,
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {"type": "linear"},
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {"group": "A", "mode": "none"},
+              "thresholdsStyle": {"mode": "off"}
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [ {"color": "green"}, {"color": "red", "value": 80} ]
+            },
+            "unit": "ms"
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+        "id": 5,
+        "options": {
+          "legend": {
+            "calcs": ["lastNotNull"],
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": true,
+            "sortBy": "Last *",
+            "sortDesc": true
+          },
+          "tooltip": {"hideZeros": false, "mode": "single", "sort": "none"}
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "Commands = $tag_cmd",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT (DERIVATIVE(mean(\"redis_commands_latencies_usec_sum\"), 1s) / DERIVATIVE(mean(\"redis_commands_latencies_usec_count\"), 1s)) / 1000 AS \"avg_latency_ms\" FROM \"redis_commands_latency\" WHERE $timeFilter AND \"host\" =~ /^$host$/ GROUP BY time($interval), \"host\", \"cmd\" fill(null)",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series"
+          }
+        ],
+        "title": "Radis Avg Command Latency",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "description": "",
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "barWidthFactor": 0.6,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+              "insertNulls": false,
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {"type": "linear"},
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {"group": "A", "mode": "none"},
+              "thresholdsStyle": {"mode": "off"}
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [ {"color": "green"}, {"color": "red", "value": 80} ]
+            },
+            "unit": "ms"
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+        "id": 9,
+        "options": {
+          "legend": {
+            "calcs": ["lastNotNull"],
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": true,
+            "sortBy": "Last *",
+            "sortDesc": true
+          },
+          "tooltip": {"hideZeros": false, "mode": "single", "sort": "none"}
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "Commands = $tag_cmd",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT max(\"redis_commands_latencies_usec_sum\")/1000 AS \"max_latency_ms\" FROM \"redis_commands_latency\" WHERE $timeFilter AND \"host\" =~ /^$host$/ GROUP BY time($interval), \"host\", \"cmd\" fill(null)",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series"
+          }
+        ],
+        "title": "Radis Max Command Latency",
+        "type": "timeseries"
+      },
+      {
+        "collapsed": false,
+        "gridPos": {"h": 1, "w": 24, "x": 0, "y": 20},
+        "id": 12,
+        "panels": [],
+        "title": "Redis Connections",
+        "type": "row"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "Counts",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "barWidthFactor": 0.6,
+              "drawStyle": "line",
+              "fillOpacity": 27,
+              "gradientMode": "none",
+              "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+              "insertNulls": false,
+              "lineInterpolation": "smooth",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {"type": "linear"},
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {"group": "A", "mode": "none"},
+              "thresholdsStyle": {"mode": "off"}
+            },
+            "decimals": 0,
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [ {"color": "green"}, {"color": "red", "value": 80} ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 8, "w": 8, "x": 0, "y": 21},
+        "id": 10,
+        "options": {
+          "legend": {
+            "calcs": ["min", "max", "sum", "lastNotNull"],
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {"hideZeros": false, "mode": "single", "sort": "none"}
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "Clients Counts",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT mean(\"redis_connected_clients\") FROM \"redis_connections\" WHERE $timeFilter AND \"host\" =~ /^$host$/ GROUP BY time($interval), \"host\" fill(null)",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series"
+          }
+        ],
+        "title": "Connected Clients",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "Counts",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "barWidthFactor": 0.6,
+              "drawStyle": "line",
+              "fillOpacity": 27,
+              "gradientMode": "none",
+              "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+              "insertNulls": false,
+              "lineInterpolation": "smooth",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {"type": "linear"},
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {"group": "A", "mode": "none"},
+              "thresholdsStyle": {"mode": "off"}
+            },
+            "decimals": 0,
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [ {"color": "green"}, {"color": "red", "value": 80} ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 8, "w": 8, "x": 8, "y": 21},
+        "id": 13,
+        "options": {
+          "legend": {
+            "calcs": ["min", "max", "sum", "lastNotNull"],
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {"hideZeros": false, "mode": "single", "sort": "none"}
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "Clients Counts",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT mean(\"redis_blocked_clients\") FROM \"redis_connections\" WHERE $timeFilter AND \"host\" =~ /^$host$/ GROUP BY time($interval), \"host\" fill(null)",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series"
+          }
+        ],
+        "title": "Blocked Clients",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "Buffer Size",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "barWidthFactor": 0.6,
+              "drawStyle": "line",
+              "fillOpacity": 27,
+              "gradientMode": "none",
+              "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+              "insertNulls": false,
+              "lineInterpolation": "smooth",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {"type": "linear"},
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {"group": "A", "mode": "none"},
+              "thresholdsStyle": {"mode": "off"}
+            },
+            "decimals": 0,
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [ {"color": "green"}, {"color": "red", "value": 80} ]
+            },
+            "unit": "bytes"
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 8, "w": 8, "x": 16, "y": 21},
+        "id": 14,
+        "options": {
+          "legend": {
+            "calcs": ["min", "max", "sum", "lastNotNull"],
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {"hideZeros": false, "mode": "single", "sort": "none"}
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT mean(\"redis_client_biggest_input_buf\") AS \"input_bytes\", mean(\"redis_client_longest_output_list\") AS \"output_bytes\" FROM \"redis_connections\" WHERE $timeFilter AND \"host\" =~ /^$host$/ GROUP BY time($interval), \"host\" fill(null)",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "table"
+          }
+        ],
+        "title": "Biggest Input/Output Buffers",
+        "type": "timeseries"
+      },
+      {
+        "collapsed": false,
+        "gridPos": {"h": 1, "w": 24, "x": 0, "y": 29},
+        "id": 15,
+        "panels": [],
+        "title": "Redis Persistence",
+        "type": "row"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "Counts",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "barWidthFactor": 0.6,
+              "drawStyle": "line",
+              "fillOpacity": 27,
+              "gradientMode": "opacity",
+              "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+              "insertNulls": false,
+              "lineInterpolation": "smooth",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {"type": "linear"},
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {"group": "A", "mode": "none"},
+              "thresholdsStyle": {"mode": "off"}
+            },
+            "decimals": 0,
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "green"                               },
+                {"color": "yellow",           "value": 100000000},
+                {"color": "semi-dark-orange", "value": 300000020},
+                {"color": "semi-dark-red",    "value": 500000010}
+              ]
+            },
+            "unit": "short"
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 7, "w": 12, "x": 0, "y": 30},
+        "id": 16,
+        "options": {
+          "legend": {
+            "calcs": ["sum", "lastNotNull"],
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {"hideZeros": false, "mode": "single", "sort": "none"}
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "Clients Counts",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT mean(\"redis_rdb_changes_since_last_save\") FROM \"redis_persistence\" WHERE $timeFilter AND \"host\" =~ /^$host$/ GROUP BY time($interval), \"host\" fill(null)",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series"
+          }
+        ],
+        "title": "RDB Changes Since Last Save",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "Counts",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "barWidthFactor": 0.6,
+              "drawStyle": "line",
+              "fillOpacity": 27,
+              "gradientMode": "opacity",
+              "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+              "insertNulls": false,
+              "lineInterpolation": "smooth",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {"type": "linear"},
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {"group": "A", "mode": "none"},
+              "thresholdsStyle": {"mode": "off"}
+            },
+            "decimals": 0,
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "green"                               },
+                {"color": "yellow",           "value": 100000000},
+                {"color": "semi-dark-orange", "value": 300000020},
+                {"color": "semi-dark-red",    "value": 500000010}
+              ]
+            },
+            "unit": "ops"
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 7, "w": 12, "x": 12, "y": 30},
+        "id": 23,
+        "options": {
+          "legend": {
+            "calcs": ["sum", "lastNotNull"],
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {"hideZeros": false, "mode": "single", "sort": "none"}
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT DERIVATIVE(mean(\"redis_commands_processed_total\"), 1s) AS \"ops_per_sec\" FROM \"redis_operations\" WHERE $timeFilter AND \"host\" =~ /^$host$/ GROUP BY time($interval), \"host\" fill(null)",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "table"
+          }
+        ],
+        "title": "Ops/sec",
+        "type": "timeseries"
+      }
+    ],
+    "schemaVersion": 41,
+    "tags": ["redis", "db"],
+    "templating": {
+      "list": [
+        {
+          "allowCustomValue": false,
+          "current": {},
+          "description": "Choose the InfluxDB data source",
+          "label": "Select Data Source",
+          "name": "InfluxDS",
+          "options": [],
+          "query": "influxdb",
+          "refresh": 1,
+          "regex": "",
+          "type": "datasource"
+        },
+        {
+          "allowCustomValue": false,
+          "current": {},
+          "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+          "definition": "SHOW TAG VALUES FROM \"redis_up\" WITH KEY = \"project\" WHERE service = 'k8'",
+          "name": "project",
+          "options": [],
+          "query": {
+            "query": "SHOW TAG VALUES FROM \"redis_up\" WITH KEY = \"project\" WHERE service = 'k8'",
+            "refId": "InfluxVariableQueryEditor-VariableQuery"
+          },
+          "refresh": 1,
+          "regex": "",
+          "type": "query"
+        },
+        {
+          "current": {},
+          "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+          "definition": "SHOW TAG VALUES FROM \"redis_up\" WITH KEY = \"zone\" WHERE project = '$project' and service = 'k8'",
+          "name": "zone",
+          "options": [],
+          "query": {
+            "query": "SHOW TAG VALUES FROM \"redis_up\" WITH KEY = \"zone\" WHERE project = '$project' and service = 'k8'",
+            "refId": "InfluxVariableQueryEditor-VariableQuery"
+          },
+          "refresh": 1,
+          "regex": "",
+          "type": "query"
+        },
+        {
+          "allowCustomValue": false,
+          "current": {},
+          "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+          "definition": "SHOW TAG VALUES FROM \"redis_up\" WITH KEY = \"host\" where project = '$project' and zone = '$zone' and service = 'k8'",
+          "name": "host",
+          "options": [],
+          "query": {
+            "query": "SHOW TAG VALUES FROM \"redis_up\" WITH KEY = \"host\" where project = '$project' and zone = '$zone' and service = 'k8'",
+            "refId": "InfluxVariableQueryEditor-VariableQuery"
+          },
+          "refresh": 1,
+          "regex": "",
+          "type": "query"
+        },
+        {
+          "auto": true,
+          "auto_count": 30,
+          "auto_min": "10s",
+          "current": {"text": "$__auto", "value": "$__auto"},
+          "name": "interval",
+          "options": [
+            {"selected": false, "text": "1m",  "value": "1m" },
+            {"selected": false, "text": "5m",  "value": "5m" },
+            {"selected": false, "text": "10m", "value": "10m"},
+            {"selected": false, "text": "30m", "value": "30m"},
+            {"selected": false, "text": "1h",  "value": "1h" },
+            {"selected": false, "text": "6h",  "value": "6h" },
+            {"selected": false, "text": "12h", "value": "12h"},
+            {"selected": false, "text": "1d",  "value": "1d" },
+            {"selected": false, "text": "7d",  "value": "7d" },
+            {"selected": false, "text": "14d", "value": "14d"},
+            {"selected": false, "text": "30d", "value": "30d"}
+          ],
+          "query": "1m,5m,10m,30m,1h,6h,12h,1d,7d,14d,30d",
+          "refresh": 2,
+          "type": "interval"
+        }
+      ]
+    },
+    "time": {"from": "now-6h", "to": "now"},
+    "timepicker": {
+      "refresh_intervals": ["1m", "5m", "15m", "30m", "1h", "2h", "1d"]
+    },
+    "timezone": "browser",
+    "title": "Redis Metrics",
+    "uid": "777selRedis",
+    "version": 3,
+    "weekStart": ""
+  }
+}

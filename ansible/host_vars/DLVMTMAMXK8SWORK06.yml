@@ -1,0 +1,38 @@
+# Variables for DLVMTMAMXK8SWORK06
+# IP 10.221.92.187
+---
+# Add host-specific variables below
+deploy_app_metrics: true
+deploy_port_listen_monitor: true
+deploy_port_conn_monitor: true
+deploy_ntp_status: false
+deploy_dra_process_script: false
+
+apps:
+  - name: "longhorn-manager"
+    match: "longhorn-manager"
+    type: "pattern"
+  - name: "kubelet --volume"
+    match: "kubelet --volume"
+    type: "pattern"
+  - name: "calico-node"
+    match: "calico-node"
+    type: "pattern"
+ 
+# Application ports for DLVMTMAMXK8SWORK06
+ports:
+  - ip: "127.0.0.1"
+    port: 6443
+    name: "kube-apiserver"
+
+  - ip: "127.0.0.1"
+    port: 10248
+    name: "kubelet"
+
+  - ip: "127.0.0.1"
+    port: 10256
+    name: "kube-proxy"
+
+  - ip: "10.221.93.187"
+    port: 9100
+    name: "node_exporte"

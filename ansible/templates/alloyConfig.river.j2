@@ -1,0 +1,230 @@
+// ============================================================================
+// Grafana Alloy Configuration for DRA Logs
+// ============================================================================
+
+// ----------------------------------------------------------------------------
+// Loki Write Endpoint
+// ----------------------------------------------------------------------------
+loki.write "default" {
+  endpoint {
+    url = "http://10.221.93.106:3100/loki/api/v1/push"
+  }
+}
+
+// ============================================================================
+// DRA Summary CSV Logs - SummaryTrace-DRA.csv
+// ============================================================================
+loki.source.file "dra_summary" {
+  targets = [
+    {
+      __path__ = "/opt/Roamware/logs/dra/SummaryTrace-DRA.csv",
+      host     = "DLVMAMXOCSDRA1",
+      nodeIP   = "10.221.86.121",
+      logtype = "DRA_SummaryTrace",
+    },
+  ]
+  forward_to = [loki.process.dra_summary.receiver]
+}
+
+loki.process "dra_summary" {
+  // Parse CSV format: 26-11-2025 06:33:28,516,1,-1,-1,27844,1410390,1200e5f09071f91,DRA,,gxgy_routing,...
+  stage.regex {
+    expression = "^(?P<timestamp>[^,]+),(?P<col2>[^,]*),(?P<col3>[^,]*),(?P<col4>[^,]*),(?P<col5>[^,]*),(?P<col6>[^,]*),(?P<col7>[^,]*),(?P<col8>[^,]*),(?P<Type>[^,]*),(?P<col10>[^,]*),(?P<FlowName>[^,]*),(?P<Protocol>[^,]*),(?P<CommandCode>[^,]*),(?P<OriginHost>[^,]*),(?P<SessionId>[^,]*),(?P<col16>[^,]*),(?P<IMSI>[^,]*),(?P<col18>[^,]*),(?P<SrcPeerHost>[^,]*),(?P<SrcPeerRealm>[^,]*),(?P<SrcLocalHost>[^,]*),(?P<SrcLocalRealm>[^,]*),(?P<RoutedPeerHost>[^,]*),(?P<RoutedPeerRealm>[^,]*),(?P<RoutedLocalHost>[^,]*),(?P<RoutedLocalRealm>[^,]*),(?P<col27>[^,]*),(?P<col28>[^,]*),(?P<DstLocalHost>[^,]*),(?P<DstLocalRealm>[^,]*),(?P<DstPeerHost>[^,]*),(?P<DstPeerRealm>[^,]*),(?P<ResultCode>[^,]*),(?P<col34>[^,]*),(?P<Action>[^,]*),(?P<RouteStatus>[^,]*).*$"
+  }
+
+  // Parse timestamp: 26-11-2025 06:33:28,516
+  stage.timestamp {
+    source = "timestamp"
+    format = "02-01-2006 15:04:05,000"
+  }
+
+  // Extract important labels
+  stage.labels {
+    values = {
+      host          = "host",
+      log_type      = "log_type",
+      type          = "Type",
+      flowname      = "FlowName",
+      protocol      = "Protocol",
+      command_code  = "CommandCode",
+      result_code   = "ResultCode",
+      action        = "Action",
+      route_status  = "RouteStatus",
+    }
+  }
+
+  // Add structured fields for querying (not as labels)
+  stage.structured_metadata {
+    values = {
+      imsi           = "IMSI",
+      origin_host    = "OriginHost",
+      session_id     = "SessionId",
+      src_peer_host  = "SrcPeerHost",
+      src_peer_realm = "SrcPeerRealm",
+      dst_peer_host  = "DstPeerHost",
+      dst_peer_realm = "DstPeerRealm",
+    }
+  }
+
+  // Drop temporary/unnecessary extracted fields
+  stage.label_drop {
+    values = [
+      "col2", "col3", "col4", "col5", "col6", "col7", "col8",
+      "col10", "col16", "col18", "col27", "col28", "col34",
+      "Type", "FlowName", "Protocol", "CommandCode", "ResultCode", "Action", "RouteStatus",
+      "IMSI", "OriginHost", "SessionId",
+      "SrcPeerHost", "SrcPeerRealm", "SrcLocalHost", "SrcLocalRealm",
+      "RoutedPeerHost", "RoutedPeerRealm", "RoutedLocalHost", "RoutedLocalRealm",
+      "DstLocalHost", "DstLocalRealm", "DstPeerHost", "DstPeerRealm",
+    ]
+  }
+
+  forward_to = [loki.write.default.receiver]
+}
+
+// ============================================================================
+// DRA Application Logs - dra.log
+// ============================================================================
+loki.source.file "dra_app" {
+  targets = [
+    {
+      __path__ = "/opt/Roamware/logs/dra/logs/dra.log",
+      host     = "DLVMAMXOCSDRA1",
+      nodeIP   = "10.221.86.121",
+      logtype = "DRA_Log",
+    },
+  ]
+  forward_to = [loki.process.dra_app.receiver]
+}
+
+loki.process "dra_app" {
+  // Parse log format: Thu Nov 27|12:49:48.555|E|Rule Executor 2|message...
+  stage.regex {
+    expression = "^(?P<weekday>\\w+) (?P<month>\\w+) (?P<day>\\d+)\\|(?P<time>\\d{2}:\\d{2}:\\d{2}\\.\\d{3})\\|(?P<level>\\w+)\\|(?P<component>[^|]+)\\|(?P<message>.*)$"
+  }
+
+  // Map log level - do this BEFORE timestamp to ensure labels exist
+  stage.labels {
+    values = {
+      host      = "host",
+      log_type  = "log_type",
+      level     = "level",
+      component = "component",
+    }
+  }
+
+  // Construct full timestamp (year-month-day hour:min:sec)
+  // Use current year since not in log format
+  stage.template {
+    source   = "full_timestamp"
+    template = "2025-{{ .month }}-{{ .day }} {{ .time }}"
+  }
+
+  // Parse the constructed timestamp
+  stage.timestamp {
+    source              = "full_timestamp"
+    format              = "2006-Jan-02 15:04:05.000"
+    action_on_failure   = "fudge"
+  }
+
+  // Add component and message as structured metadata for filtering
+  stage.structured_metadata {
+    values = {
+      component_detail = "component",
+      log_message      = "message",
+    }
+  }
+
+  // Drop temporary fields
+  stage.label_drop {
+    values = [
+      "weekday",
+      "month",
+      "day",
+      "time",
+      "full_timestamp",
+      "message",
+    ]
+  }
+
+  forward_to = [loki.write.default.receiver]
+}
+
+// ============================================================================
+// CONFIGURATION NOTES
+// ============================================================================
+//
+// DRA Summary CSV Fields Mapping:
+// --------------------------------
+// Field 1:  timestamp          -> Label: (parsed to timestamp)
+// Field 2:  col2               -> Dropped
+// Field 3:  col3               -> Dropped
+// Field 4:  col4               -> Dropped
+// Field 5:  col5               -> Dropped
+// Field 6:  col6               -> Dropped
+// Field 7:  col7               -> Dropped
+// Field 8:  col8               -> Dropped
+// Field 9:  Type (DRA)         -> Label: type
+// Field 10: col10 (empty)      -> Dropped
+// Field 11: FlowName           -> Label: flowname (e.g., gxgy_routing)
+// Field 12: Protocol           -> Label: protocol (e.g., 3GPP-Gx)
+// Field 13: CommandCode        -> Label: command_code (e.g., CC-Request)
+// Field 14: OriginHost         -> Metadata: origin_host
+// Field 15: SessionId          -> Metadata: session_id
+// Field 16: col16              -> Dropped
+// Field 17: IMSI               -> Metadata: imsi
+// Field 18: col18              -> Dropped
+// Field 19: SrcPeerHost        -> Metadata: src_peer_host
+// Field 20: SrcPeerRealm       -> Metadata: src_peer_realm
+// Field 21: SrcLocalHost       -> Dropped
+// Field 22: SrcLocalRealm      -> Dropped
+// Field 23: RoutedPeerHost     -> Dropped
+// Field 24: RoutedPeerRealm    -> Dropped
+// Field 25: RoutedLocalHost    -> Dropped
+// Field 26: RoutedLocalRealm   -> Dropped
+// Field 27: col27 (empty)      -> Dropped
+// Field 28: col28 (empty)      -> Dropped
+// Field 29: DstLocalHost       -> Dropped
+// Field 30: DstLocalRealm      -> Dropped
+// Field 31: DstPeerHost        -> Metadata: dst_peer_host
+// Field 32: DstPeerRealm       -> Metadata: dst_peer_realm
+// Field 33: ResultCode         -> Label: result_code (e.g., DIAMETER_SUCCESS)
+// Field 34: col34 (empty)      -> Dropped
+// Field 35: Action             -> Label: action (e.g., ReturnAnswer)
+// Field 36: RouteStatus        -> Label: route_status (e.g., MessageRouted)
+//
+// DRA App Log Fields:
+// -------------------
+// - weekday: Wed, Thu, etc (dropped - not useful as label)
+// - month: Nov, Dec, etc (dropped - used for timestamp)
+// - day: 26, 27, etc (dropped - used for timestamp)
+// - time: 06:33:00.005 (parsed to timestamp)
+// - level: W, E, I, D (Warning, Error, Info, Debug) -> Label
+// - component: TCPAdapter:10.221.86.217(14378) -> Label
+// - message: Full log message -> Metadata
+//
+// LogQL Query Examples:
+// ---------------------
+//
+// 1. Query DRA Summary logs by flow:
+//    {log_type="DRA_Summary", flowname="gxgy_routing"}
+//
+// 2. Query by result code:
+//    {log_type="DRA_Summary", result_code="DIAMETER_SUCCESS"}
+//
+// 3. Query DRA app errors:
+//    {log_type="DRA_App", level="E"}
+//
+// 4. Query by IMSI (using structured metadata):
+//    {log_type="DRA_Summary"} | imsi="724054018389002"
+//
+// 5. Query TCP adapter warnings:
+//    {log_type="DRA_App", level="W", component=~"TCPAdapter.*"}
+//
+// 6. Count requests by protocol:
+//    sum by (protocol) (count_over_time({log_type="DRA_Summary"}[5m]))
+//
+// 7. Rate of failed routes:
+//    sum(rate({log_type="DRA_Summary", route_status!="MessageRouted"}[5m]))
+//
+// ============================================================================

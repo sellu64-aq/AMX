@@ -1,0 +1,16 @@
+# Variables for DLVMAMXETL01
+---
+# Add host-specific variables below
+#
+########## Feature Flags ##########
+deploy_telegraf_redis: false
+deploy_telegraf_postgres: false
+deploy_telegraf_infra: false
+deploy_mysql_replica_status_monitor: false
+deploy_app_metrics: true
+deploy_port_listen_monitor: true
+deploy_port_conn_monitor: true
+deploy_ntp_status: false
+deploy_dra_process_script: false
+deploy_mysql_slowquery_script: false
+deploy_nginx: false

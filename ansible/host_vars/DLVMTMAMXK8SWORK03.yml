@@ -1,0 +1,52 @@
+# Variables for DLVMTMAMXK8SWORK03
+# IP 10.221.93.184
+---
+# Add host-specific variables below
+deploy_app_metrics: true
+deploy_port_listen_monitor: true
+deploy_port_conn_monitor: true
+deploy_ntp_status: false
+deploy_dra_process_script: false
+
+apps:
+  - name: "redislabs"
+    match: "redislabs"
+    type: "pattern"
+	
+  - name: "kubelet"
+    match: "kubelet"
+    type: "pattern"
+	
+  - name: "nginx"
+    match: "nginx"
+    type: "pattern"
+	
+  - name: "resource_mgr"
+    match: "resource_mgr"
+    type: "pattern"
+	
+  - name: "containerd"
+    match: "containerd"
+    type: "pattern"
+	
+  - name: "redis_mgr"
+    match: "redis_mgr"
+    type: "pattern
+ 
+   - name: "gunicorn"
+    match: "gunicorn"
+    type: "pattern
+
+# Application ports for DLVMTMAMXK8SWORK03
+ports:
+  - ip: "127.0.0.1"
+    port: 9099
+    name: "calico"
+
+  - ip: "127.0.0.1"
+    port:  6444
+    name: "rke2 agent"
+
+  - ip: "10.221.93.179"
+    port: 6443
+    name: "KUBE1"

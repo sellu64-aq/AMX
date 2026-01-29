@@ -1,0 +1,156 @@
+{
+  "uid": "{{ alert_uid }}",
+  "title": "High Network Interface Errors",
+  "folderUID": "{{ folder_uid }}",
+  "ruleGroup": "{{ rulegroup }}",
+  "condition": "F",
+  "data": [
+    {
+      "refId": "A",
+      "relativeTimeRange": {"from": 900, "to": 0},
+      "datasourceUid": "{{ datasourceUid }}",
+      "model": {
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "query": "SELECT derivative(mean(\"err_in\"), 1s) AS err_in FROM \"net\" WHERE $timeFilter AND \"interface\" != 'lo' GROUP BY time(5m), project, zone, host, interface fill(0)",
+        "rawQuery": true,
+        "refId": "A",
+        "resultFormat": "time_series"
+      }
+    },
+    {
+      "refId": "B",
+      "relativeTimeRange": {"from": 600, "to": 0},
+      "datasourceUid": "{{ datasourceUid }}",
+      "model": {
+        "datasource": {"type": "influxdb", "uid": "{{ datasourceUid }}"},
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "query": "SELECT derivative(mean(\"err_out\"), 1s) AS err_out FROM \"net\" WHERE $timeFilter AND \"interface\" != 'lo' GROUP BY time(5m), project, zone, host, interface fill(0)",
+        "rawQuery": true,
+        "refId": "B",
+        "resultFormat": "time_series"
+      }
+    },
+    {
+      "refId": "C",
+      "relativeTimeRange": {"from": 0, "to": 0},
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": { "params": [0, 0], "type": "gt" },
+            "operator": {"type": "and"},
+            "query": {"params": []},
+            "reducer": {"params": [], "type": "avg"},
+            "type": "query"
+          }
+        ],
+        "datasource": {
+          "name": "Expression",
+          "type": "__expr__",
+          "uid" : "__expr__"
+        },
+        "expression": "A",
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "reducer": "last",
+        "refId": "C",
+        "type": "reduce"
+      }
+    },
+    {
+      "refId": "D",
+      "relativeTimeRange": {"from": 0, "to": 0},
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": { "params": [0, 0], "type": "gt" },
+            "operator": {"type": "and"},
+            "query": {"params": []},
+            "reducer": {"params": [], "type": "avg"},
+            "type": "query"
+          }
+        ],
+        "datasource": {
+          "name": "Expression",
+          "type": "__expr__",
+          "uid" : "__expr__"
+        },
+        "expression": "B",
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "reducer": "last",
+        "refId": "D",
+        "type": "reduce"
+      }
+    },
+    {
+      "refId": "E",
+      "relativeTimeRange": {"from": 0, "to": 0},
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": { "params": [0, 0], "type": "gt" },
+            "operator": {"type": "and"},
+            "query": {"params": []},
+            "reducer": {"params": [], "type": "avg"},
+            "type": "query"
+          }
+        ],
+        "datasource": {
+          "name": "Expression",
+          "type": "__expr__",
+          "uid" : "__expr__"
+        },
+        "expression": "$C + $D",
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "refId": "E",
+        "type": "math"
+      }
+    },
+    {
+      "refId": "F",
+      "relativeTimeRange": {"from": 0, "to": 0},
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": { "params": [7], "type": "gt" },   
+            "operator": {"type": "and"},
+            "query": {"params": []},
+            "reducer": {"params": [], "type": "avg"},
+            "type": "query"
+          }
+        ],
+        "datasource": {
+          "name": "Expression",
+          "type": "__expr__",
+          "uid" : "__expr__"
+        },
+        "expression": "E",
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "refId": "F",
+        "type": "threshold"
+      }
+    }
+  ],
+  "noDataState": "OK",
+  "execErrState": "Error",
+  "labels": {
+    "platform": "{{ project }}",
+    "zone"    : "{{ zone }}",
+    "severity": "Major",
+        "type": "{{ (rulegroup | string).split('_')[0] }}"
+  },
+  "annotations": {
+    "description": "🧐 **Why This Happens**\n- Faulty or loose network cable.\n- NIC hardware issues.\n- Duplex mismatch between NIC and switch.\n- Network congestion or packet corruption.\n- Misconfigured MTU or VLAN settings.\n\n🔍 **Impact**\n- Network throughput degradation.\n- Application timeouts and packet drops.\n- Possible service outages if error rate increases.\n\n✅ **Immediate Actions for Ops**\n1. **Check interface error counters:**\n   ```\n   ip -s link show <interface>\n   ethtool -S <interface> | grep err\n   ```\n2. Verify physical connectivity (cables, SFP modules).\n3. Confirm NIC speed and duplex settings match the switch:\n   ```\n   ethtool <interface>\n   ```\n4. If errors persist:\n   - Swap cable or NIC.\n   - Check switch port logs for CRC errors.\n   - Investigate for driver/firmware updates.\n5. Review network congestion and traffic patterns.\n\n⚠ **Note:** This alert fires if combined `err_in + err_out` stays above 10 errors/sec for 2 minutes.",
+    "summary": "High network interface errors detected on one or more servers."
+  },
+  "isPaused": false
+}
+

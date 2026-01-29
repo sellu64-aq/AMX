@@ -1,0 +1,32 @@
+# Variables for DLVMAMXBILLING02
+
+#ip 10.221.87.129
+---
+# Add host-specific variables below
+#
+########## Feature Flags ##########
+deploy_telegraf_redis: false
+deploy_telegraf_postgres: false
+deploy_telegraf_infra: false
+deploy_mysql_replica_status_monitor: false
+deploy_mysql_slowquery_script: false
+deploy_app_metrics: true
+deploy_port_listen_monitor: true
+deploy_port_conn_monitor: true
+deploy_ntp_status: false
+deploy_dra_process_script: false
+deploy_nginx: false
+
+########## Application Monitoring ##########
+apps:
+  - name: "report_processor"
+    match: "report_processor"
+    type: "pattern"
+	
+########## Port Monitoring ##########
+ports:
+ 
+  - ip: 10.221.86.210
+    port: 3306
+    name: Replication-Mysql
+	

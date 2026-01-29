@@ -1,0 +1,12 @@
+folderUID: "ce92t4kl87e9sc"   # alerts folder
+orgId: 1
+project_name: "AMX"
+site_name: "Mex"
+influxMaster: "adnngic9frwg0e"
+influxSlave: "$influxS"
+prometheusMaster: "NZx80_hVk"
+prometheusSlave: "NZx80_hVk"
+lokiMaster: "ivVvJlh4k"
+lokiSlave: "ivVvJlh4k"
+mysqlAircontrol: "$mysqlAircontrol"
+mysqlAuditlog: "$mysqlAuditlog"

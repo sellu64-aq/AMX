@@ -1,0 +1,28 @@
+---
+- name: Create directory for Grafana
+  file:
+    path: /opt/grafana
+    state: directory
+    mode: '0755'
+
+- name: Download Grafana RPM
+  get_url:
+    url: "https://dl.grafana.com/enterprise/release/grafana-enterprise-11.4.0-1.x86_64.rpm"  # Update to the desired version
+    dest: /opt/grafana/grafana.rpm
+
+- name: Install Grafana from RPM
+  yum:
+    name: /opt/grafana/grafana.rpm
+    state: present
+
+- name: Start and enable Grafana service
+  systemd:
+    name: grafana-server
+    state: started
+    enabled: yes
+
+- name: Execute Grafana binary
+  command: /usr/sbin/grafana-server
+  args:
+    chdir: /opt/grafana
+

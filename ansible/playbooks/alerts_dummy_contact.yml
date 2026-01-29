@@ -1,0 +1,80 @@
+---
+- name: Cleanup Grafana notifications
+  hosts: all
+  vars_files:
+    - "../group_vars/grafana.yml"
+  tasks:
+
+    - name: Ensure Default contact point exists
+      uri:
+        url: "{{ grafana_api_url }}/api/v1/provisioning/contact-points"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ grafana_api_key }}"
+          Content-Type: "application/json"
+        body_format: json
+        body: |
+          {
+            "name": "Default",
+            "type": "email",
+            "settings": {
+              "addresses": "aq.noc@airlinq.com"
+            }
+          }
+        status_code: [200, 201, 202]
+      delegate_to: localhost
+
+    - name: Get current notification policies
+      uri:
+        url: "{{ grafana_api_url }}/api/v1/provisioning/policies"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ grafana_api_key }}"
+        return_content: yes
+      register: notif_policy
+      delegate_to: localhost
+
+    - name: Update default policy to use 'Default' receiver
+      set_fact:
+        cleaned_default_policy: >-
+          {{
+            notif_policy.json
+            | combine({
+                'receiver': 'Default'
+              })
+          }}
+
+    - name: Push updated default policy with 'Default' receiver
+      uri:
+        url: "{{ grafana_api_url }}/api/v1/provisioning/policies"
+        method: PUT
+        headers:
+          Authorization: "Bearer {{ grafana_api_key }}"
+          Content-Type: "application/json"
+        body_format: json
+        body: "{{ cleaned_default_policy }}"
+        status_code: [200, 202]
+      delegate_to: localhost
+
+    - name: Get all contact points
+      uri:
+        url: "{{ grafana_api_url }}/api/v1/provisioning/contact-points"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ grafana_api_key }}"
+        return_content: yes
+      register: contact_points
+      delegate_to: localhost
+
+    - name: Delete unwanted contact points
+      uri:
+        url: "{{ grafana_api_url }}/api/v1/provisioning/contact-points/{{ item.uid }}"
+        method: DELETE
+        headers:
+          Authorization: "Bearer {{ grafana_api_key }}"
+        status_code: [200, 202, 404]
+      loop: "{{ contact_points.json | selectattr('name','in',['infra-emails','infra-teams','app-emails','app-teams','mysql-emails','mysql-teams']) | list }}"
+      loop_control:
+        label: "{{ item.name }}"
+      delegate_to: localhost
+

@@ -1,0 +1,254 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telegraf-redis-config
+  namespace: monitoring
+data:
+  telegraf.conf: |
+    [global_tags]
+      project = "{{ project }}"
+      zone = "{{ zone }}"
+      nodeIP = "{{ ansible_host }}"
+      service = "k8"
+
+    [agent]
+      interval = "15s"
+      round_interval = true
+      metric_batch_size = 1000
+      metric_buffer_limit = 10000
+      collection_jitter = "0s"
+      flush_interval = "15s"
+      flush_jitter = "0s"
+      precision = ""
+      hostname = "{{ inventory_hostname | upper }}"
+      omit_hostname = false
+      logfile = "/var/log/telegraf/telegraf.log"
+
+    ####################################################
+    # Redis up status
+    [[inputs.prometheus]]
+      urls = ["http://prometheus-redis-exporter.monitoring.svc.cluster.local:9121/metrics"]
+      name_override = "redis_up"
+      metric_version = 2
+      interval = "15s"
+
+    [[processors.starlark]]
+      namepass = ["redis_up"]
+      order = 0
+      source = '''
+    def apply(metric):
+        prefix = "redis_up"
+        keys_to_remove = []
+        for key in metric.fields:
+            if not key.startswith(prefix):
+                keys_to_remove.append(key)
+        for key in keys_to_remove:
+            metric.fields.pop(key)
+        if not metric.fields:
+            return None
+        return metric
+    '''
+
+    [[processors.rename]]
+      namepass = ["redis_up"]
+      [[processors.rename.replace]]
+        measurement = "redis_up"
+        dest = "redis_up"
+
+    ####################################################
+    # Redis memory metrics
+    [[inputs.prometheus]]
+      urls = ["http://prometheus-redis-exporter.monitoring.svc.cluster.local:9121/metrics"]
+      name_override = "redis_memory"
+      metric_version = 2
+      interval = "15s"
+
+    [[processors.starlark]]
+      namepass = ["redis_memory"]
+      order = 0
+      source = '''
+    def apply(metric):
+        prefix_list = ["redis_memory_used_bytes", "redis_memory_rss_bytes", "redis_memory_fragmentation_ratio"]
+        keys_to_remove = []
+        for key in metric.fields:
+            if key not in prefix_list:
+                keys_to_remove.append(key)
+        for key in keys_to_remove:
+            metric.fields.pop(key)
+        if not metric.fields:
+            return None
+        return metric
+    '''
+
+    [[processors.rename]]
+      namepass = ["redis_memory"]
+      [[processors.rename.replace]]
+        measurement = "redis_memory"
+        dest = "redis_memory"
+
+    ####################################################
+    # Redis keyspace metrics
+    [[inputs.prometheus]]
+      urls = ["http://prometheus-redis-exporter.monitoring.svc.cluster.local:9121/metrics"]
+      name_override = "redis_keyspace"
+      metric_version = 2
+      interval = "15s"
+
+    [[processors.starlark]]
+      namepass = ["redis_keyspace"]
+      order = 0
+      source = '''
+    def apply(metric):
+        prefix_list = ["redis_keys","redis_expired_keys","redis_evicted_keys","redis_keyspace_hits","redis_keyspace_misses"]
+        keys_to_remove = []
+        for key in metric.fields:
+            if key not in prefix_list:
+                keys_to_remove.append(key)
+        for key in keys_to_remove:
+            metric.fields.pop(key)
+        if not metric.fields:
+            return None
+        return metric
+    '''
+
+    [[processors.rename]]
+      namepass = ["redis_keyspace"]
+      [[processors.rename.replace]]
+        measurement = "redis_keyspace"
+        dest = "redis_keyspace"
+
+    ####################################################
+    # Redis commands metrics
+    [[inputs.prometheus]]
+      urls = ["http://prometheus-redis-exporter.monitoring.svc.cluster.local:9121/metrics"]
+      name_override = "redis_commands"
+      metric_version = 2
+      interval = "15s"
+
+    [[processors.starlark]]
+      namepass = ["redis_commands"]
+      order = 0
+      source = '''
+    def apply(metric):
+        prefix_list = ["redis_commands_processed_total","redis_commands_duration_seconds_total","get","set","hget","hset","incrby","del"]
+        keys_to_remove = []
+        for key in metric.fields:
+            if key not in prefix_list:
+                keys_to_remove.append(key)
+        for key in keys_to_remove:
+            metric.fields.pop(key)
+        if not metric.fields:
+            return None
+        return metric
+    '''
+
+    [[processors.rename]]
+      namepass = ["redis_commands"]
+      [[processors.rename.replace]]
+        measurement = "redis_commands"
+        dest = "redis_commands"
+
+    ####################################################
+    # Redis replication metrics
+    [[inputs.prometheus]]
+      urls = ["http://prometheus-redis-exporter.monitoring.svc.cluster.local:9121/metrics"]
+      name_override = "redis_replication"
+      metric_version = 2
+      interval = "15s"
+
+    [[processors.starlark]]
+      namepass = ["redis_replication"]
+      order = 0
+      source = '''
+    def apply(metric):
+        prefix_list = ["redis_connected_slaves","redis_master_repl_offset","redis_repl_backlog_size","redis_repl_backlog_histlen"]
+        keys_to_remove = []
+        for key in metric.fields:
+            if key not in prefix_list:
+                keys_to_remove.append(key)
+        for key in keys_to_remove:
+            metric.fields.pop(key)
+        if not metric.fields:
+            return None
+        return metric
+    '''
+
+    [[processors.rename]]
+      namepass = ["redis_replication"]
+      [[processors.rename.replace]]
+        measurement = "redis_replication"
+        dest = "redis_replication"
+
+    ####################################################
+    # Redis persistence / AOF / RDB metrics
+    [[inputs.prometheus]]
+      urls = ["http://prometheus-redis-exporter.monitoring.svc.cluster.local:9121/metrics"]
+      name_override = "redis_persistence"
+      metric_version = 2
+      interval = "15s"
+
+    [[processors.starlark]]
+      namepass = ["redis_persistence"]
+      order = 0
+      source = '''
+    def apply(metric):
+        prefix_list = ["redis_rdb_changes_since_last_save","redis_rdb_bgsave_in_progress","redis_aof_enabled","redis_aof_current_size"]
+        keys_to_remove = []
+        for key in metric.fields:
+            if key not in prefix_list:
+                keys_to_remove.append(key)
+        for key in keys_to_remove:
+            metric.fields.pop(key)
+        if not metric.fields:
+            return None
+        return metric
+    '''
+
+    [[processors.rename]]
+      namepass = ["redis_persistence"]
+      [[processors.rename.replace]]
+        measurement = "redis_persistence"
+        dest = "redis_persistence"
+
+    ####################################################
+    # Redis CPU / Eviction / Latency metrics
+    [[inputs.prometheus]]
+      urls = ["http://prometheus-redis-exporter.monitoring.svc.cluster.local:9121/metrics"]
+      name_override = "redis_cpu_latency"
+      metric_version = 2
+      interval = "15s"
+
+    [[processors.starlark]]
+      namepass = ["redis_cpu_latency"]
+      order = 0
+      source = '''
+    def apply(metric):
+        prefix_list = ["redis_cpu_sys","redis_cpu_user","redis_latest_fork_usec","redis_latency"]
+        keys_to_remove = []
+        for key in metric.fields:
+            if key not in prefix_list:
+                keys_to_remove.append(key)
+        for key in keys_to_remove:
+            metric.fields.pop(key)
+        if not metric.fields:
+            return None
+        return metric
+    '''
+
+    [[processors.rename]]
+      namepass = ["redis_cpu_latency"]
+      [[processors.rename.replace]]
+        measurement = "redis_cpu_latency"
+        dest = "redis_cpu_latency"
+
+    ####################################################
+    # OUTPUTS
+    [[outputs.influxdb]]
+      urls = [
+        "http://{{ influx_Pri_IP }}:{{ influx_Pri_Port }}",
+        "http://{{ influx_Sec_IP }}:{{ influx_Sec_Port }}"
+      ]
+      database = "{{ influx_priDB_name }}"
+      timeout = "5s"
+      skip_database_creation = true
+      namepass = ["redis_up","redis_memory","redis_keyspace","redis_commands","redis_replication","redis_persistence","redis_cpu_latency"]

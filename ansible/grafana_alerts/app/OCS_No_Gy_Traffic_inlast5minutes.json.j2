@@ -1,0 +1,81 @@
+{
+  "uid": "{{ alert_uid }}",
+  "folderUID": "{{ folder_uid }}",
+  "ruleGroup": "{{ rulegroup }}",
+  "title": "OCS No Gy Traffic in last 5 Minutes",
+  "condition": "C",
+  "data": [
+    {
+      "refId": "A",
+      "relativeTimeRange": {"from": 900, "to": 0},
+      "datasourceUid": "{{ datasourceUid }}",
+      "model": {
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "query": "SELECT sum(SessionCounts) AS \"RequestType\" FROM thirty_days.CQ_Gylog1mAgg WHERE $timeFilter group by time(5m), RequestType, project, host, zone fill(null)",
+        "rawQuery": true,
+        "refId": "A",
+        "resultFormat": "time_series"
+      }
+    },
+    {
+      "refId": "B",
+      "relativeTimeRange": {"from": 0, "to": 0},
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": {"params": [], "type": "gt"},
+            "operator": {"type": "and"},
+            "query": { "params": ["B"] },
+            "reducer": {"params": [], "type": "last"},
+            "type": "query"
+          }
+        ],
+        "datasource": {"type": "__expr__", "uid": "__expr__"},
+        "expression": "A",
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "reducer": "last",
+        "refId": "B",
+        "settings": {"mode": ""},
+        "type": "reduce"
+      }
+    },
+    {
+      "refId": "C",
+      "relativeTimeRange": {"from": 0, "to": 0},
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": { "params": [100], "type": "lt" },
+            "operator": {"type": "and"},
+            "query": { "params": ["C"] },
+            "reducer": {"params": [], "type": "last"},
+            "type": "query"
+          }
+        ],
+        "datasource": {"type": "__expr__", "uid": "__expr__"},
+        "expression": "B",
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "refId": "C",
+        "type": "threshold"
+      }
+    }
+  ],
+  "noDataState": "OK",
+  "execErrState": "Error",
+  "annotations": {
+    "description": "This alert triggers when no Gy interface traffic (SessionCounts) has been recorded in the last 5 minutes on one or more nodes. This may indicate an issue with the online charging system (OCS), Gx/Gy integration, application crash, or communication breakdown between the PGW/SGW and the OCS.\n\n🧭 Ops Notes\n\nThe Gy interface is responsible for online charging in real-time.\n\nLack of Gy traffic may result in unbilled sessions, subscriber access failures, or loss of charging records.\n\nThis is a critical alert especially in production or high-revenue systems.\n\nConfirm there is network connectivity between the PGW/SGW and OCS over the Gy interface (usually port 3868 for Diameter):\nnc -zv <remote-host> 3868\n\nIf everything looks healthy on the OCS, confirm if PGW/SGW or PCRF systems are generating Gy requests."
+  },
+  "labels": {
+    "platform": "{{ project }}",
+    "zone"    : "{{ zone }}",
+    "severity": "CRITICAL",
+    "type"    : "{{ (rulegroup | string).split('_')[0] }}"
+  },
+  "isPaused": false
+}
+

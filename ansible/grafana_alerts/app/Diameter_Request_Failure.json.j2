@@ -1,0 +1,80 @@
+{
+  "uid": "{{ alert_uid }}",
+  "folderUID": "{{ folder_uid }}",
+  "ruleGroup": "{{ rulegroup }}",
+  "title": "DIAMETER UNABLE_TO_COMPLY Failures",
+  "condition": "C",
+  "data": [
+    {
+      "refId": "A",
+      "relativeTimeRange": {"from": 300, "to": 0},
+      "datasourceUid": "{{ datasourceUid }}",
+      "model": {
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "query": "SELECT sum(ResponseCount) FROM \"CQ_DRASuccessFailure1mAggr\" WHERE $timeFilter and ResultCode = 'DIAMETER_UNABLE_TO_COMPLY' group by time(1m),\"ResultCode\",project, zone, host",
+        "rawQuery": true,
+        "refId": "A",
+        "resultFormat": "time_series"
+      }
+    },
+    {
+      "refId": "B",
+      "relativeTimeRange": {"from": 0, "to": 0},
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": {"params": [], "type": "gt"},
+            "operator": {"type": "and"},
+            "query": { "params": ["B"] },
+            "reducer": {"params": [], "type": "last"},
+            "type": "query"
+          }
+        ],
+        "datasource": {"type": "__expr__", "uid": "__expr__"},
+        "expression": "A",
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "reducer": "last",
+        "refId": "B",
+        "type": "reduce"
+      }
+    },
+    {
+      "refId": "C",
+      "relativeTimeRange": {"from": 0, "to": 0},
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": { "params": [7], "type": "gt" },
+            "operator": {"type": "and"},
+            "query": { "params": ["C"] },
+            "reducer": {"params": [], "type": "last"},
+            "type": "query"
+          }
+        ],
+        "datasource": {"type": "__expr__", "uid": "__expr__"},
+        "expression": "B",
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "refId": "C",
+        "type": "threshold"
+      }
+    }
+  ],
+  "noDataState": "OK",
+  "execErrState": "OK",
+  "annotations": {
+    "description": "1. Diameter Request Failure: A Diameter request has failed to complete successfully. This may indicate issues with the Diameter peer, authentication, or network connectivity. Verify the Diameter server logs and peer connectivity.\n\n2. Diameter Transaction Failed: A Diameter transaction did not complete as expected. This could impact user sessions or AAA requests. Check for transaction errors and investigate logs for root cause.\n\n3. Diameter Unable to Process Request: The Diameter server was unable to process an incoming request. Possible causes include protocol errors, misconfigurations, or network issues. Review server logs and peer status immediately.\n\n4. Diameter End User Denied: A Diameter request was denied by the end-user or the AAA server. This may affect user authentication or service provisioning. Verify user account status and policy configuration.\n\n5. Diameter Authentication Failure: Diameter authentication failed for one or more sessions. Users may be unable to authenticate or access services. Investigate the AAA server logs and network connectivity to peers.\n\n6. Diameter Connectivity Error: The Diameter server experienced connectivity issues with one or more peers. This may disrupt service requests. Check network connectivity, firewall rules, and peer availability.\n\n7. Diameter Session Rejected: A Diameter session initiation was rejected. This may indicate policy violations or capacity issues. Investigate server logs and session counters for root cause.\n\n8. Diameter Protocol Error: A protocol error occurred while processing Diameter requests. This may lead to failed user sessions or service disruption. Verify request formats, peer compatibility, and server health."
+  },
+  "labels": {
+    "platform": "{{ project }}",
+    "zone"    : "{{ zone }}",
+    "severity": "CRITICAL",
+        "type": "{{ (rulegroup | string).split('_')[0] }}"
+  },
+  "isPaused": false
+}
+

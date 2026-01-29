@@ -1,0 +1,96 @@
+{
+  "uid": "{{ alert_uid }}",
+  "folderUID": "{{ folder_uid }}",
+  "ruleGroup": "{{ rulegroup }}",
+  "title": "MySQL Slow Queries Count Exceeds",
+  "condition": "C",
+  "data": [
+    {
+      "refId": "A",
+      "relativeTimeRange": {"from": 300, "to": 0},
+      "datasourceUid": "{{ datasourceUid }}",
+      "model": {
+        "adhocFilters": [],
+        "alias": "",
+        "datasource": {"type": "influxdb", "uid": "{{ datasourceUid }}"},
+        "instant": false,
+        "intervalMs": 1000,
+        "limit": "",
+        "maxDataPoints": 43200,
+        "measurement": "",
+        "policy": "",
+        "query": "SELECT derivative(mean(\"slow_queries\"), 1m) AS \"slow_per_min\"\nFROM \"mysql_queries\" \nWHERE $timeFilter \nGROUP BY time(1m),\"host\",project,zone,nodeIP",
+        "range": true,
+        "rawQuery": true,
+        "rawSql": "",
+        "refId": "A",
+        "resultFormat": "time_series",
+        "slimit": "",
+        "tz": ""
+      }
+    },
+    {
+      "refId": "B",
+      "relativeTimeRange": {"from": 300, "to": 0},
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": {"params": [], "type": "gt"},
+            "operator": {"type": "and"},
+            "query": { "params": ["B"] },
+            "reducer": {"params": [], "type": "last"},
+            "type": "query"
+          }
+        ],
+        "datasource": {"type": "__expr__", "uid": "__expr__"},
+        "expression": "A",
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "reducer": "last",
+        "refId": "B",
+        "settings": {"mode": ""},
+        "type": "reduce"
+      }
+    },
+    {
+      "refId": "C",
+      "relativeTimeRange": {"from": 0, "to": 0},
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": { "params": [100, 0], "type": "gt" },
+            "operator": {"type": "and"},
+            "query": {"params": []},
+            "reducer": {"params": [], "type": "avg"},
+            "type": "query"
+          }
+        ],
+        "datasource": {
+          "name": "Expression",
+          "type": "__expr__",
+          "uid" : "__expr__"
+        },
+        "expression": "B",
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "refId": "C",
+        "type": "threshold"
+      }
+    }
+  ],
+  "noDataState": "OK",
+  "execErrState": "OK",
+  "annotations": {
+    "description": "⚠️ MySQL Slow Queries Alert\nThe number of slow queries per minute (slow_queries) has exceeded the defined threshold.\nThis could indicate performance problems such as missing indexes, inefficient queries, or server resource bottlenecks.\nReview the slow query log and optimize queries or server settings as needed.\n\n🛠 Recommended Follow-up Actions\n\nCheck the MySQL slow query log to identify problematic queries.\n\nLook for missing indexes or table scans.\n\nMonitor disk I/O, CPU, and connections for bottlenecks.\n\nConsider increasing the slow query log threshold if too many trivial queries are logged."
+  },
+  "labels": {
+    "platform": "{{ project }}",
+    "zone"    : "{{ zone }}",
+    "severity": "CRITICAL",
+    "type"    : "{{ (rulegroup | string).split('_')[0] }}"
+  },
+  "isPaused": false
+}
+

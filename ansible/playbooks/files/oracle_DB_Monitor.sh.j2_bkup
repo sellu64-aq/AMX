@@ -1,0 +1,240 @@
+#!/bin/bash
+
+# Oracle environment setup
+export ORACLE_HOME={{ oracle_home }}
+export PATH=$ORACLE_HOME/bin:$PATH
+export LD_LIBRARY_PATH=$ORACLE_HOME/lib:$LD_LIBRARY_PATH
+export TNS_ADMIN=$ORACLE_HOME/network/admin
+
+SQLPLUS=$ORACLE_HOME/bin/sqlplus
+DB_CONN="{{ db_conn }}"
+
+# Fixed metadata (update values below if needed)
+HOST="{{ inventory_hostname }}"
+NODE_IP="{{ ansible_host }}"
+PROJECT="{{ project }}"
+SERVICE="{{ service | default('oracledb') }}"
+ZONE="{{ zone }}"
+
+TAGS="host=${HOST},nodeIP=${NODE_IP},project=${PROJECT},service=${SERVICE},zone=${ZONE}"
+
+escape_tag_value() {
+  echo "$1" | sed -e 's/,/\\,/g' -e 's/ /\\ /g' -e 's/=/\\=/g'
+}
+
+run_sql() {
+  echo "$1" | $SQLPLUS -S $DB_CONN | sed '/^$/d' | sed 's/ *$//g'
+}
+
+# 1. Sessions
+read -r active_sessions total_sessions <<< $(run_sql "
+SET HEADING OFF FEEDBACK OFF PAGESIZE 0
+SELECT
+  (SELECT COUNT(*) FROM v\$session WHERE status='ACTIVE'),
+  (SELECT COUNT(*) FROM v\$session)
+FROM dual;
+")
+echo "oracle_metrics,metric=sessions,${TAGS} active_sessions=${active_sessions}i,total_sessions=${total_sessions}i"
+
+# 2. System stats
+read -r user_commits user_rollbacks <<< $(run_sql "
+SET HEADING OFF FEEDBACK OFF PAGESIZE 0
+SELECT
+  MAX(DECODE(statistic#, 14, value, NULL)),
+  MAX(DECODE(statistic#, 15, value, NULL))
+FROM v\$sysstat
+WHERE statistic# IN (14,15);
+")
+user_commits=$(printf "%.0f" "$user_commits")
+user_rollbacks=$(printf "%.0f" "$user_rollbacks")
+echo "oracle_metrics,metric=sysstat,${TAGS} user_commits=${user_commits}i,user_rollbacks=${user_rollbacks}i"
+
+# 3. Tablespace Usage
+run_sql "
+SET HEADING OFF FEEDBACK OFF PAGESIZE 0 LINESIZE 200
+SELECT
+  d.tablespace_name,
+  ROUND(100 * (SUM(d.bytes) - NVL(SUM(f.bytes),0)) / SUM(d.bytes), 2),
+  SUM(d.bytes),
+  NVL(SUM(f.bytes),0)
+FROM dba_data_files d
+LEFT JOIN dba_free_space f ON d.tablespace_name = f.tablespace_name
+GROUP BY d.tablespace_name;
+" | while read -r tablespace used_percent total_bytes free_bytes; do
+  tbs_tag=$(escape_tag_value "$tablespace")
+  used_percent=$(echo "$used_percent" | tr -d ',' | awk '{$1=$1};1')
+
+  # Normalize total_bytes
+  if [[ "$total_bytes" == *[eE]* ]]; then
+    total_bytes=$(printf "%.0f" "$total_bytes")
+  fi
+
+  # Normalize free_bytes
+  if [[ "$free_bytes" == *[eE]* ]]; then
+    free_bytes=$(printf "%.0f" "$free_bytes")
+  fi
+
+  echo "oracle_metrics,metric=tablespace,tablespace=${tbs_tag},${TAGS} used_percent=${used_percent},total_bytes=${total_bytes}i,free_bytes=${free_bytes}i"
+done
+
+# 4. Buffer Cache Hit Ratio
+buffer_cache_hit_ratio=$(run_sql "
+SET HEADING OFF FEEDBACK OFF PAGESIZE 0
+SELECT ROUND((1 - (phy.value / (cur.value + phy.value))) * 100, 2) FROM
+  (SELECT value FROM v\$sysstat WHERE name = 'physical reads') phy,
+  (SELECT value FROM v\$sysstat WHERE name = 'db block gets') cur;
+")
+buffer_cache_hit_ratio=$(echo "$buffer_cache_hit_ratio" | awk '{$1=$1};1')
+echo "oracle_metrics,metric=buffer_cache_hit_ratio,${TAGS} value=${buffer_cache_hit_ratio}"
+
+# 5. Lock Contention
+lock_contention=$(run_sql "
+SET HEADING OFF FEEDBACK OFF PAGESIZE 0
+SELECT COUNT(*) FROM v\$lock WHERE block > 0;
+")
+lock_contention=$(echo "$lock_contention" | awk '{$1=$1};1')
+# Use count field and integer type for lock_contention
+echo "oracle_metrics,metric=lock_contention,${TAGS} count=${lock_contention}i"
+
+# 6. Redo Logs
+run_sql "
+SET HEADING OFF FEEDBACK OFF PAGESIZE 0
+SELECT group#, status, archived FROM v\$log;
+" | while read -r group status archived; do
+  status_escaped=$(escape_tag_value "$status")
+  archived_escaped=$(escape_tag_value "$archived")
+  # Use count field as integer for redo_log entries
+  echo "oracle_metrics,metric=redo_log,group=${group},status=${status_escaped},archived=${archived_escaped},${TAGS} count=1i"
+done
+
+# 7. Top Wait Events
+run_sql "
+SET HEADING OFF FEEDBACK OFF PAGESIZE 0
+SELECT * FROM (
+  SELECT REPLACE(event, '|', '/') || '|' || SUM(time_waited)
+  FROM v\$system_event
+  GROUP BY event
+  ORDER BY SUM(time_waited) DESC
+) WHERE ROWNUM <= 5;
+" | while IFS='|' read -r event time_waited; do
+  safe_event=$(escape_tag_value "$event")
+
+  # Normalize time_waited to integer
+  if [[ "$time_waited" == *[eE]* ]]; then
+    time_waited=$(printf "%.0f" "$time_waited")
+  fi
+
+  echo "oracle_metrics,metric=wait_event,event=${safe_event},${TAGS} time_waited_ms=${time_waited}i"
+done
+
+# 8. Long Running Queries
+long_running_queries=$(run_sql "
+SET HEADING OFF FEEDBACK OFF PAGESIZE 0
+SELECT COUNT(*) FROM v\$session WHERE status='ACTIVE' AND last_call_et > 300;
+")
+long_running_queries=$(echo "$long_running_queries" | awk '{$1=$1};1')
+echo "oracle_metrics,metric=long_running_queries,${TAGS} count=${long_running_queries}i"
+
+# 9. PGA and SGA Usage
+read -r pga_target pga_used <<< $(run_sql "
+SET HEADING OFF FEEDBACK OFF PAGESIZE 0
+SELECT
+  value,
+  (SELECT value FROM v\$pgastat WHERE name='total PGA allocated')
+FROM v\$parameter WHERE name='pga_aggregate_target';
+")
+
+read -r sga_target sga_used <<< $(run_sql "
+SET HEADING OFF FEEDBACK OFF PAGESIZE 0
+SELECT
+  value,
+  (SELECT SUM(value) FROM v\$sgastat WHERE name='free memory')
+FROM v\$parameter WHERE name='sga_target';
+")
+
+# Normalize values
+pga_target=$(printf "%.0f" "$pga_target")
+pga_used=$(printf "%.0f" "$pga_used")
+sga_target=$(printf "%.0f" "$sga_target")
+sga_used=$(printf "%.0f" "$sga_used")
+
+echo "oracle_metrics,metric=memory,${TAGS} pga_target=${pga_target}i,pga_used=${pga_used}i,sga_target=${sga_target}i,sga_free=${sga_used}i"
+
+
+# 10. CPU Usage
+cpu_used_by_session=$(run_sql "
+SET HEADING OFF FEEDBACK OFF PAGESIZE 0
+SELECT value FROM v\$sysstat WHERE name='CPU used by this session';
+")
+cpu_used_by_session=$(echo "$cpu_used_by_session" | awk '{$1=$1};1')
+echo "oracle_metrics,metric=cpu_usage,${TAGS} cpu_used_by_session=${cpu_used_by_session}i"
+
+# 11. Blocked Sessions
+blocked_sessions=$(run_sql "
+SET HEADING OFF FEEDBACK OFF PAGESIZE 0
+SELECT COUNT(*) FROM v\$session WHERE blocking_session IS NOT NULL;
+")
+blocked_sessions=$(echo "$blocked_sessions" | awk '{$1=$1};1')
+echo "oracle_metrics,metric=blocked_sessions,${TAGS} count=${blocked_sessions}i"
+
+# 12. Redo Log Switch Count (Last 1 Hour)
+redo_log_switches_last_hour=$(run_sql "
+SET HEADING OFF FEEDBACK OFF PAGESIZE 0
+SELECT COUNT(*) FROM v\$log_history WHERE FIRST_TIME > SYSDATE - (1/24);
+")
+redo_log_switches_last_hour=$(echo "$redo_log_switches_last_hour" | awk '{$1=$1};1')
+echo "oracle_metrics,metric=redo_log_switch_rate,${TAGS} count_last_hour=${redo_log_switches_last_hour}i"
+
+# 13. Temp Tablespace Usage (Fixed)
+run_sql "
+SET HEADING OFF FEEDBACK OFF PAGESIZE 0
+SELECT
+  ts.name,
+  SUM(u.blocks) * ts.block_size
+FROM
+  v\$tempseg_usage u,
+  v\$tablespace ts,
+  dba_temp_files f
+WHERE
+  ts.ts# = f.ts#
+  AND u.tablespace = ts.name
+GROUP BY ts.name, ts.block_size;
+" | while read -r tbs used_bytes; do
+  tbs_tag=$(escape_tag_value "$tbs")
+  
+  # Fallback if used_bytes is empty or invalid
+  if [[ "$used_bytes" =~ ^[0-9]+$ ]]; then
+    echo "oracle_metrics,metric=temp_tablespace,tablespace=${tbs_tag},${TAGS} used_bytes=${used_bytes}i"
+  else
+    echo "oracle_metrics,metric=temp_tablespace,tablespace=${tbs_tag},${TAGS} used_bytes=0i"
+  fi
+done
+
+# 14. Locked or Expired Accounts (Fixed)
+locked_or_expired_users=$(run_sql "
+SET DEFINE OFF
+SET HEADING OFF FEEDBACK OFF PAGESIZE 0
+SELECT COUNT(*) FROM dba_users WHERE account_status IN ('LOCKED', 'EXPIRED', 'EXPIRED & LOCKED');
+")
+locked_or_expired_users=$(echo "$locked_or_expired_users" | tr -dc '0-9')
+echo "oracle_metrics,metric=user_account_status,${TAGS} locked_or_expired_users=${locked_or_expired_users}i"
+
+
+# 15. Top SQL by Elapsed Time (Optional - Heavy)
+run_sql "
+SET HEADING OFF FEEDBACK OFF PAGESIZE 0
+SELECT sql_id || '|' || ROUND(elapsed_time/1000000,2) || '|' || executions
+FROM (
+  SELECT sql_id, elapsed_time, executions
+  FROM v\$sql
+  WHERE elapsed_time > 0
+  ORDER BY elapsed_time DESC
+) WHERE ROWNUM <= 5;
+" | while IFS='|' read -r sql_id elapsed_time_sec executions; do
+  sql_tag=$(escape_tag_value "$sql_id")
+  elapsed_time_sec=$(printf "%.2f" "$elapsed_time_sec")
+  executions=$(printf "%.0f" "$executions")
+  echo "oracle_metrics,metric=top_sql,sql_id=${sql_tag},${TAGS} elapsed_time_sec=${elapsed_time_sec},executions=${executions}i"
+done
+
+

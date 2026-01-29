@@ -1,0 +1,41 @@
+# grafana_vars.yml
+
+grafana_server_ip: "10.223.72.216"
+
+grafana_api_key: "glsa_VFqwAf3ZPEGZ87GcjdaBnOwYiZVpqZpM_71c47764" # grafana server 10.221.86.103
+#grafana_api_key: "glsa_Lgxuz7EJZpC4ZOpuO2xcRvOGk9u0wm8j_bcd46f14"  # selvamtesever You can generate a Grafana API key in the Grafana UI
+
+
+grafana_url: "http://{{ hostvars['grafana_slave']['ansible_host'] }}:3000"  # Grafana URL dynamically fetched
+grafana_domain_url: "https://grafanaops.airlinq.com:3000"  # Define your domain URL here
+# prometheus_url: "http://10.221.72.20:9090"
+# loki_url: "http://10.221.72.20:3100"
+# influxdb_url: "http://10.221.72.20:8086"
+
+# Prometheus master server URL
+prometheus_url: "http://{{ hostvars['prometheus_master']['ansible_host'] }}:9090"  # Prometheus URL dynamically fetched
+
+# loki master server URL
+loki_url: "http://{{ hostvars['loki_master']['ansible_host'] }}:3100"  # InfluxDB URL dynamically fetched
+
+# InfluxDB master server URL
+influxdb_url: "http://{{ hostvars['influx_master']['ansible_host'] }}:8086"  # InfluxDB URL dynamically fetched
+
+# Optional: Alert email
+alert_email: "kselvam.enoch@airlinq.com"
+
+# Optional: User credentials for Grafana
+user_name: "selvam"
+user_email: "kselvam.enoch@airlinq.com"
+user_login: "selvam"
+user_password: "selvam"  # You may want to vault this password
+user_role: "Admin"  # Or Admin/Viewer based on role  
+
+# Define the dashboards you want to deploy
+dashboards:
+  - dashboard_file: "~/ansible/templates/dashboards/AirControl.json"
+  - dashboard_file: "~/ansible/templates/dashboards/BSS.json"
+  - dashboard_file: "~/ansible/templates/dashboards/DRA.json"
+
+#### Dashboards related variables #######
+job: "AMX_CMP"   ### this is defined under /etc/prometheus/prometheus.yml

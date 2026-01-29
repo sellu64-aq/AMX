@@ -1,0 +1,70 @@
+{
+  "uid": "{{ alert_uid }}",
+  "title": "High Swap Usage Server",
+  "folderUID": "{{ folder_uid }}",
+  "ruleGroup": "{{ rulegroup }}",
+  "interval": "5m",
+  "condition": "C",
+  "data": [
+    {
+      "refId": "A",
+      "relativeTimeRange": {"from": 900, "to": 0},
+      "datasourceUid": "{{ datasourceUid }}",
+      "model": {
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "query": "SELECT ((last(\"swap_total\") - last(\"swap_free\")) / last(\"swap_total\")) * 100 AS \"swap_used%\" FROM \"mem\" WHERE $timeFilter GROUP BY time(5m), host, project, zone fill(0)",
+        "rawQuery": true,
+        "refId": "A",
+        "resultFormat": "time_series"
+      }
+    },
+    {
+      "refId": "B",
+      "relativeTimeRange": {"from": 0, "to": 0},
+      "datasourceUid": "__expr__",
+      "model": {
+        "expression": "A",
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "reducer": "last",
+        "type": "reduce"
+      }
+    },
+    {
+      "refId": "C",
+      "relativeTimeRange": {"from": 0, "to": 0},
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": { "params": [85], "type": "gt" },
+            "operator": {"type": "and"},
+            "query": { "params": ["C"] },
+            "reducer": {"params": [], "type": "last"},
+            "type": "query"
+          }
+        ],
+        "expression": "B",
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "type": "threshold"
+      }
+    }
+  ],
+  "noDataState": "OK",
+  "execErrState": "Error",
+  "for": "2m",
+  "annotations": {
+    "description": "🧐 Why This Happens\n    Physical RAM is fully utilized, and the system starts swapping processes to disk.\n\n    A memory leak in an application.\n\n    Running too many memory-intensive processes.\n\n    Misconfigured memory limits or JVM heap settings.\n\n🔍 Impact\n    High swap usage significantly slows down the system.\n\n    Processes may become unresponsive or crash if swap fills up completely.\n\n    In extreme cases, the server can trigger the OOM (Out Of Memory) killer.\n\n✅ Immediate Actions for Ops\n    Check current memory and swap usage:\n\nfree -h\nswapon --show\n\nIdentify top memory-consuming processes:\n\ntop -o %MEM\nor\nps aux --sort=-%mem | head -n 10\n\nRestart or stop unnecessary high-memory processes (if safe to do so).\n\nClear page cache (if needed):\n\nsync; echo 3 > /proc/sys/vm/drop_caches\n\n(Use with caution, can impact performance briefly.)\n\nIf usage persists:\n    Consider adding more RAM.\n    Tune swapiness:\n\nsysctl vm.swappiness=10\n\nCheck for memory leaks in applications.",
+    "summary": "The server is heavily using swap memory instead of physical RAM, which can cause severe performance degradation because disk-based swap is much slower than RAM."
+  },
+  "labels": {
+    "platform": "{{ project }}",
+    "zone"    : "{{ zone }}",
+    "severity": "CRITICAL",
+        "type": "{{ (rulegroup | string).split('_')[0] }}"
+  },
+  "isPaused": false
+}
+

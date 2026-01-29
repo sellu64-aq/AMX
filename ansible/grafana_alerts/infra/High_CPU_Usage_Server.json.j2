@@ -1,0 +1,80 @@
+{
+  "uid": "{{ alert_uid }}",
+  "title": "High CPU Usage Server",
+  "folderUID": "{{ folder_uid }}",
+  "ruleGroup": "{{ rulegroup }}",
+  "condition": "C",
+  "data": [
+    {
+      "refId": "A",
+      "queryType": "",
+      "relativeTimeRange": {
+        "from": 600,
+        "to": 0
+      },
+      "datasourceUid": "{{ datasourceUid }}",
+      "model": {
+        "refId": "A",
+        "query": "SELECT mean(\"usage_user\") + mean(\"usage_system\") AS cpu_usage FROM \"cpu\" WHERE $timeFilter AND \"cpu\" = 'cpu-total' GROUP BY time(1m), host, project, zone, service fill(null)",
+        "rawQuery": true
+      }
+    },
+    {
+      "refId": "B",
+      "relativeTimeRange": {
+        "from": 0,
+        "to": 0
+      },
+      "datasourceUid": "__expr__",
+      "model": {
+        "type": "reduce",
+        "expression": "A",
+        "reducer": "last",
+        "conditions": []
+      }
+    },
+    {
+      "refId": "C",
+      "relativeTimeRange": {
+        "from": 0,
+        "to": 0
+      },
+      "datasourceUid": "__expr__",
+      "model": {
+        "type": "threshold",
+        "expression": "B",
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [85],
+              "type": "gt"
+            },
+            "operator": {
+              "type": "and"
+            },
+            "query": {
+              "params": ["C"]
+            },
+            "reducer": {
+              "type": "last",
+              "params": []
+            },
+            "type": "query"
+          }
+        ]
+      }
+    }
+  ],
+  "for": "2m",
+  "noDataState": "OK",
+  "execErrState": "Error",
+  "labels": {
+    "platform": "{{ project }}",
+    "zone": "{{ zone }}",
+    "severity": "CRITICAL",
+    "type": "{{ (rulegroup | string).split('_')[0] }}"
+  },
+  "annotations": {},
+  "isPaused": false
+}
+

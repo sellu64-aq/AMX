@@ -1,0 +1,82 @@
+{
+  "uid": "{{ alert_uid }}",
+  "title": "High TCP Established Connections",
+  "folderUID": "{{ folder_uid }}",
+  "ruleGroup": "{{ rulegroup }}",
+  "condition": "C",
+  "data": [
+    {
+      "refId": "A",
+      "relativeTimeRange": {
+        "from": 300,
+        "to": 0
+      },
+      "datasourceUid": "{{ datasourceUid }}",
+      "model": {
+        "refId": "A",
+        "query": "SELECT last(\"tcp_established\") AS \"TCP_Estab\" FROM \"netstat\" WHERE $timeFilter GROUP BY time(1m), project, zone, host fill(null)",
+        "rawQuery": true
+      }
+    },
+    {
+      "refId": "B",
+      "relativeTimeRange": {
+        "from": 0,
+        "to": 0
+      },
+      "datasourceUid": "__expr__",
+      "model": {
+        "type": "reduce",
+        "expression": "A",
+        "reducer": "last"
+      }
+    },
+    {
+      "refId": "C",
+      "relativeTimeRange": {
+        "from": 0,
+        "to": 0
+      },
+      "datasourceUid": "__expr__",
+      "model": {
+        "type": "threshold",
+        "expression": "B",
+        "conditions": [
+          {
+            "evaluator": {
+              "type": "gt",
+              "params": [500]
+            },
+            "operator": {
+              "type": "and"
+            },
+            "query": {
+              "params": ["C"]
+            },
+            "reducer": {
+              "type": "last",
+              "params": []
+            },
+            "type": "query"
+          }
+        ]
+      }
+    }
+  ],
+  "interval": "1m",
+  "for": "5m",
+  "noDataState": "OK",
+  "execErrState": "Error",
+  "labels": {
+    "platform": "{{ project }}",
+    "zone": "{{ zone }}",
+    "severity": "CRITICAL",
+        "type": "{{ (rulegroup | string).split('_')[0] }}"
+  },
+  "annotations": {
+    "summary": "Number of established TCP connections is abnormally high on the server.",
+    "description": "🧐 **Why This Happens**\n- Application-level connection leaks (connections not closed properly).\n- Heavy incoming traffic or DoS attack.\n- Misconfigured load balancer keeping connections open.\n- Long-lived idle sessions consuming resources.\n\n🔍 **Impact**\n- Memory and CPU consumption on the host.\n- Potential exhaustion of file descriptors (ulimit).\n- Application latency and possible outages if limit is hit.\n\n✅ **Immediate Actions for Ops**\n1. **Check active TCP connections:**\n   ```\n   netstat -an | grep ESTABLISHED | wc -l\n   ```\n2. Identify top remote IPs:\n   ```\n   netstat -ant | awk '{print $5}' | cut -d: -f1 | sort | uniq -c | sort -nr | head\n   ```\n3. Check which process owns connections:\n   ```\n   lsof -iTCP -sTCP:ESTABLISHED | awk '{print $1,$2,$9}' | sort | uniq -c | sort -nr | head\n   ```\n4. Validate application logs for connection leaks or performance issues.\n5. If caused by external traffic spike:\n   - Enable rate limiting or connection limits on load balancer.\n   - Block suspicious IPs using firewall.\n6. If recurring issue:\n   - Tune `net.ipv4.tcp_fin_timeout`, `tcp_tw_reuse` in sysctl.\n   - Review app design to close connections properly.\n\n⚠ **Note:** This alert triggers if `tcp_established` remains above **500** for 5 minutes."
+  },
+  "isPaused": false
+}
+

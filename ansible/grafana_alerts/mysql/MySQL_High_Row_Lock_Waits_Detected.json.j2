@@ -1,0 +1,91 @@
+{
+  "uid": "{{ alert_uid }}",
+  "folderUID": "{{ folder_uid }}",
+  "ruleGroup": "{{ rulegroup }}",
+  "title": "MySQL InnoDB Row Lock Wait Detected",
+  "condition": "C",
+  "data": [
+    {
+      "refId": "A",
+      "relativeTimeRange": {"from": 300, "to": 0},
+      "datasourceUid": "{{ datasourceUid }}",
+      "model": {
+        "adhocFilters": [],
+        "alias": "",
+        "datasource": {"type": "influxdb", "uid": "{{ datasourceUid }}"},
+        "instant": false,
+        "intervalMs": 1000,
+        "limit": "",
+        "maxDataPoints": 43200,
+        "measurement": "",
+        "policy": "",
+        "query": "SELECT last(\"innodb_row_lock_current_waits\") AS \"Current Lock Waits\"\nFROM \"mysql_locks\" \nWHERE $timeFilter GROUP BY time(1m),host,\"project\",\"zone\",nodeIP fill(0)\n",
+        "range": true,
+        "rawQuery": true,
+        "rawSql": "",
+        "refId": "A",
+        "resultFormat": "time_series",
+        "slimit": "",
+        "tz": ""
+      }
+    },
+    {
+      "refId": "B",
+      "relativeTimeRange": {"from": 300, "to": 0},
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": {"params": [], "type": "gt"},
+            "operator": {"type": "and"},
+            "query": { "params": ["B"] },
+            "reducer": {"params": [], "type": "last"},
+            "type": "query"
+          }
+        ],
+        "datasource": {"type": "__expr__", "uid": "__expr__"},
+        "expression": "A",
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "reducer": "last",
+        "refId": "B",
+        "type": "reduce"
+      }
+    },
+    {
+      "refId": "C",
+      "relativeTimeRange": {"from": 300, "to": 0},
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": { "params": [5], "type": "gt" },
+            "operator": {"type": "and"},
+            "query": { "params": ["C"] },
+            "reducer": {"params": [], "type": "last"},
+            "type": "query"
+          }
+        ],
+        "datasource": {"type": "__expr__", "uid": "__expr__"},
+        "expression": "B",
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "refId": "C",
+        "type": "threshold"
+      }
+    }
+  ],
+  "noDataState": "OK",
+  "execErrState": "OK",
+  "annotations": {
+    "description": "The number of current InnoDB row lock waits (innodb_row_lock_current_waits) has exceeded the defined threshold. This may indicate locking contention, long-running transactions, or poor query/index design.\nHigh lock waits can degrade performance and cause application timeouts if not addressed promptly.\n\n🛠 Recommended Actions:\n\nCheck for long-running or uncommitted transactions\n\nAnalyze slow query logs\n\nReview indexes and locking queries\n\nConsider transaction isolation level tuning"
+  },
+  "labels": {
+    "platform": "{{ project }}",
+    "zone"    : "{{ zone }}",
+    "severity": "CRITICAL",
+    "type"    : "{{ (rulegroup | string).split('_')[0] }}"
+  },
+  "isPaused": false
+}
+

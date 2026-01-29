@@ -1,0 +1,106 @@
+#!/bin/bash
+
+# ========= Config =========
+DEBUG={{ debug | default("true") }}      # set false in production if you want less console noise
+BASE_DIR="{{ base_dir | default('/opt/Roamware/logs/dra/events') }}"
+RP={{ rp | default('1hrRP') }}
+MEASUREMENT="{{ measurement | default('DRA_Event_ProcessTime') }}"
+HOSTNAME=$(hostname | tr '[:lower:]' '[:upper:]')
+export RP MEASUREMENT HOSTNAME
+# ==========================
+
+echo "Watching $BASE_DIR for new CSV files and folders..."
+
+LAST_FILE=""
+TAIL_PID=""
+
+process_line() {
+  local LINE="$1"
+  IFS=',' read -r TIMESTAMP_DATE MS COL3 COL4 TRANSACTIONID EVENTTYPE REQUESTTYPE _ <<< "$LINE"
+
+  if [[ -z "$TRANSACTIONID" || -z "$EVENTTYPE" || -z "$REQUESTTYPE" ]]; then
+    [ "$DEBUG" == "true" ] && echo "[DEBUG] Skipping line (missing fields): $LINE"
+    return
+  fi
+
+  BASE_TS="$TIMESTAMP_DATE"
+  PARSE_TS=$(echo "$BASE_TS" | awk -F'[- :]' '{print $3"-"$2"-"$1" "$4":"$5":"$6}')
+  EPOCH_S=$(date -d "$PARSE_TS" +%s 2>/dev/null)
+
+  if [ -z "$EPOCH_S" ]; then
+    echo "⚠️ Timestamp parse failed: $BASE_TS"
+    return
+  fi
+
+  EPOCH_NS="${EPOCH_S}${MS}000000"
+
+  LINE_PROTO="${MEASUREMENT},hostname=${HOSTNAME},eventType=${EVENTTYPE},transactionId=${TRANSACTIONID},requestType=${REQUESTTYPE} value=1,ts_epoch=${EPOCH_NS} $EPOCH_NS"
+
+  if [ "$DEBUG" == "true" ]; then
+    echo "[DEBUG] Raw line: $LINE"
+    echo "[DEBUG] Parsed -> TRANSACTIONID=$TRANSACTIONID EVENTTYPE=$EVENTTYPE REQUESTTYPE=$REQUESTTYPE TS=$EPOCH_NS"
+    echo "[DEBUG] Line protocol: $LINE_PROTO"
+  fi
+
+  # Always push to Influx
+  for TARGET in "${INFLUX_TARGETS[@]}"; do
+    INFLUX_HOST="${TARGET%%|*}"
+    INFLUX_DB="${TARGET##*|}"
+    echo "$LINE_PROTO" | curl -s -XPOST "http://$INFLUX_HOST:8086/write?db=$INFLUX_DB&rp=$RP" \
+      --data-binary @- -w " => HTTP %{http_code}\n"
+  done
+}
+
+start_tail() {
+  local FILE="$1"
+  echo "Starting to tail: $FILE"
+  setsid bash -c "
+    tail -Fn0 '$FILE' | while IFS= read -r LINE; do
+      $(declare -f process_line)
+      $(declare -p INFLUX_TARGETS)
+      process_line \"\$LINE\"
+    done
+  " &
+  TAIL_PID=$!
+}
+
+# Define InfluxDB targets from inventory dynamically
+INFLUX_TARGETS=(
+  "{{ influx_Pri_IP }}|{{ influx_priDB_name }}"
+  "{{ influx_Sec_IP }}|{{ influx_secDB_name }}"
+)
+
+while true; do
+  # Always get the latest folder first
+  RECENT_DIR=$(ls -td $BASE_DIR/*/ 2>/dev/null | head -1)
+  if [ -z "$RECENT_DIR" ]; then
+    echo "No folders found in $BASE_DIR, waiting..."
+    sleep 5
+    continue
+  fi
+
+  # Always get the latest CSV file in that folder
+  FILE=$(ls -tr "${RECENT_DIR}"/*.csv 2>/dev/null | tail -1)
+
+  if [ -z "$FILE" ]; then
+    echo "No CSV files found in $RECENT_DIR, waiting..."
+    sleep 5
+    continue
+  fi
+
+  # If new file detected or folder changed, restart tail
+  if [ "$FILE" != "$LAST_FILE" ]; then
+    echo "Detected new file: $FILE"
+    if [ -n "$TAIL_PID" ]; then
+      echo "Stopping old tail process group PID=$TAIL_PID"
+      pkill -P $TAIL_PID 2>/dev/null
+      kill $TAIL_PID 2>/dev/null
+      wait $TAIL_PID 2>/dev/null
+    fi
+    start_tail "$FILE"
+    LAST_FILE="$FILE"
+  fi
+
+  sleep 5
+done
+

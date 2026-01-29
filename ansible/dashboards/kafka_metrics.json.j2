@@ -1,0 +1,1515 @@
+{
+  "dashboard": {
+    "folderUid": "app777Sel",
+    "message": "deployment",
+    "overwrite": true,
+    "__inputs": [
+      {
+        "name"       : "influx_DS",
+        "label"      : "Select InfluxDB Source",
+        "description": "Choose the InfluxDB data source (Pri/Sec)",
+        "type"       : "datasource",
+        "pluginId"   : "influxdb",
+        "pluginName" : "InfluxDB"
+      }
+    ],
+    "__elements": {},
+    "__requires": [
+      {
+        "type"   : "grafana",
+        "id"     : "grafana",
+        "name"   : "Grafana",
+        "version": "12.0.2"
+      },
+      {
+        "type"   : "datasource",
+        "id"     : "influxdb",
+        "name"   : "InfluxDB",
+        "version": "1.0.0"
+      },
+      {"type": "panel", "id": "piechart", "name": "Pie chart", "version": ""},
+      {"type": "panel", "id": "stat", "name": "Stat", "version": ""},
+      {
+        "type"   : "panel",
+        "id"     : "timeseries",
+        "name"   : "Time series",
+        "version": ""
+      }
+    ],
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {"type": "grafana", "uid": "-- Grafana --"},
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "target": {
+            "limit": 100,
+            "matchAny": false,
+            "tags": [],
+            "type": "dashboard"
+          },
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": null,
+    "links": [],
+    "panels": [
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "semi-dark-red"              },
+                {"color": "semi-dark-green", "value": 1}
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 2, "w": 4, "x": 0, "y": 0},
+        "id": 7,
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "horizontal",
+          "percentChangeColorMode": "standard",
+          "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "fields": "",
+            "values": false
+          },
+          "showPercentChange": false,
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "Active Brokers",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT last(\"kafka_broker_info\") AS \"Broker Info\"\nFROM \"kafka_broker_info\"\nWHERE $timeFilter\n  AND \"host\" =~ /^$host$/\nGROUP BY time($interval), \"broker_id\"\n",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series"
+          }
+        ],
+        "title": "",
+        "type": "stat"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "#35b70a"            },
+                {"color": "#ad0f1b", "value": 1}
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 2, "w": 4, "x": 4, "y": 0},
+        "id": 33,
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "horizontal",
+          "percentChangeColorMode": "standard",
+          "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "fields": "",
+            "values": false
+          },
+          "showPercentChange": false,
+          "text": {"titleSize": 14, "valueSize": 16},
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "Under-Replicated Partitions",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT sum(\"kafka_topic_partition_under_replicated_partition\") FROM \"kafka_topic_partition_under_replicated_partition\" WHERE $timeFilter AND \"host\" =~ /^$host$/ GROUP BY time($interval)",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series"
+          }
+        ],
+        "title": "",
+        "type": "stat"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "#35b70a"               },
+                {"color": "#EAB839", "value":  250},
+                {"color": "#EF843C", "value":  500},
+                {"color": "#ad0f1b", "value": 1000}
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 4, "w": 3, "x": 8, "y": 0},
+        "id": 34,
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "horizontal",
+          "percentChangeColorMode": "standard",
+          "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "fields": "",
+            "values": false
+          },
+          "showPercentChange": false,
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "Total Consumer Groups",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT sum(\"kafka_consumergroup_members\") AS \"Total Consumer Groups\"  FROM \"1hrRP\".\"kafka_consumergroup_members\" WHERE $timeFilter and host = '$host' group by time($interval)",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "table"
+          }
+        ],
+        "title": "",
+        "type": "stat"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "#35b70a"            },
+                {"color": "#ad0f1b", "value": 1}
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 4, "w": 3, "x": 11, "y": 0},
+        "id": 36,
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "horizontal",
+          "percentChangeColorMode": "standard",
+          "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "fields": "",
+            "values": false
+          },
+          "showPercentChange": false,
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "Total Consumer Lag",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT sum(\"kafka_consumergroup_lag_sum\") AS \"Total Consumer Lags\" FROM \"kafka_consumergroup_lag_sum\" WHERE $timeFilter AND \"host\" =~ /^$host$/   AND \"consumergroup\" !~ /console-consumer-.*/ AND \"topic\" =~ /^(bss_session_notification_br|bss_session_notification|bss_cdr_events_br|aq_test1)$/\n",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "table"
+          }
+        ],
+        "title": "",
+        "type": "stat"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "#35b70a"            },
+                {"color": "#ad0f1b", "value": 1}
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 4, "w": 3, "x": 14, "y": 0},
+        "id": 39,
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "horizontal",
+          "percentChangeColorMode": "standard",
+          "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "fields": "",
+            "values": false
+          },
+          "showPercentChange": false,
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "In-Sync Replicas",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT sum(\"kafka_topic_partition_in_sync_replica\") AS \"In-Sync Replicas\" FROM \"kafka_topic_partition_in_sync_replica\" WHERE $timeFilter AND \"host\" =~ /^$host$/",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "table"
+          }
+        ],
+        "title": "",
+        "type": "stat"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "#b80920"            },
+                {"color": "#308816", "value": 1}
+              ]
+            },
+            "unit": "percent"
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 2, "w": 4, "x": 17, "y": 0},
+        "id": 40,
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "horizontal",
+          "percentChangeColorMode": "standard",
+          "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "fields": "",
+            "values": false
+          },
+          "showPercentChange": false,
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "In-Sync Replicas",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT mean(\"kafka_topic_partition_leader_is_preferred\") * 100 AS \"Preferred Leader %\" FROM \"kafka_topic_partition_leader_is_preferred\" WHERE $timeFilter AND \"host\" =~ /^$host$/",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "table"
+          }
+        ],
+        "title": "",
+        "type": "stat"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "semi-dark-red"              },
+                {"color": "semi-dark-green", "value": 1}
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 2, "w": 4, "x": 0, "y": 2},
+        "id": 8,
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "horizontal",
+          "percentChangeColorMode": "standard",
+          "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "fields": "",
+            "values": false
+          },
+          "showPercentChange": false,
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "Total Brokers",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT last(\"kafka_brokers\") AS \"Total Brokers\"\nFROM \"kafka_brokers\"\nWHERE $timeFilter \n  AND \"host\" =~ /^$host$/\n",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series"
+          }
+        ],
+        "title": "",
+        "type": "stat"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "#35b70a"            },
+                {"color": "#ad0f1b", "value": 1}
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 2, "w": 4, "x": 4, "y": 2},
+        "id": 38,
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "horizontal",
+          "percentChangeColorMode": "standard",
+          "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "fields": "",
+            "values": false
+          },
+          "showPercentChange": false,
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT sum(\"kafka_topic_partitions\") AS \"Total Partititons\" FROM \"kafka_topic_partitions\" WHERE $timeFilter AND \"host\" =~ /^$host$/",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "table"
+          }
+        ],
+        "title": "",
+        "type": "stat"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "description": "🧾 Purpose:\n\nThis panel tracks the message ingest rate per Kafka topic on each host, by calculating how fast offsets are increasing. It helps detect which topics are active and how fast data is being consumed.\n\n✅ Operational Use:\n\n    Monitor real-time throughput of production topics\n\n    Detect slowdowns or spikes in message processing\n\n    Helps in Kafka sizing, consumer lag diagnosis, or traffic balancing\n\n⚠️ Things to Watch:\n\n    A sudden drop to zero could mean a stuck connector or stalled topic.\n\n    Very high values may indicate a spike in load or a consumer catching up.\n\n    Ensure retention and partition counts are tuned based on ingest rate.",
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "Msgs / Sec",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "barWidthFactor": 0.6,
+              "drawStyle": "line",
+              "fillOpacity": 1,
+              "gradientMode": "hue",
+              "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+              "insertNulls": false,
+              "lineInterpolation": "smooth",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "linearThreshold": 3,
+                "log": 2,
+                "type": "log"
+              },
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {"group": "A", "mode": "none"},
+              "thresholdsStyle": {"mode": "off"}
+            },
+            "decimals": 0,
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "semi-dark-red"              },
+                {"color": "semi-dark-green", "value": 1}
+              ]
+            },
+            "unit": "short"
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 9, "w": 12, "x": 0, "y": 4},
+        "id": 9,
+        "options": {
+          "legend": {
+            "calcs": ["min", "mean", "max", "sum", "lastNotNull"],
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {"hideZeros": false, "mode": "single", "sort": "none"}
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "$tag_topic",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT non_negative_derivative(mean(\"kafka_topic_partition_current_offset\"), 1s)\nFROM \"kafka_topic_partition_current_offset\"\nWHERE $timeFilter AND \"host\" =~ /^$host$/ AND \"consumergroup\" !~ /console-consumer-.*/\nAND \"topic\" =~ /^(r\\.airlinq\\.airocs\\.imei\\.events|m\\.airlinq\\.airocs\\.imei\\.events|b\\.airlinq\\.airocs\\.imei\\.events|bss_session_notification_br|bss_cdr_events_br|aq_test1|bss_session_notification|cdc_aircontrol299\\.myindian1\\.tdata_bucket|cdc1_aircontrol\\.myindian2\\.tdata_bucket)$/\nGROUP BY time($interval), \"topic\"\nFILL(null)\n\n\n",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series"
+          }
+        ],
+        "title": "Topic Messages in per second",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "description": " Explanation\nConcept\tDescription\nLag\tNumber of messages a consumer hasn't yet read.\nZero Lag\tPerfect health — the consumer is caught up.\nHigh Lag\tIndicates backlog — investigate possible bottlenecks (CPU, GC, code issues).\nSpikes in Lag\tOften due to restarts, rebalances, or broker downtime.\nConstantly Increasing\tSign of a stuck or slow consumer — immediate action needed.",
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "Counts",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "barWidthFactor": 0.6,
+              "drawStyle": "line",
+              "fillOpacity": 24,
+              "gradientMode": "none",
+              "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+              "insertNulls": false,
+              "lineInterpolation": "smooth",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {"type": "linear"},
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {"group": "A", "mode": "none"},
+              "thresholdsStyle": {"mode": "off"}
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [ {"color": "green"}, {"color": "red", "value": 80} ]
+            },
+            "unit": "none"
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 9, "w": 12, "x": 12, "y": 4},
+        "id": 2,
+        "options": {
+          "legend": {
+            "calcs": ["min", "mean", "max", "sum", "lastNotNull"],
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": true,
+            "sortBy": "Last *",
+            "sortDesc": true
+          },
+          "tooltip": {"hideZeros": false, "mode": "single", "sort": "none"}
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "$tag_topic",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT last(\"kafka_consumergroup_lag_sum\")\nFROM \"kafka_consumergroup_lag_sum\"\nWHERE $timeFilter \n  AND \"host\" =~ /^$host$/\n  AND \"consumergroup\" !~ /console-consumer-.*/\nAND \"topic\" =~ /^(r\\.airlinq\\.airocs\\.imei\\.events|m\\.airlinq\\.airocs\\.imei\\.events|b\\.airlinq\\.airocs\\.imei\\.events|bss_session_notification_br|bss_cdr_events_br|aq_test1|bss_session_notification|cdc_aircontrol299\\.myindian1\\.tdata_bucket|cdc1_aircontrol\\.myindian2\\.tdata_bucket)$/\n\nGROUP BY time($interval), \"topic\"\n",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series"
+          }
+        ],
+        "title": "Kafka Per Topic Lag Overview",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "description": "🔍 Objective\n\nTo monitor Kafka consumer lag (kafka_consumergroup_lag) using the InfluxDB gauge metric, identify lag spikes, detect unresponsive consumers, and alert operators before downstream systems are impacted.\n\nkafka_consumergroup_lag typically indicates how many messages are yet to be consumed by the consumer group for a given topic-partition.\n\n✅ Regular Checks:\n\n    Daily: Review consumer lag patterns.\n\n    Weekly: Check for persistent high-lag consumers.\n\n    Monthly: Audit topic/consumer group alignment and Kafka broker health.\n\n🛠️ What to Do When You See High Lag:\n\n    Check if consumer is running.\n\n    Inspect consumer logs for errors or processing slowdowns.\n\n    Scale consumers if lag is consistently high under normal load.\n\n    Check Kafka brokers for partition unavailability or ISR issues.\n\n📌 Example: What is “Normal” Lag?\n\n    For real-time processing, lag should be near zero.\n\n    For batch consumers, lag may build up and drain periodically.\n\n    Lag of 1000+ messages that doesn’t reduce quickly is a sign of a slow or stuck consumer.",
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "barWidthFactor": 0.6,
+              "drawStyle": "line",
+              "fillOpacity": 9,
+              "gradientMode": "none",
+              "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+              "insertNulls": false,
+              "lineInterpolation": "smooth",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {"log": 10, "type": "symlog"},
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {"group": "A", "mode": "normal"},
+              "thresholdsStyle": {"mode": "off"}
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [ {"color": "green"}, {"color": "red", "value": 80} ]
+            },
+            "unit": "short"
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 9, "w": 24, "x": 0, "y": 13},
+        "id": 31,
+        "options": {
+          "legend": {
+            "calcs": ["sum", "lastNotNull", "min", "max"],
+            "displayMode": "table",
+            "placement": "right",
+            "showLegend": true
+          },
+          "tooltip": {"hideZeros": false, "mode": "single", "sort": "none"}
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "Messages_Pending - $tag_topic",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "hide": false,
+            "query": "SELECT mean(\"kafka_consumergroup_lag\")\nFROM \"kafka_consumergroup_lag\"\nWHERE $timeFilter AND \"host\" =~ /^$host$/  AND \"consumergroup\" !~ /console-consumer-.*/\nAND \"topic\" =~ /^(r\\.airlinq\\.airocs\\.imei\\.events|m\\.airlinq\\.airocs\\.imei\\.events|b\\.airlinq\\.airocs\\.imei\\.events|bss_session_notification_br|bss_cdr_events_br|aq_test1|bss_session_notification|cdc_aircontrol299\\.myindian1\\.tdata_bucket|cdc1_aircontrol\\.myindian2\\.tdata_bucket)$/\nGROUP BY time($interval), \"consumergroup\",\"topic\" fill(null)\n",
+            "rawQuery": true,
+            "refId": "B",
+            "resultFormat": "time_series"
+          },
+          {
+            "alias": "Messages_In - $tag_topic",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "hide": true,
+            "query": "SELECT mean(\"kafka_consumergroup_current_offset\")\nFROM \"kafka_consumergroup_current_offset\"\nWHERE $timeFilter AND \"host\" =~ /^$host$/\nGROUP BY time($__interval), \"consumergroup\",\"topic\"\n",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series"
+          }
+        ],
+        "title": "Pending Messages",
+        "transformations": [
+          {
+            "disabled": true,
+            "id": "joinByField",
+            "options": {"byField": "consumergroup", "mode": "outer"}
+          },
+          {
+            "disabled": true,
+            "id": "organize",
+            "options": {
+              "excludeByName": {
+                "Time kafka_consumergroup_current_offset": true,
+                "Time kafka_consumergroup_lag"           : true,
+                "topic"                                  : false
+              },
+              "includeByName": {},
+              "indexByName": {
+                "Messages_In"                            : 1,
+                "Msgs_Pending"                           : 2,
+                "Time kafka_consumergroup_current_offset": 4,
+                "Time kafka_consumergroup_lag"           : 5,
+                "consumergroup"                          : 0,
+                "topic"                                  : 3
+              },
+              "renameByName": {}
+            }
+          }
+        ],
+        "type": "timeseries"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "description": "🔍 Objective\n\nTo monitor Kafka consumer lag (kafka_consumergroup_lag) using the InfluxDB gauge metric, identify lag spikes, detect unresponsive consumers, and alert operators before downstream systems are impacted.\n\nkafka_consumergroup_lag typically indicates how many messages are yet to be consumed by the consumer group for a given topic-partition.\n\n✅ Regular Checks:\n\n    Daily: Review consumer lag patterns.\n\n    Weekly: Check for persistent high-lag consumers.\n\n    Monthly: Audit topic/consumer group alignment and Kafka broker health.\n\n🛠️ What to Do When You See High Lag:\n\n    Check if consumer is running.\n\n    Inspect consumer logs for errors or processing slowdowns.\n\n    Scale consumers if lag is consistently high under normal load.\n\n    Check Kafka brokers for partition unavailability or ISR issues.\n\n📌 Example: What is “Normal” Lag?\n\n    For real-time processing, lag should be near zero.\n\n    For batch consumers, lag may build up and drain periodically.\n\n    Lag of 1000+ messages that doesn’t reduce quickly is a sign of a slow or stuck consumer.",
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "Count",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "barWidthFactor": 0.6,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+              "insertNulls": false,
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {"type": "linear"},
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {"group": "A", "mode": "none"},
+              "thresholdsStyle": {"mode": "off"}
+            },
+            "mappings": [],
+            "noValue": "0",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [ {"color": "green"}, {"color": "red", "value": 80} ]
+            },
+            "unit": "short"
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 22},
+        "id": 6,
+        "options": {
+          "legend": {
+            "calcs": ["min", "mean", "max", "sum", "lastNotNull"],
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": true,
+            "sortBy": "Total",
+            "sortDesc": true
+          },
+          "tooltip": {"hideZeros": false, "mode": "single", "sort": "none"}
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "ConsumerGroup= $tag_consumergroup.",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT sum(\"avg_members\")\nFROM CQ_Kafka_Consumers_5m\nWHERE $timeFilter AND \"host\" =~ /^$host$/\nGROUP BY time($interval), \"consumergroup\"\n",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series"
+          }
+        ],
+        "title": "Kafka Consumer Group Members",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "Partition Count",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "barWidthFactor": 0.6,
+              "drawStyle": "line",
+              "fillOpacity": 1,
+              "gradientMode": "hue",
+              "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+              "insertNulls": false,
+              "lineInterpolation": "smooth",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "linearThreshold": 3,
+                "log": 2,
+                "type": "symlog"
+              },
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {"group": "A", "mode": "none"},
+              "thresholdsStyle": {"mode": "off"}
+            },
+            "decimals": 0,
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "semi-dark-red"              },
+                {"color": "semi-dark-green", "value": 1}
+              ]
+            },
+            "unit": "short"
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 22},
+        "id": 14,
+        "options": {
+          "legend": {
+            "calcs": ["lastNotNull"],
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {"hideZeros": false, "mode": "single", "sort": "none"}
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "$tag_topic",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT mean(\"kafka_topic_partitions\")\nFROM \"kafka_topic_partitions\"\nWHERE $timeFilter AND \"host\" =~ /^$host$/ AND \"consumergroup\" !~ /console-consumer-.*/\nAND \"topic\" =~ /^(r\\.airlinq\\.airocs\\.imei\\.events|m\\.airlinq\\.airocs\\.imei\\.events|b\\.airlinq\\.airocs\\.imei\\.events|bss_session_notification_br|bss_cdr_events_br|aq_test1|bss_session_notification|cdc_aircontrol299\\.myindian1\\.tdata_bucket|cdc1_aircontrol\\.myindian2\\.tdata_bucket)$/\nGROUP BY time($interval), \"topic\"\n",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series"
+          }
+        ],
+        "title": "Partition Per Topic",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "description": "🧾 Purpose:\n\nThis panel shows the number of active members (consumers) in each Kafka consumer group over time on the selected host. It helps monitor whether expected services are connected and consuming data.\n\n✅ Operational Use:\n\n    Monitor whether consumer groups have active members.\n\n    Detect unexpected drops to 0, which may indicate:\n\n        Service crashes\n\n        Lost connectivity\n\n        Improper configuration or topic assignment\n\n⚠️ Things to Watch:\n\n    If expected consumer groups show no members consistently, it may indicate a service outage.\n\n    Groups with rapidly fluctuating membership may suggest scaling issues or unhealthy consumer instances.\n\n    Ensure kafka-consumer-groups.sh --describe shows matching active members for troubleshooting.",
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "Members Count",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "barWidthFactor": 0.6,
+              "drawStyle": "line",
+              "fillOpacity": 11,
+              "gradientMode": "hue",
+              "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+              "insertNulls": false,
+              "lineInterpolation": "smooth",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {"type": "linear"},
+              "showPoints": "never",
+              "spanNulls": false,
+              "stacking": {"group": "A", "mode": "none"},
+              "thresholdsStyle": {"mode": "off"}
+            },
+            "decimals": 0,
+            "mappings": [],
+            "noValue": "0",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "semi-dark-red"              },
+                {"color": "semi-dark-green", "value": 1}
+              ]
+            },
+            "unit": "short"
+          },
+          "overrides": [
+            {
+              "matcher": {"id": "byName", "options": "consumergroup"},
+              "properties": []
+            },
+            {
+              "matcher": {"id": "byName", "options": "Members"},
+              "properties": []
+            },
+            {
+              "matcher": {
+                "id"     : "byName",
+                "options": "kafka_consumergroup_members"
+              },
+              "properties": []
+            }
+          ]
+        },
+        "gridPos": {"h": 9, "w": 12, "x": 0, "y": 30},
+        "id": 13,
+        "options": {
+          "legend": {
+            "calcs": ["lastNotNull", "sum"],
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": true,
+            "sortBy": "Last *",
+            "sortDesc": true
+          },
+          "tooltip": {"hideZeros": false, "mode": "single", "sort": "none"}
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "$tag_consumergroup",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT last(\"kafka_consumergroup_members\")\nFROM \"1hrRP\".\"kafka_consumergroup_members\"\nWHERE $timeFilter AND \"consumergroup\" !~ /console-consumer-.*/\n  AND \"host\" =~ /^$host$/ \nGROUP BY time($interval), \"consumergroup\" \nFILL(null)",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series"
+          }
+        ],
+        "timeFrom": "1h",
+        "title": "kafka Consumer Group Members",
+        "transformations": [
+          {
+            "disabled": true,
+            "id": "organize",
+            "options": {
+              "excludeByName": {"Time": true},
+              "includeByName": {            },
+              "indexByName"  : {            },
+              "renameByName" : {            }
+            }
+          }
+        ],
+        "type": "timeseries"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "description": "🔍 Objective\n\nTo monitor Kafka consumer lag (kafka_consumergroup_lag) using the InfluxDB gauge metric, identify lag spikes, detect unresponsive consumers, and alert operators before downstream systems are impacted.\n\nkafka_consumergroup_lag typically indicates how many messages are yet to be consumed by the consumer group for a given topic-partition.\n\n✅ Regular Checks:\n\n    Daily: Review consumer lag patterns.\n\n    Weekly: Check for persistent high-lag consumers.\n\n    Monthly: Audit topic/consumer group alignment and Kafka broker health.\n\n🛠️ What to Do When You See High Lag:\n\n    Check if consumer is running.\n\n    Inspect consumer logs for errors or processing slowdowns.\n\n    Scale consumers if lag is consistently high under normal load.\n\n    Check Kafka brokers for partition unavailability or ISR issues.\n\n📌 Example: What is “Normal” Lag?\n\n    For real-time processing, lag should be near zero.\n\n    For batch consumers, lag may build up and drain periodically.\n\n    Lag of 1000+ messages that doesn’t reduce quickly is a sign of a slow or stuck consumer.",
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "hideFrom": {"legend": false, "tooltip": false, "viz": false}
+            },
+            "mappings": [],
+            "unit": "sishort"
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 9, "w": 12, "x": 12, "y": 30},
+        "id": 41,
+        "options": {
+          "displayLabels": ["percent"],
+          "legend": {
+            "displayMode": "table",
+            "placement": "right",
+            "showLegend": true,
+            "values": ["value"]
+          },
+          "pieType": "pie",
+          "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "fields": "",
+            "values": false
+          },
+          "tooltip": {"hideZeros": false, "mode": "single", "sort": "none"}
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "$tag_topic",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "hide": false,
+            "query": "SELECT mean(\"kafka_consumergroup_current_offset\")\nFROM \"kafka_consumergroup_current_offset\"\nWHERE $timeFilter AND \"host\" =~ /^$host$/ AND \"consumergroup\" !~ /console-consumer-.*/\nAND \"topic\" =~ /^(r\\.airlinq\\.airocs\\.imei\\.events|m\\.airlinq\\.airocs\\.imei\\.events|b\\.airlinq\\.airocs\\.imei\\.events|bss_session_notification_br|bss_cdr_events_br|aq_test1|bss_session_notification|cdc_aircontrol299\\.myindian1\\.tdata_bucket|cdc1_aircontrol\\.myindian2\\.tdata_bucket)$/\nGROUP BY time($__interval), \"consumergroup\",\"topic\"\n",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series"
+          }
+        ],
+        "title": "Processed Messages",
+        "transformations": [
+          {
+            "disabled": true,
+            "id": "joinByField",
+            "options": {"byField": "consumergroup", "mode": "outer"}
+          },
+          {
+            "disabled": true,
+            "id": "organize",
+            "options": {
+              "excludeByName": {
+                "Time kafka_consumergroup_current_offset": true,
+                "Time kafka_consumergroup_lag"           : true,
+                "topic"                                  : false
+              },
+              "includeByName": {},
+              "indexByName": {
+                "Messages_In"                            : 1,
+                "Msgs_Pending"                           : 2,
+                "Time kafka_consumergroup_current_offset": 4,
+                "Time kafka_consumergroup_lag"           : 5,
+                "consumergroup"                          : 0,
+                "topic"                                  : 3
+              },
+              "renameByName": {}
+            }
+          }
+        ],
+        "type": "piechart"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "description": "🎯 Purpose of This Panel:\n\n    To monitor real-time performance and health of Debezium connectors.\n    Helps determine if connectors are keeping up with Kafka topics, or falling behind due to load or errors.\n    Useful for proactive alerting before data processing delays impact downstream systems.\n\n✅ Expected Behavior:\n\n    Lag should stay low or near-zero under normal operating conditions.\n    Temporary spikes may happen during:\n        Kafka partition reassignments\n        Connector restarts\n        Temporary throughput spikes\n\n🚨 When to Alert:\n\n    Lag grows continuously over time (e.g., consistently increasing over 5–10 min window).\n    Lag exceeds threshold (e.g., >100k messages for a connector or topic).\n    Connector appears stuck (high lag, no offset commits).\n\n🔧 Troubleshooting Tips:\n\n    Check connector logs:\n\n        Look for retry loops, deserialization errors, or backpressure warnings.\n    Check Kafka topic throughput:\n        High producer volume may overload the connector.\n    Review connector settings:\n        max.tasks, poll.interval.ms, batch.size, etc.\n    Evaluate resource usage:\n        CPU/memory on the Kafka Connect node.",
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "barWidthFactor": 0.6,
+              "drawStyle": "line",
+              "fillOpacity": 1,
+              "gradientMode": "none",
+              "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+              "insertNulls": false,
+              "lineInterpolation": "smooth",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {"type": "linear"},
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {"group": "A", "mode": "none"},
+              "thresholdsStyle": {"mode": "off"}
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [ {"color": "green"}, {"color": "red", "value": 80} ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 39},
+        "id": 26,
+        "options": {
+          "legend": {
+            "calcs": ["last"],
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": true,
+            "sortBy": "Last",
+            "sortDesc": true
+          },
+          "tooltip": {"hideZeros": false, "mode": "single", "sort": "none"}
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "$tag_consumergroup",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT mean(\"kafka_consumergroup_lag\") AS \"Debezium Lag\"\nFROM \"kafka_consumergroup_lag\"\nWHERE $timeFilter\n  AND \"host\" =~ /^$host$/\n  AND \"consumergroup\" =~ /debezium/\nAND \"topic\" =~ /^(r\\.airlinq\\.airocs\\.imei\\.events|m\\.airlinq\\.airocs\\.imei\\.events|b\\.airlinq\\.airocs\\.imei\\.events|bss_session_notification_br|bss_cdr_events_br|aq_test1|bss_session_notification|cdc_aircontrol299\\.myindian1\\.tdata_bucket|cdc1_aircontrol\\.myindian2\\.tdata_bucket)$/\nGROUP BY time($interval), \"consumergroup\"\n",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series"
+          }
+        ],
+        "title": "Debezium Connector Lag",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "barWidthFactor": 0.6,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+              "insertNulls": false,
+              "lineInterpolation": "smooth",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {"type": "linear"},
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {"group": "A", "mode": "none"},
+              "thresholdsStyle": {"mode": "off"}
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [ {"color": "green"}, {"color": "red", "value": 80} ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 39},
+        "id": 25,
+        "options": {
+          "legend": {
+            "calcs": ["last"],
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {"hideZeros": false, "mode": "single", "sort": "none"}
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "$tag_consumergroup",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT sum(\"kafka_consumergroup_members\") AS \"Consumer Group Members\"\nFROM \"1hrRP\".kafka_consumergroup_members\nWHERE $timeFilter\n  AND \"host\" =~ /^$host$/\nAND \"consumergroup\" !~ /console-consumer-.*/\nGROUP BY time($interval), \"consumergroup\"\n",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series"
+          }
+        ],
+        "title": "Consumer Group Members Panel",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "description": "🧠 What This Metric Shows\n\n    The number of replicas for each partition of a topic.\n\n    Useful to verify:\n\n        Whether replication factor is as expected.\n\n        If all partitions are uniformly replicated.",
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "barWidthFactor": 0.6,
+              "drawStyle": "line",
+              "fillOpacity": 1,
+              "gradientMode": "opacity",
+              "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+              "insertNulls": false,
+              "lineInterpolation": "smooth",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {"type": "linear"},
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {"group": "A", "mode": "none"},
+              "thresholdsStyle": {"mode": "off"}
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [ {"color": "green"}, {"color": "red", "value": 80} ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 47},
+        "id": 29,
+        "options": {
+          "legend": {
+            "calcs": ["last"],
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {"hideZeros": false, "mode": "single", "sort": "none"}
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "$tag_topic, Partition= $tag_partition",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT mean(\"kafka_topic_partition_replicas\") AS \"Replicas\"\nFROM \"kafka_topic_partition_replicas\"\nWHERE $timeFilter\n  AND \"host\" =~ /^$host$/\nAND \"consumergroup\" !~ /console-consumer-.*/\nAND \"topic\" =~ /^(r\\.airlinq\\.airocs\\.imei\\.events|m\\.airlinq\\.airocs\\.imei\\.events|b\\.airlinq\\.airocs\\.imei\\.events|bss_session_notification_br|bss_cdr_events_br|aq_test1|bss_session_notification|cdc_aircontrol299\\.myindian1\\.tdata_bucket|cdc1_aircontrol\\.myindian2\\.tdata_bucket)$/\nGROUP BY time($interval), \"topic\", \"partition\"\n",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series"
+          }
+        ],
+        "title": "Topic_Partition_Replicas",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "description": "🛠️ What This Panel Shows:\n\n    Metric: gauge represents the number of in-sync replicas (ISR) per Kafka topic and partition.\n\n    The query excludes internal Kafka topics (like __consumer_offsets) using topic !~ /^__.*$/.\n\n    Aggregated as last() value over the selected time range and interval.\n\n🎯 Purpose of This Panel:\n\n    To monitor Kafka partition replica health and ensure high availability.\n\n    In-sync replicas are those that are up-to-date and part of the ISR set, ensuring fault tolerance.\n\n    A drop in ISR count may lead to unclean leader elections or data loss risk if the leader fails.\n\n✅ Expected Behavior:\n\n    The number of in-sync replicas should equal the total configured replicas for each partition.\n\n    For example, if replication factor is 3, then ISR should always be 3.\n\n🔧 Troubleshooting Tips:\n\n    Check broker logs for:\n\n        replica.lag.time.max.ms violations.\n\n        Network disconnects or long GC pauses.\n\n    Validate:\n\n        Disk usage and IOPS.\n\n        Network throughput between brokers.\n\n    Confirm replication settings (replication.factor, min.insync.replicas) in topic configs.",
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "barWidthFactor": 0.6,
+              "drawStyle": "line",
+              "fillOpacity": 2,
+              "gradientMode": "opacity",
+              "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+              "insertNulls": false,
+              "lineInterpolation": "smooth",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {"type": "linear"},
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {"group": "A", "mode": "none"},
+              "thresholdsStyle": {"mode": "off"}
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [ {"color": "green"}, {"color": "red", "value": 80} ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 47},
+        "id": 27,
+        "options": {
+          "legend": {
+            "calcs": ["last"],
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {"hideZeros": false, "mode": "single", "sort": "none"}
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "$tag_topic, Partition= $tag_partition",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT mean(\"kafka_topic_partition_in_sync_replica\") AS \"In-Sync Replicas\"\nFROM \"kafka_topic_partition_in_sync_replica\"\nWHERE $timeFilter\n  AND \"host\" =~ /^$host$/\nAND \"topic\" =~ /^(r\\.airlinq\\.airocs\\.imei\\.events|m\\.airlinq\\.airocs\\.imei\\.events|b\\.airlinq\\.airocs\\.imei\\.events|bss_session_notification_br|bss_cdr_events_br|aq_test1|bss_session_notification|cdc_aircontrol299\\.myindian1\\.tdata_bucket|cdc1_aircontrol\\.myindian2\\.tdata_bucket)$/\nGROUP BY time($interval), \"partition\", \"topic\"\n",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series"
+          }
+        ],
+        "title": "Topic_Partition_in_Sync_Replica",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "description": "🧠 What This Metric Means\n\n    This metric indicates whether a partition has all replicas in-sync:\n\n        0 → Healthy (no under-replicated partitions)\n\n        > 0 → Problem (some replicas lagging behind or offline)",
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "barWidthFactor": 0.6,
+              "drawStyle": "line",
+              "fillOpacity": 1,
+              "gradientMode": "opacity",
+              "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+              "insertNulls": false,
+              "lineInterpolation": "smooth",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {"type": "linear"},
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {"group": "A", "mode": "none"},
+              "thresholdsStyle": {"mode": "off"}
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [ {"color": "green"}, {"color": "red", "value": 80} ]
+            }
+          },
+          "overrides": [
+            {
+              "__systemRef": "hideSeriesFrom",
+              "matcher": {
+                "id": "byNames",
+                "options": {
+                  "mode": "exclude",
+                  "names": ["bss_session_notification, Partition= 5"],
+                  "prefix": "All except:",
+                  "readOnly": true
+                }
+              },
+              "properties": [
+                {
+                  "id": "custom.hideFrom",
+                  "value": {"legend": false, "tooltip": false, "viz": true}
+                }
+              ]
+            }
+          ]
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 55},
+        "id": 30,
+        "options": {
+          "legend": {
+            "calcs": ["last"],
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {"hideZeros": false, "mode": "single", "sort": "none"}
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "$tag_topic, Partition= $tag_partition",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT mean(\"kafka_topic_partition_under_replicated_partition\") AS \"Under Replicated Partitions\"\nFROM \"kafka_topic_partition_under_replicated_partition\"\nWHERE $timeFilter\n  AND \"host\" =~ /^$host$/\nAND \"consumergroup\" !~ /console-consumer-.*/\nAND \"topic\" =~ /^(r\\.airlinq\\.airocs\\.imei\\.events|m\\.airlinq\\.airocs\\.imei\\.events|b\\.airlinq\\.airocs\\.imei\\.events|bss_session_notification_br|bss_cdr_events_br|aq_test1|bss_session_notification|cdc_aircontrol299\\.myindian1\\.tdata_bucket|cdc1_aircontrol\\.myindian2\\.tdata_bucket)$/\nGROUP BY time($interval), \"topic\", \"partition\"\n",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series"
+          }
+        ],
+        "title": "Topic_Partition_Under_Replicated_Partition",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+        "description": "📋 What This Metric Shows\n\n    The broker ID currently acting as leader for a given topic-partition.\n\n    Helps verify leader distribution across Kafka brokers.\n\n🧠 Use Cases for Monitoring\n\n    Detect if leadership is overly concentrated on one broker.\n\n    Identify if leader election is happening too frequently.\n\n    Validate that leadership has failed over successfully when a broker goes down.",
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "barWidthFactor": 0.6,
+              "drawStyle": "line",
+              "fillOpacity": 1,
+              "gradientMode": "opacity",
+              "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+              "insertNulls": false,
+              "lineInterpolation": "smooth",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {"type": "linear"},
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {"group": "A", "mode": "none"},
+              "thresholdsStyle": {"mode": "off"}
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [ {"color": "green"}, {"color": "red", "value": 80} ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 55},
+        "id": 28,
+        "options": {
+          "legend": {
+            "calcs": ["last"],
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {"hideZeros": false, "mode": "single", "sort": "none"}
+        },
+        "pluginVersion": "12.0.2",
+        "targets": [
+          {
+            "alias": "$tag_topic, Partition= $tag_partition",
+            "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+            "query": "SELECT last(\"kafka_topic_partition_leader\") AS \"Leader Broker\"\nFROM \"kafka_topic_partition_leader\"\nWHERE $timeFilter\n  AND \"host\" =~ /^$host$/\nAND \"consumergroup\" !~ /console-consumer-.*/\nAND \"topic\" =~ /^(r\\.airlinq\\.airocs\\.imei\\.events|m\\.airlinq\\.airocs\\.imei\\.events|b\\.airlinq\\.airocs\\.imei\\.events|bss_session_notification_br|bss_cdr_events_br|aq_test1|bss_session_notification|cdc_aircontrol299\\.myindian1\\.tdata_bucket|cdc1_aircontrol\\.myindian2\\.tdata_bucket)$/\nGROUP BY time($interval), \"topic\", \"partition\"\n",
+            "rawQuery": true,
+            "refId": "A",
+            "resultFormat": "time_series"
+          }
+        ],
+        "title": "Topic_Partition_Leader",
+        "type": "timeseries"
+      }
+    ],
+    "preload": false,
+    "refresh": "",
+    "schemaVersion": 41,
+    "tags": ["app"],
+    "templating": {
+      "list": [
+        {
+          "allowCustomValue": false,
+          "current": {},
+          "description": "Choose the InfluxDB data source",
+          "label": "Select Data Source",
+          "name": "InfluxDS",
+          "options": [],
+          "query": "influxdb",
+          "refresh": 1,
+          "regex": "",
+          "type": "datasource"
+        },
+        {
+          "allowCustomValue": false,
+          "current": {},
+          "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+          "definition": "SHOW TAG VALUES FROM \"app_metrics\" WITH KEY = \"project\" WHERE \"service\" =~ /^kafka$/",
+          "name": "project",
+          "options": [],
+          "query": {
+            "query": "SHOW TAG VALUES FROM \"app_metrics\" WITH KEY = \"project\" WHERE \"service\" =~ /^kafka$/",
+            "refId": "InfluxVariableQueryEditor-VariableQuery"
+          },
+          "refresh": 1,
+          "regex": "",
+          "type": "query"
+        },
+        {
+          "allowCustomValue": false,
+          "current": {},
+          "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+          "definition": "SHOW TAG VALUES FROM \"app_metrics\" WITH KEY = \"zone\" WHERE project = '$project' AND service = 'kafka'",
+          "name": "zone",
+          "options": [],
+          "query": {
+            "query": "SHOW TAG VALUES FROM \"app_metrics\" WITH KEY = \"zone\" WHERE project = '$project' AND service = 'kafka'",
+            "refId": "InfluxVariableQueryEditor-VariableQuery"
+          },
+          "refresh": 1,
+          "regex": "",
+          "type": "query"
+        },
+        {
+          "allowCustomValue": false,
+          "current": {},
+          "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+          "definition": "SHOW TAG VALUES FROM \"app_metrics\" WITH KEY = \"host\" WHERE project = '$project' AND zone = '$zone' AND service = 'kafka'",
+          "name": "host",
+          "options": [],
+          "query": {
+            "query": "SHOW TAG VALUES FROM \"app_metrics\" WITH KEY = \"host\" WHERE project = '$project' AND zone = '$zone' AND service = 'kafka'",
+            "refId": "InfluxVariableQueryEditor-VariableQuery"
+          },
+          "refresh": 1,
+          "regex": "",
+          "type": "query"
+        },
+        {
+          "allowCustomValue": false,
+          "current": {},
+          "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+          "definition": "SHOW TAG VALUES FROM \"app_metrics\" WITH KEY = \"nodeIP\" WHERE project = '$project' AND zone = '$zone' AND host = '$host' AND service = 'kafka'",
+          "name": "IP",
+          "options": [],
+          "query": {
+            "query": "SHOW TAG VALUES FROM \"app_metrics\" WITH KEY = \"nodeIP\" WHERE project = '$project' AND zone = '$zone' AND host = '$host' AND service = 'kafka'",
+            "refId": "InfluxVariableQueryEditor-VariableQuery"
+          },
+          "refresh": 1,
+          "regex": "",
+          "type": "query"
+        },
+        {
+          "allowCustomValue": false,
+          "current": {},
+          "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+          "definition": "SHOW TAG VALUES FROM \"app_metrics\" WITH KEY = \"service\" WHERE project = '$project' AND zone = '$zone' AND host = '$host' AND service = 'kafka'",
+          "hide": 2,
+          "name": "service",
+          "options": [],
+          "query": {
+            "query": "SHOW TAG VALUES FROM \"app_metrics\" WITH KEY = \"service\" WHERE project = '$project' AND zone = '$zone' AND host = '$host' AND service = 'kafka'",
+            "refId": "InfluxVariableQueryEditor-VariableQuery"
+          },
+          "refresh": 1,
+          "regex": "",
+          "type": "query"
+        },
+        {
+          "current": {},
+          "datasource": {"type": "influxdb", "uid": "${InfluxDS}"},
+          "definition": "SHOW TAG VALUES FROM \"kafka_topic_partitions\" WITH KEY = \"topic\"",
+          "includeAll": true,
+          "multi": true,
+          "name": "topics",
+          "options": [],
+          "query": {
+            "query": "SHOW TAG VALUES FROM \"kafka_topic_partitions\" WITH KEY = \"topic\"",
+            "refId": "InfluxVariableQueryEditor-VariableQuery"
+          },
+          "refresh": 1,
+          "regex": "",
+          "type": "query"
+        },
+        {
+          "auto": false,
+          "auto_count": 30,
+          "auto_min": "10s",
+          "current": {"text": "5m", "value": "5m"},
+          "name": "interval",
+          "options": [
+            {"selected": false, "text": "1m",  "value": "1m" },
+            {"selected": true,  "text": "5m",  "value": "5m" },
+            {"selected": false, "text": "10m", "value": "10m"},
+            {"selected": false, "text": "30m", "value": "30m"},
+            {"selected": false, "text": "1h",  "value": "1h" },
+            {"selected": false, "text": "6h",  "value": "6h" },
+            {"selected": false, "text": "12h", "value": "12h"},
+            {"selected": false, "text": "1d",  "value": "1d" },
+            {"selected": false, "text": "7d",  "value": "7d" },
+            {"selected": false, "text": "14d", "value": "14d"},
+            {"selected": false, "text": "30d", "value": "30d"}
+          ],
+          "query": "1m,5m,10m,30m,1h,6h,12h,1d,7d,14d,30d",
+          "refresh": 2,
+          "type": "interval"
+        }
+      ]
+    },
+    "time": {"from": "now-1h", "to": "now"},
+    "timepicker": {},
+    "timezone": "Asia/Kolkata",
+    "title": "Kafka Metrics",
+    "uid": "777selKafkaMetrics",
+    "version": 1,
+    "weekStart": ""
+  }
+}

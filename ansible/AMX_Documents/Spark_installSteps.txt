@@ -1,0 +1,71 @@
+
+------ Document Preview -----
+
+Spark Metrics Configuration Setup on Backend Server
+🔹 Scope
+This will enable capturing JVM metrics via JMX and write periodic CSV metrics locally for monitoring purposes.
+
+🔹 Steps
+1️⃣ Place the metrics.properties file
+Create or update the file at: (or the project specific file/path)
+
+/home/airlinq/amx_streaming/APICalling_Streaming/metrics.properties
+with the following content:
+# Metrics sources
+*.source.jvm.class=org.apache.spark.metrics.source.JvmSource
+streaming.source.jvm.class=org.apache.spark.metrics.source.JvmSource
+
+# CSV sink
+*.sink.csv.class=org.apache.spark.metrics.sink.CsvSink
+*.sink.csv.period=10
+*.sink.csv.unit=seconds
+*.sink.csv.directory=/home/airlinq/amx_streaming/APICalling_Streaming/spark-metrics
+
+# JMX sink for Prometheus JMX exporter
+*.sink.jmx.class=org.apache.spark.metrics.sink.JmxSink
+
+✅ Notes:
+
+CSV metrics will be written every 10 seconds into:
+/home/airlinq/amx_streaming/APICalling_Streaming/spark-metrics/
+Expose JMX metrics for external scraping or local tools.
+
+
+2️⃣ Ensure directory for CSV metrics exists
+Create the directory if not already present:
+Run:
+
+mkdir -p /home/airlinq/amx_streaming/APICalling_Streaming/spark-metrics
+chown -R <spark_user>:<spark_group> /home/airlinq/amx_streaming/APICalling_Streaming/spark-metrics
+(Replace <spark_user> and <spark_group> with the actual user running Spark.)
+
+3️⃣ Update Spark startup script to pick this config
+
+Add the below to your spark-start.sh script under ‘bin’ folder: (Rename the correct jmx-java-prometheus-agent-filename).
+
+✅ Example:
+export GMSA_Orchastration_Engine=/home/airlinq/amx_streaming/APICalling_Streaming
+JMX_JAR=$GMSA_Orchastration_Engine/bin/grafana_jars/jmx_prometheus_javaagent-0.20.0.jar
+JMX_CONFIG=$GMSA_Orchastration_Engine/template/jmx-config.yaml
+JMX_PORT=9010
+
+java \
+-javaagent:$JMX_JAR=$JMX_PORT:$JMX_CONFIG \
+-Dspark.metrics.conf=$GMSA_Orchastration_Engine/metrics.properties \
+-XX:MinHeapFreeRatio=20 -XX:+UseG1GC -XX:MaxHeapFreeRatio=90 \
+-cp "$GMSA_Orchastration_Engine/bin/gmsa_orchestration_streaming.jar:bin/lib/*" \
+com.java.main.StreamingMain GMSA_Orchastration_Engine 0 \
+>> $GMSA_Orchastration_Engine/log/log.txt
+
+4️⃣ Verify metrics output
+🔹 CSV
+Check if CSV metrics files are being generated under:
+/home/airlinq/amx_streaming/APICalling_Streaming/spark-metrics/
+Files like driver.jvm.PS-MarkSweep.count.csv should appear.
+🔹 JMX
+Ensure JMX port is open (usually via setting SPARK_DAEMON_JAVA_OPTS or similar). JMX_PORT=9010
+Can use jconsole or jcmd to connect and verify metrics MBeans.
+
+🔄 Rollback procedure
+
+If needed, simply put back the backed up config metrics.properties file and restart spark..

@@ -1,0 +1,45 @@
+# Variables for DLMVAMXSAALLDRA03
+
+# IP: 10.221.92.52
+---
+# Add host-specific variables below
+deploy_telegraf_redis: false
+deploy_telegraf_postgres: false
+deploy_telegraf_infra: false
+deploy_mysql_replica_status_monitor: false
+deploy_mysql_slowquery_script: false
+deploy_app_metrics: true
+deploy_port_listen_monitor: true
+deploy_port_conn_monitor: true
+deploy_ntp_status: false
+deploy_dra_process_script: false
+deploy_nginx: false
+deploy_bssBypass_Check: false
+deploy_oracle_Metrics: false
+
+oracle_user: "RWUSER"
+oracle_pass: "ROAMWARE"
+oracle_db: "RWDB"
+oracle_home: "/u01/app/oracle/product/11.2.4/client_1"
+
+apps:
+  - name: "ARG_DRA2"
+    match: "DiameterRoutingAgent"
+    type: "pattern"
+  - name: "ARG_DRA2"
+    match: "DiameterRoutingAgent"
+    type: "pattern"
+
+# Application ports for DLMVAMXSAALLDRA03
+ports:
+  - ip: "190.110.144.5"
+    port: 3886
+    name: "java"
+
+  - ip: "190.110.144.4"
+    port: 3886
+    name: "java"
+
+  - ip: "10.221.87.229"
+    port: 1521
+    name: "ORACLE"

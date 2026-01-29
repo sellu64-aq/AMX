@@ -1,0 +1,38 @@
+# Variables for DLVMAMXSAMXBSS01
+# IP 10.221.92.64
+---
+# Add host-specific variables below
+deploy_telegraf_redis: false
+deploy_telegraf_postgres: false
+deploy_telegraf_infra: false
+deploy_mysql_replica_status_monitor: false
+deploy_mysql_slowquery_script: false
+deploy_app_metrics: true
+deploy_port_listen_monitor: true
+deploy_port_conn_monitor: true
+deploy_ntp_status: false
+deploy_dra_process_script: false
+deploy_nginx: false
+
+apps:
+  - name: "MexicoBSS2"
+    match: "bss_1"
+    type: "pattern"
+
+# Application ports for DLVMAMXSAMXBSS01
+ports:
+  - ip: "127.0.0.1"
+    port: 8005
+    name: "java-8005"
+    
+  - ip: "127.0.0.1"
+    port: 8080
+    name: "tomcat-8080"
+
+  - ip: "10.221.81.41"
+    port: 6667
+    name: "KAFKA1-STREAMING"
+    
+  - ip: "10.221.81.42"
+    port: 6667
+    name: "KAFKA2-STREAMING"

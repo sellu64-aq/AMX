@@ -1,0 +1,184 @@
+Alert Create #######
+
+#---- infra_1m -----
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "alert_file=infra/High_CPU_Usage_Server.json.j2" --limit DLVMTMAMXOPS01  -e "rulegroup=infra_1m" -e "influxDS_name=Dallas_Pri"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "alert_file=infra/High_Memory_Usage_Server.json.j2" --limit DLVMTMAMXOPS01  -e "rulegroup=infra_1m" -e "influxDS_name=Dallas_Pri"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "alert_file=infra/High_Disc_Usage_Server.json.j2" --limit DLVMTMAMXOPS01  -e "rulegroup=infra_1m" -e "influxDS_name=Dallas_Pri"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "alert_file=infra/High_System_Load_Alert.json.j2" --limit DLVMTMAMXOPS01  -e "rulegroup=infra_1m" -e "influxDS_name=Dallas_Pri"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "alert_file=infra/High_TCP_Established_Connections.json.j2" --limit DLVMTMAMXOPS01  -e "rulegroup=infra_1m" -e "influxDS_name=Dallas_Pri"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "alert_file=infra/High_TCP_CLOSE_WAIT_Connections.json.j2" --limit DLVMTMAMXOPS01  -e "rulegroup=infra_1m" -e "influxDS_name=Dallas_Pri"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "alert_file=infra/High_TCP_TIME_WAIT_Connections.json.j2" --limit DLVMTMAMXOPS01  -e "rulegroup=infra_1m" -e "influxDS_name=Dallas_Pri"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "alert_file=infra/Server_Reboot_Alert.json.j2" --limit DLVMTMAMXOPS01  -e "rulegroup=infra_1m" -e "influxDS_name=Dallas_Pri"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "alert_file=infra/Server_Down_Alert.json.j2" --limit DLVMTMAMXOPS01  -e "rulegroup=infra_1m" -e "influxDS_name=Dallas_Pri"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "alert_file=infra/NTP_not_Synchronized.json.j2" --limit DLVMTMAMXOPS01  -e "rulegroup=infra_1m" -e "influxDS_name=Dallas_Pri"
+
+
+#---- infra_5m -----
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "alert_file=infra/High_Swap_Usage_Server.json.j2" --limit DLVMTMAMXOPS01  -e "rulegroup=infra_5m" -e "influxDS_name=Dallas_Pri"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "alert_file=infra/High_Disk_IO_Utilization.json.j2" --limit DLVMTMAMXOPS01  -e "rulegroup=infra_5m" -e "influxDS_name=Dallas_Pri"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "alert_file=infra/High_Network_Interface_Errors.json.j2" --limit DLVMTMAMXOPS01  -e "rulegroup=infra_5m" -e "influxDS_name=Dallas_Pri"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "alert_file=infra/High_Disk_Inodes_Usage.json.j2" --limit DLVMTMAMXOPS01  -e "rulegroup=infra_5m" -e "influxDS_name=Dallas_Pri"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "alert_file=infra/High_Network_Packet_Drops.json.j2" --limit DLVMTMAMXOPS01  -e "rulegroup=infra_5m" -e "influxDS_name=Dallas_Pri"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "alert_file=infra/Low_Entropy_Availability.json.j2" --limit DLVMTMAMXOPS01  -e "rulegroup=infra_5m" -e "influxDS_name=Dallas_Pri"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "alert_file=infra/High_Context_Switch_Rate.json.j2" --limit DLVMTMAMXOPS01  -e "rulegroup=infra_5m" -e "influxDS_name=Dallas_Pri"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "alert_file=infra/Disk_IO_Wait_Time_Alert.json.j2" --limit DLVMTMAMXOPS01  -e "rulegroup=infra_5m" -e "influxDS_name=Dallas_Pri"
+
+
+#---- app_1m -----
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=app/High_CPU_Usage_App.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=app/High_Memory_Usage_App.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=app/Application_Down.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=app/SNMP_Trap_Received.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=dra/Diameter_Request_Failure.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=dra/Diameter_High_Req_Res_Time.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=dra/DRA_Current_Queue_BuildUP.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=bss/BSS_bypassed_OCS_system.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=app/Network_link_Down.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=bss/BSS-SQL_Connection_Failure.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=app/"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=app/"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=app/"
+
+
+#----app_30m--------
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_30m" -e "influxDS_name=Dallas_Pri" -e "alert_file=app/ESIM_High_Error_logs_Observed_in_Last_1hr_interval.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_30m" -e "influxDS_name=Dallas_Pri" -e "alert_file=app/WSO2_API_Gateway_no_Traffic_Detected_in_Last_5mins.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_30m" -e "influxDS_name=Dallas_Pri" -e "alert_file=app/WSO2_API_Gateway_High_Traffic_Detected_in_Last_5mins.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_30m" -e "influxDS_name=Dallas_Pri" -e "alert_file=app/High_OL_LocalHost_Access_Logs_Observed_in_Last_5mins.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_30m" -e "influxDS_name=Dallas_Pri" -e "alert_file=app/Billing_Aged_Files_input_Foledr.json.j2" --limit DLVMTMAMXOPS01
+
+
+#-----app_5m -----------
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_5m" -e "influxDS_name=Dallas_Pri" -e "alert_file=app/High_PID_Count.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_5m" -e "influxDS_name=Dallas_Pri" -e "alert_file=app/High_Port_Response_time.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup= app_5m" -e "influxDS_name=Dallas_Pri" -e "alert_file=app/Network_Link_Down.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_5m" -e "influxDS_name=Dallas_Pri" -e "alert_file=app/Catalina_ERROR_Logs_in_Last_5mins_Interval.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_5m" -e "influxDS_name=Dallas_Pri" -e "alert_file=app/Catalina_WARN_logs_in_last_5mins_Interval.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_5m" -e "influxDS_name=Dallas_Pri" -e "alert_file=dra/Diameter_Error_log.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_5m" -e "influxDS_name=Dallas_Pri" -e "alert_file=app/SNMP_Trap_Received.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_5m" -e "influxDS_name=Dallas_Pri" -e "alert_file=kafka/kafka_consumer_group_lag.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_5m" -e "influxDS_name=Dallas_Pri" -e "alert_file=kafka/Kafka_Under_Replicated_Partition.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_5m" -e "influxDS_name=Dallas_Pri" -e "alert_file=kafka/Kafka_low_broker_count.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_5m" -e "influxDS_name=Dallas_Pri" -e "alert_file=kafka/Kakfa_Partition_Leadership_Not_Preferred.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_5m" -e "influxDS_name=Dallas_Pri" -e "alert_file=app/SDS_App_State.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_5m" -e "influxDS_name=Dallas_Pri" -e "alert_file=kafka/Kafka_Consumer_Group_Member_Loss.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_5m" -e "influxDS_name=Dallas_Pri" -e "alert_file=dra/DRA_Traffic_Spike_in_last5mins.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_5m" -e "influxDS_name=Dallas_Pri" -e "alert_file=billing/Billing_Builder_Error_Log.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_5m" -e "influxDS_name=Dallas_Pri" -e "alert_file=billing/Billing_Invoice_Processor_Error_log.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_5m" -e "influxDS_name=Dallas_Pri" -e "alert_file=billing/Billing_Usage_loader_Error_log.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_5m" -e "influxDS_name=Dallas_Pri" -e "alert_file=ocs/OCS_No_Gy_Traffic_inlast5minutes.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_5m" -e "influxDS_name=Dallas_Pri" -e "alert_file=app/"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_5m" -e "influxDS_name=Dallas_Pri" -e "alert_file=app/"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_5m" -e "influxDS_name=Dallas_Pri" -e "alert_file=app/"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_5m" -e "influxDS_name=Dallas_Pri" -e "alert_file=app/"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_5m" -e "influxDS_name=Dallas_Pri" -e "alert_file=app/"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_5m" -e "influxDS_name=Dallas_Pri" -e "alert_file=app/"
+
+#-----app_24h -----------
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_24h" -e "influxDS_name=Dallas_Pri" -e "alert_file=app/DRA_Brazil_SuccessCount_Dropped_Previous_day.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=app_24h" -e "influxDS_name=Dallas_Pri" -e "alert_file=app/DRA_Mexico_SuccessCount_Dropped_Previous_day.json.j2" --limit DLVMTMAMXOPS01
+
+
+#----- mysql_1m--------
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=mysql_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=mysql/Mysql_Application_Down.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=mysql_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=mysql/MySQL_Replication_Stopped.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=mysql_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=mysql/MySQL_Slow_Queries_Count_Exceeds.json.j2" --limit DLVMTMAMXOPS01
+
+#------ mysql_5m ---------
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=mysql_5m" -e "influxDS_name=Dallas_Pri" -e "alert_file=mysql/MySQL_High_Threads_Connected.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=mysql_5m" -e "influxDS_name=Dallas_Pri" -e "alert_file=mysql/MySQL_High_Thread_Running.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=mysql_5m" -e "influxDS_name=Dallas_Pri" -e "alert_file=mysql/MySQL_High_Table_Lock_Waited_Time.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=mysql_5m" -e "influxDS_name=Dallas_Pri" -e "alert_file=mysql/MySQL_Replication_Lag.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=mysql_5m" -e "influxDS_name=Dallas_Pri" -e "alert_file=mysql/MySQL_High_Row_Lock_Waits_Detected.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=mysql_5m" -e "influxDS_name=Dallas_Pri" -e "alert_file=mysql/High_Rate_Of_Temp_Table_Created.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=mysql_5m" -e "influxDS_name=Dallas_Pri" -e "alert_file=mysql/MySQL_Replication_Stopped.json.j2" --limit DLVMTMAMXOPS01
+
+#----- mysql_1h------
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=mysql_1h" -e "influxDS_name=Dallas_Pri" -e "alert_file=mysql/MySQL_Long-Running_Queries_1_hour_Duration_Detected.json.j2" --limit DLVMTMAMXOPS01
+
+#——— Oracle_1m ———
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=oracle_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=oracle/Oracle_High_Active_Session_Counts.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=oracle_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=oracle/Oracle_CPU_Usage_by_Session.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=oracle_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=oracle/Oracle_SGA_Free_Memory_Check.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=oracle_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=oracle/Oracle_PGA_High_Memory_Usage.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=oracle_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=oracle/Oracle_User_Commit_vs_Rollback_Ratio.josn.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=oracle_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=oracle/Oracle_Spike_in_Total_Sessions.json.j2" --limit DLVMTMAMXOPS01
+
+#———Oracle_5m ————
+ ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=oracle_5m" -e "influxDS_name=Dallas_Pri" -e "alert_file=oracle/Oracle_unarchived_redo_log_detected.json.j2" --limit DLVMTMAMXOPS01
+
+# —— Oracle_4h ———
+ ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml --limit DLVMTMAMXOPS01 -e "rulegroup=oracle_4h" -e "influxDS_name=Dallas_Pri" -e "alert_file=oracle/Oracle_TableSpace_Usage.json.j2" --limit DLVMTMAMXOPS01
+# —— radis 1m ———
+ ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=redis_4h" -e "influxDS_name=Dallas_Pri" -e "alert_file=radis/Radis_Service_Down.json.j2" --limit DLVMTMAMXOPS01
+
+# —— Nginx ———
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=nginx_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=nginx/Nginx_High_Request_Failures.json.j2" --limit DLVMTMAMXOPS01
+
+#------profileSwitch-------
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=profileSwitch_1d" -e "influxDS_name=Dallas_Pri" -e "alert_file=profileSwitch/GMI_ProfileSwitch_Critically_Low_SucessRate.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=profileSwitch_1d" -e "influxDS_name=Dallas_Pri" -e "alert_file=profileSwitch/GMI_ProfileSwitch_Low_SucessRate.json.j2 "
+
+#-------sms_30m--------
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=sms_30m" -e "influxDS_name=Dallas_Pri" -e "alert_file=sms/High_SMS_Failure_in_Last_30mins.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=sms_5m" -e "influxDS_name=Dallas_Pri" -e "alert_file=sms/High_SMS_Error_Logs_in_last_5mins.json.j2" --limit DLVMTMAMXOPS01
+
+
+#------ Spark ---------
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/spark_high_processing_delay.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/spark_LiveListenerBus_QueueCritical.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/spark_high_records_per_batch.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/spark_high_sceduling_delay.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/spark_kafka_consumer_lag.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/spark_live_listenersBus_Event_Dropped.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/spark_recieved_vs_processed.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/spark_total_batch_delay.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/spark_unprocessed_vs_waiting.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/spark_LiveListenerBus_QueueHigh.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/spark_LiveListenerBus_QueueCritical.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/spark_appListeners_highLatency.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/spark_HeartbeatReceiver_highLatency.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/Spark_LiveListenerBus_Processing_Spike.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/spark_liveListeners_event_storm.json.j2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/spark_liveListeners_multi_queue_failure.jsonj2" --limit DLVMTMAMXOPS01
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/alerts_provision.yml -e "rulegroup=spark_1m" -e "influxDS_name=Dallas_Pri" -e "alert_file=spark/"
+
+
+
+
+
+
+
+
+############## Notitifcation Policy Provision ##################
+# group_wait    How long to wait to group alerts before sending the first notification.
+# group_interval        Minimum interval between notifications for a group of alerts.
+# repeat_interval       How often to resend a notification if the alert is still firing.
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/notification_provision.yml -e "rulegroup=infra_1m contact_point=All_Alerts group_by=['alertname','severity'] group_wait=10s group_interval=2m repeat_interval=30m"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/notification_provision.yml -e "rulegroup=infra_5m contact_point=All_Alerts group_by=['alertname','severity'] group_wait=10s group_interval=10m repeat_interval=1h"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/notification_provision.yml -e "rulegroup=app_1m contact_point=All_Alerts group_by=['alertname','severity'] group_wait=10s group_interval=5m repeat_interval=30m"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/notification_provision.yml -e "rulegroup=app_5m contact_point=All_Alerts group_by=['alertname','severity'] group_wait=10s group_interval=10m repeat_interval=1h"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/notification_provision.yml -e "rulegroup=app_30m contact_point=All_Alerts group_by=['alertname','severity'] group_wait=10s group_interval=30m repeat_interval=4h"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/notification_provision.yml -e "rulegroup=app_1h contact_point=All_Alerts group_by=['alertname','severity'] group_wait=10s group_interval=30m repeat_interval=4h"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/notification_provision.yml -e "rulegroup=mysql_1m contact_point=All_Alerts group_by=['alertname','severity'] group_wait=10s group_interval=2m repeat_interval=30m"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/notification_provision.yml -e "rulegroup=mysql_5m contact_point=All_Alerts group_by=['alertname','severity'] group_wait=10s group_interval=10m repeat_interval=1h"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/notification_provision.yml -e "rulegroup=mysql_30m contact_point=All_Alerts group_by=['alertname','severity'] group_wait=10s group_interval=30m repeat_interval=4h"
+
+
+########### Notitifcation Policy Delete ##############
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/notification_delete.yml -e "notification_policy_type=infra_1m"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/notification_delete.yml -e "notification_policy_type=infra_5m"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/notification_delete.yml -e "notification_policy_type=app_1m"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/notification_delete.yml -e "notification_policy_type=app_5m"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/notification_delete.yml -e "notification_policy_type=app_30m"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/notification_delete.yml -e "notification_policy_type=app_1h"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/notification_delete.yml -e "notification_policy_type=mysql_1m"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/notification_delete.yml -e "notification_policy_type=mysql_5m"
+ansible-playbook -i inventory/AMX_dallas_north.ini playbooks/notification_delete.yml -e "notification_policy_type=mysql_30m"
+
+curl -s -H "Authorization: Bearer glsa_ao7MZIeX4bKOEXz2KqzRstUxQ98I8JNi_073f2b4e" -H "Content-Type: application/json" https://grafanaops.airlinq.com:3000/api/v1/provisioning/alert-rules | jq -r '.[].title'
+

@@ -1,0 +1,129 @@
+#####################################
+# Environment Settings
+#####################################
+app_mode = production
+instance_name = ${HOSTNAME}
+
+#####################################
+# Server Settings
+#####################################
+[server]
+protocol = {{ grafana_server.protocol }}
+http_addr =
+http_port = {{ grafana_server.port }}
+# The public facing domain name used to access grafana from a browser
+domain = {{ grafana_server.domain }}
+enforce_domain = true
+root_url = %(protocol)s://%(domain)s:%(http_port)s/
+
+;root_url = https://grafanaops.airlinq.com:3000
+;root_url = %(protocol)s://%(http_addr)s:%(http_port)s/
+;root_url = %(protocol)s://%(domain)s:%(http_port)s/
+
+router_logging = true
+enable_gzip = true
+
+# https certs & key file
+;cert_file = /etc/grafana/orig_ssl_cert/certificate.crt
+;cert_key = /etc/grafana/orig_ssl_cert/airlinq.key
+read_timeout = 60s
+
+#### under server only ######### this is important to keep grafana workign without heavy load from users ###########
+# Set the maximum number of connections to Grafana (adjust based on your needs)
+max_connections = 50
+
+#####################################
+# Security Settings
+#####################################
+[security]
+allow_sign_up = true
+admin_user = admin
+admin_password = admin
+
+############## cache #################
+[cache]
+enabled = true
+max_cache_age = 1h  # Set the cache expiration to 1 hour (adjust this based on your needs)
+
+
+#####################################
+# Path Settings
+#####################################
+[paths]
+;data = /var/lib/grafana
+temp_data_lifetime = 48h
+logs = "{{ telegraf_remote_path }}/grafana"
+# Directory where grafana will automatically scan and look for plugins
+plugins = /var/lib/grafana/plugins
+# folder that contains provisioning config files that grafana will apply on startup and while running.
+provisioning = /etc/grafana/provisioning
+
+#####################################
+# Database Settings
+#####################################
+[database]
+type = mysql
+host = 127.0.0.1:3306
+name = "{{ project }}"
+user = "{{ mysqldb_user }}"
+password = "{{ mysqldb_pass }}"
+max_open_connections = 10
+max_idle_conn = 5   # Reduce idle connections
+conn_max_lifetime = 14400
+
+[query_cache]
+enabled = true
+max_cache_size = 256MB  # Adjust cache size based on available memory
+
+####################################
+[dashboard]
+# Set the default dashboard refresh interval
+default_refresh_interval = 5m
+
+#####################################
+# Logging Settings
+#####################################
+[log]
+level = info
+file = "{{ telegraf_remote_path }}/grafana/grafana.log"
+
+#####################################
+# Anonymous Access
+#####################################
+[auth.anonymous]
+enabled = false
+
+#####################################
+# SMTP Settings (with SSL/TLS)
+#####################################
+[smtp]
+enabled = true
+host = {{ grafana_smtp.host }}:{{ grafana_smtp.port }}
+;user = {{ grafana_smtp.user }}
+;password = {{ grafana_smtp.password }}
+from_address = {{ grafana_smtp.from_address }}
+from_name = {{ grafana_smtp.from_name }}
+skip_verify = false
+startTLS_policy = NoStartTLS
+
+#####################################
+# Snapshots Settings
+#####################################
+[snapshots]
+# snapshot sharing options
+;external_enabled = true
+;external_snapshot_url = https://snapshots.raintank.io
+;external_snapshot_name = Publish to snapshots.raintank.io
+
+#####################################
+# AWS Settings
+#####################################
+[aws]
+# Enter a comma-separated list of allowed AWS authentication providers.
+# Options are: default (AWS SDK Default), keys (Access && secret key), credentials (Credentials field), ec2_iam_role (EC2 IAM Role)
+; allowed_auth_providers = default,keys,credentials
+# Allow AWS users to assume a role using temporary security credentials.
+# If true, assume role will be enabled for all AWS authentication providers that are specified in aws_auth_providers
+; assume_role_enabled = true
+[plugins]
+allow_loading_unsigned_plugins=albertowd-oraclegrafana-datasource

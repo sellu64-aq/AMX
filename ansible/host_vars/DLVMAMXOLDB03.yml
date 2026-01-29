@@ -1,0 +1,24 @@
+# Variables for DLVMAMXOLDB03
+# IP 10.221.86.125
+
+---
+# Add host-specific variables below
+deploy_app_metrics: true
+deploy_port_listen_monitor: true
+deploy_port_conn_monitor: true
+deploy_ntp_status: false
+deploy_dra_process_script: false
+
+apps:
+  - name: "kworker"
+    match: "kworker"
+    type: "pattern"
+
+
+  
+# Application ports for DLVMAMXOLDB03
+ports:
+  - ip: "10.221.86.125"
+    port: 56958
+    name: "OLDB03"
+	

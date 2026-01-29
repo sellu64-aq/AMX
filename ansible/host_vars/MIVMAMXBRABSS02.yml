@@ -1,0 +1,45 @@
+# Variables for MIVMAMXBRABSS02
+---
+deploy_telegraf_infra: false
+deploy_app_metrics: true
+deploy_port_listen_monitor: true
+deploy_port_conn_monitor: true
+deploy_ntp_status: false
+deploy_telegraf_postgres: false
+deploy_telegraf_redis: false
+deploy_mysql_slowquery_script: false
+deploy_mysql_replica_status_monitor: false
+deploy_nginx: false
+deploy_oracle_Metrics: false
+deploy_dra_process_script: false
+
+apps:
+  - name: "bss"
+    match: "bss"
+    type: "pattern"
+
+ports:
+  - ip: "127.0.0.1"
+    port: 8282
+    name: "bss"
+
+  - ip: "10.121.72.88"
+    port: 9092
+    name: "kafka-broker1"
+
+  - ip: "10.121.69.89"
+    port: 9092
+    name: "kafka-broker2"
+
+  - ip: "10.121.69.90"
+    port: 9092
+    name: "kafka-broker3"
+
+  - ip: "10.121.69.70"
+    port: 10000
+    name: "redis"
+
+  - ip: "10.121.72.133"
+    port: 6441
+    name: "mysql"
+

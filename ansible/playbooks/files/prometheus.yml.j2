@@ -1,0 +1,89 @@
+global:
+  scrape_interval: 50s
+  evaluation_interval: 50s
+  scrape_timeout: 40s
+# query_log_file: /etc/prometheus/query.log
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+
+############# {{ project_name }}_Prometheus ###########
+  - job_name: "{{ project_name }}_prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+        labels:
+          job: prometheus
+          project: "{{ project_name }}"
+          zone: "{{ zone_name }}"
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: "([^:]+):\\d+"
+        target_label: instance
+{% if groups['all_servers'] is defined %}
+{% for host in groups['all_servers'] %}
+      - source_labels: [__address__]
+        regex: "{{ hostvars[host].ansible_host }}:9090"
+        target_label: hostname
+        replacement: "{{ hostvars[host].ansible_hostname | default(host) }}"
+{% endfor %}
+{% endif %}
+
+############# {{ project_name }}_NodeExporter ###########
+{% if groups['all_servers'] is defined and groups['all_servers'] | length > 0 %}
+  - job_name: "{{ project_name }}_nodeExporter"
+    static_configs:
+      - targets: [
+{% for host in groups['all_servers'] %}
+          "{{ hostvars[host].ansible_host }}:9100"{% if not loop.last %},{% endif %}
+{% endfor %}
+        ]
+        labels:
+          job: "infra"
+          project: "{{ project_name }}"
+          zone: "{{ zone_name }}"
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: "([^:]+):\\d+"
+        target_label: instance
+{% for host in groups['all_servers'] %}
+      - source_labels: [__address__]
+        regex: "{{ hostvars[host].ansible_host }}:9100"
+        target_label: hostname
+        replacement: "{{ hostvars[host].ansible_hostname | default(host) }}"
+{% endfor %}
+{% endif %}
+
+############# {{ project_name }}_MySQL ###########
+{% if groups['mysql'] is defined and groups['mysql'] | length > 0 %}
+  - job_name: "{{ project_name }}_MySQL"
+    static_configs:
+      - targets: [
+{% for host in groups['mysql'] %}
+          "{{ hostvars[host].ansible_host }}:9104"{% if not loop.last %},{% endif %}
+{% endfor %}
+        ]
+        labels:
+          job: "mysql"
+          project: "{{ project_name }}"
+          zone: "{{ zone_name }}"
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: "([^:]+):\\d+"
+        target_label: instance
+{% for host in groups['mysql'] %}
+      - source_labels: [__address__]
+        regex: "{{ hostvars[host].ansible_host }}:9104"
+        target_label: hostname
+        replacement: "{{ hostvars[host].ansible_hostname | default(host) }}"
+{% endfor %}
+{% endif %}
+

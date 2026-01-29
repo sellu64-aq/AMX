@@ -1,0 +1,61 @@
+# Variables for MIVMAMXBRAOCS01
+---
+deploy_telegraf_infra: false
+deploy_app_metrics: true
+deploy_port_listen_monitor: true
+deploy_port_conn_monitor: true
+deploy_ntp_status: false
+deploy_telegraf_postgres: false
+deploy_telegraf_redis: false
+deploy_mysql_slowquery_script: false
+deploy_mysql_replica_status_monitor: false
+deploy_nginx: false
+deploy_oracle_Metrics: false
+deploy_dra_process_script: false
+deploy_bssBypass_Check: true
+
+oracle_user: "RWUSER"
+oracle_pass: "ROAMWARE"
+oracle_db: "RWDB"
+oracle_home: "/u01/app/oracle/product/11.2.4/client_1"
+
+apps:
+  - name: "AirConsumerApp"
+    match: "AirConsumerApp"
+    type: "pattern"
+  - name: "Air-OCS"
+    match: "Air-OCS"
+    type: "pattern"
+  - name: "Api-Service"
+    match: "Api-Service"
+    type: "pattern"
+
+ports:
+  - ip: "10.121.69.201"
+    port: 1521
+    name: "oracledb"
+
+  - ip: "127.0.0.1"
+    port: 8070
+    name: "ocs"
+
+  - ip: "10.121.69.119"
+    port: 20131
+    name: "dra1"
+
+  - ip: "10.121.69.120"
+    port: 20131
+    name: "dra2"
+
+  - ip: "10.121.72.88"
+    port: 9092
+    name: "kafka-broker1"
+
+  - ip: "10.121.69.89"
+    port: 9092
+    name: "kafka-broker2"
+
+  - ip: "10.121.69.90"
+    port: 9092
+    name: "kafka-broker3"
+

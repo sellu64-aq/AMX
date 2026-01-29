@@ -1,0 +1,41 @@
+# Variables for DLVMTMAMXK8SWORK08
+# IP 10.221.92.189
+---
+# Add host-specific variables below
+deploy_app_metrics: true
+deploy_port_listen_monitor: true
+deploy_port_conn_monitor: true
+deploy_ntp_status: false
+deploy_dra_process_script: false
+
+apps:
+  - name: "kubelet --volume"
+    match: 'kubelet --volume'
+    type: "pattern"
+  - name: "java"
+    match: "app.jar"
+    type: "pattern"
+  - name: "containerd"
+    match: "containerd"
+    type: "pattern"
+  - name: "kube-proxy"
+    match: "kube-proxy"
+    type: "pattern"    
+ 
+# Application ports for DLVMTMAMXK8SWORK08
+ports:
+  - ip: "127.0.0.1"
+    port: 6443
+    name: "rke2 agent"
+
+  - ip: "127.0.0.1"
+    port: 10248
+    name: "kubelet"
+
+  - ip: "127.0.0.1"
+    port: 10249
+    name: "kube-proxy"
+
+  - ip: "127.0.0.1"
+    port: 10010
+    name: "containerd"

@@ -1,0 +1,40 @@
+# Variables for MIVMAMXNEDE01
+---
+deploy_telegraf_infra: false
+deploy_app_metrics: true
+deploy_port_listen_monitor: true
+deploy_port_conn_monitor: true
+deploy_ntp_status: false
+deploy_telegraf_postgres: true
+deploy_telegraf_redis: false
+deploy_mysql_slowquery_script: true
+deploy_mysql_replica_status_monitor: true
+deploy_nginx: false
+deploy_oracle_Metrics: false
+deploy_dra_process_script: false
+
+apps:
+  - name: "DownloadCenter"
+    match: "DownloadCenter"
+    type: "pattern"
+  - name: "notification"
+    match: "notification"
+    type: "pattern"
+
+ports:
+  - ip: "10.121.69.109"
+    port: 6446
+    name: "mysql"
+
+  - ip: "10.121.69.59"
+    port: 8082
+    name: "ac-api"
+
+  - ip: "10.121.69.158"
+    port: 5432
+    name: "postgres"
+
+  - ip: "10.121.72.88"
+    port: 9092
+    name: "kafka-broker1"
+

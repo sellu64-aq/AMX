@@ -1,0 +1,49 @@
+# Variables for DLMVAMXSAALLOCS03
+# IP: 10.221.92.72
+---
+# Add host-specific variables below
+
+########## Feature Flags ##########
+deploy_telegraf_redis: false
+deploy_telegraf_postgres: false
+deploy_telegraf_infra: false
+deploy_mysql_replica_status_monitor: false
+deploy_app_metrics: true
+deploy_port_listen_monitor: true
+deploy_port_conn_monitor: true
+deploy_ntp_status: false
+deploy_dra_process_script: false
+deploy_mysql_slowquery_script: false
+deploy_nginx: false
+deploy_bssBypass_Check: true
+deploy_oracle_Metrics: false
+
+########## Oracle DB Details ##########
+oracle_home: "/u01/app/oracle/product/11.2.4/client_1"
+db_user: "RWUSER"
+db_pass: "ROAMWARE"
+db_conn: "RWDB"
+
+########## Applications ##########
+apps:
+  - name: "jakarta-tomcat"
+    match: "jakarta-tomcat"
+    type: "pattern"
+
+  - name: "AirOCS"
+    match: "AirOCSApp"
+    type: "pattern"
+
+########## Ports ##########
+ports:
+  - ip: "10.221.93.48"
+    port: 1521
+    name: "ORACLE"
+
+  - ip: "10.221.93.75"
+    port: 1521
+    name: "ORACLE1"
+
+  - ip: "10.221.92.52"
+    port: 20131
+    name: "ARG-DRA"

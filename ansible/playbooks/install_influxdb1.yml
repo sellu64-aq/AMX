@@ -1,0 +1,99 @@
+---
+- name: Install InfluxDB 1.x under standard path using aqadmin user
+  hosts: influxdb
+  become: true
+  become_user: aqadmin
+  vars:
+    base_path: "{{ telegraf_remote_path }}"
+    influx_path: "{{ base_path }}/influxdb"
+    influx_conf_dir: "{{ influx_path }}/conf"
+    influx_data_dir: "{{ influx_path }}/data"
+    influx_bin_dir: "{{ influx_path }}/bin"
+
+  tasks:
+    - name: Debug - Creating necessary influxdb directories
+      debug:
+        msg: "Ensuring influxdb directories exist under {{ influx_path }}"
+
+    - name: Ensure all influxdb directories exist
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: aqadmin
+        group: aqadmin
+        mode: "0755"
+      loop:
+        - "{{ influx_path }}"
+        - "{{ influx_conf_dir }}"
+        - "{{ influx_data_dir }}"
+        - "{{ influx_bin_dir }}"
+
+    - name: Debug - Copying InfluxDB binaries to {{ influx_bin_dir }}
+      debug:
+        msg: "Copying influxdb binaries to {{ influx_bin_dir }}"
+
+    - name: Copy InfluxDB binaries
+      copy:
+        src: "{{ item }}"
+        dest: "{{ influx_bin_dir }}/"
+        mode: '0755'
+        owner: aqadmin
+        group: aqadmin
+      with_items:
+        - "{{ ansible_folder }}/binaries/influx"
+        - "{{ ansible_folder }}/binaries/influxd"
+        - "{{ ansible_folder }}/binaries/influx_inspect"
+        - "{{ ansible_folder }}/binaries/influx_stress"
+
+    - name: Debug - Copying influxdb1.conf to {{ influx_conf_dir }}
+      debug:
+        msg: "Copying InfluxDB configuration template to {{ influx_conf_dir }}/influx.conf"
+
+    - name: Copy influxdb1 config
+      template:
+        src: "../templates/influxdb1.conf.j2"
+        dest: "{{ influx_conf_dir }}/influx.conf"
+        owner: aqadmin
+        group: aqadmin
+        mode: '0644'
+
+    - name: Debug - Creating influxdb systemd service
+      debug:
+        msg: "Creating systemd service unit file for influxdb under /etc/systemd/system"
+
+    - name: Create systemd service for InfluxDB 1.x
+      become: true
+      become_user: root
+      copy:
+        dest: /etc/systemd/system/influxdb.service
+        owner: root
+        group: root
+        mode: '0644'
+        content: |
+          [Unit]
+          Description=InfluxDB 1.x Service
+          After=network.target
+
+          [Service]
+          User=aqadmin
+          Group=aqadmin
+          ExecStart={{ influx_bin_dir }}/influxd -config {{ influx_conf_dir }}/influx.conf
+          Restart=always
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Debug - Reloading systemd and enabling influxdb service
+      debug:
+        msg: "Reloading systemd and restarting & enabling influxdb service"
+
+    - name: Reload and enable service
+      become: true
+      become_user: root
+      systemd:
+        daemon_reload: yes
+        name: influxdb
+        state: restarted
+        enabled: yes
+
+

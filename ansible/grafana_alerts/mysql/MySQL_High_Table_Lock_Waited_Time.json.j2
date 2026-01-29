@@ -1,0 +1,96 @@
+{
+  "uid": "{{ alert_uid }}",
+  "folderUID": "{{ folder_uid }}",
+  "ruleGroup": "{{ rulegroup }}",
+  "title": "MySQL High Table Locks Waited Time (2 secs).",
+  "condition": "D",
+  "data": [
+    {
+      "refId": "A",
+      "relativeTimeRange": {"from": 900, "to": 0},
+      "datasourceUid": "{{ datasourceUid }}",
+      "model": {
+        "adhocFilters": [],
+        "alias": "",
+        "datasource": {"type": "influxdb", "uid": "{{ datasourceUid }}"},
+        "dsType": "influxdb",
+        "groupBy": [
+          { "params": ["5m"  ], "type": "time" },
+          { "params": ["none"], "type": "fill" }
+        ],
+        "instant": false,
+        "intervalMs": 1000,
+        "limit": "",
+        "maxDataPoints": 43200,
+        "measurement": "mysql",
+        "policy": "default",
+        "query": "SELECT derivative(mean(\"table_locks_waited\"), 1s)\nFROM \"mysql\"\nWHERE $timeFilter\nGROUP BY time(5m),host,project,zone fill(0)\n",
+        "range": true,
+        "rawQuery": true,
+        "rawSql": "",
+        "refId": "A",
+        "resultFormat": "time_series",
+        "slimit": "",
+        "tz": ""
+      }
+    },
+    {
+      "refId": "C",
+      "relativeTimeRange": {"from": 0, "to": 0},
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": {"params": [], "type": "gt"},
+            "operator": {"type": "and"},
+            "query": { "params": ["C"] },
+            "reducer": {"params": [], "type": "last"},
+            "type": "query"
+          }
+        ],
+        "datasource": {"type": "__expr__", "uid": "__expr__"},
+        "expression": "A",
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "reducer": "last",
+        "refId": "C",
+        "type": "reduce"
+      }
+    },
+    {
+      "refId": "D",
+      "relativeTimeRange": {"from": 0, "to": 0},
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": { "params": [0.5], "type": "gt" },
+            "operator": {"type": "and"},
+            "query": { "params": ["D"] },
+            "reducer": {"params": [], "type": "last"},
+            "type": "query"
+          }
+        ],
+        "datasource": {"type": "__expr__", "uid": "__expr__"},
+        "expression": "C",
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "refId": "D",
+        "type": "threshold"
+      }
+    }
+  ],
+  "noDataState": "OK",
+  "execErrState": "Error",
+  "annotations": {
+    "description": "➤ Alert condition:\n\n    Trigger if derivative \u003e 0 for 2 or more consecutive intervals.\n\n    For example, alert if the value is \u003e 1/sec sustained for 2–5 minutes."
+  },
+  "labels": {
+    "platform": "{{ project }}",
+    "zone"    : "{{ zone }}",
+    "severity": "CRITICAL",
+        "type": "{{ (rulegroup | string).split('_')[0] }}"
+  },
+  "isPaused": false
+}
+

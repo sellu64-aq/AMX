@@ -1,0 +1,302 @@
+[global_tags]
+  project = "Test"
+  zone = "North"
+  service = "Selvam"
+  hostIP = "$HOSTIP"    #### this is coming from systemd env variable @@@@
+
+[agent]
+  debug = true
+  quiet = false
+  interval = "10s"
+  flush_interval = "10s"
+  logfile = "/opt/grafana/log/telegraf/telegraf.log"
+  hostname = ""
+  omit_hostname = false
+  round_interval = true
+  metric_batch_size = 1000
+  metric_buffer_limit = 10000
+  collection_jitter = "0s"
+  flush_jitter = "0s"
+  precision = "0s"
+  logfile_rotation_interval = "12h"
+  logfile_rotation_max_size = "100MB"
+  logfile_rotation_max_archives = 5
+
+
+[[inputs.exec]]
+  commands = [
+    "/bin/bash -c 'export ORACLE_HOME=/u01/app/oracle/product/11.2.4/client_1; export PATH=$PATH:$ORACLE_HOME/bin; host=$(hostname); SourceIP=$(hostname -I | awk \"{print \\$2}\"); ByPassValue=$(echo -e \"set heading off\nset feedback off\nset pagesize 0\nSELECT ogp_bss_check FROM (SELECT ogp_bss_check FROM ocs_gx_parameter ORDER BY OGP_REC_CHANGED_AT DESC) WHERE ROWNUM = 1;\nexit\" | sqlplus -s RWUSER/ROAMWARE@RWDB | xargs); echo \"BSSbyPass,project=AMX,host=$host,lclIP=$SourceIP value=$ByPassValue\"'"
+  ]
+  name_override = "BSSbyPass"
+  data_format = "influx"
+  interval = "30s"
+  timeout = "20s"
+
+
+[[inputs.exec]]
+  commands = [
+    "/bin/bash -c 'ip=$(hostname -I | tr \" \" \"\\n\" | grep -E \"^(10\\.|192\\.168\\.|172\\.(1[6-9]|2[0-9]|3[0-1]))\" | head -n1); echo \"host_ip,host=$(hostname) ip=\\\"$ip\\\"\"'"
+  ]
+  name_override = "host_ip"
+  timeout = "5s"
+  data_format = "influx"
+  interval = "1h"  # Executes the query once every hour
+
+[[inputs.nginx]]
+  urls = ["http://localhost:8080/status"]
+  interval = "10s"
+
+[[inputs.cpu]]
+  percpu = true
+  totalcpu = true
+  collect_cpu_time = false
+  report_active = true
+  core_tags = false
+
+[[inputs.mem]]
+  fieldinclude = ["total", "used", "free", "cached"]
+
+[[inputs.disk]]
+  ignore_fs = ["tmpfs", "devtmpfs", "devfs", "iso9660", "overlay", "aufs", "squashfs"]
+
+[[inputs.diskio]]
+
+[[inputs.system]]
+  fieldinclude = ["uptime", "load1", "load5", "load15", "n_cpus"]
+
+[[inputs.net]]
+  interfaces = ["*"]
+
+[[inputs.exec]]
+  commands = [
+    "/bin/bash -c \"host=\\$(hostname); hostIP1=\\$(hostname -I | awk '{print \\$2}'); ip_list=\\\"10.221.72.20 10.221.81.31 10.221.86.1 10.221.86.217 10.221.87.133 10.221.93.71 131.100.109.189 192.168.202.136 192.168.202.206 192.168.202.34 200.95.169.11 200.95.169.5 203.89.104.232\\\"; pattern=\\$(echo \\\"\\$ip_list\\\" | sed 's/ /|/g'); draIPs=\\$(netstat -n | grep -E \\\"\\$pattern\\\" | awk '{print \\$5}' | cut -d: -f1 | sort -u); for IP in \\$ip_list; do if echo \\\"\\$draIPs\\\" | grep -qw \\\"\\$IP\\\"; then state=\\$(netstat -an | grep \\\"\\$IP\\\" | awk '{print \\$6}' | head -n1); case \\$state in ESTABLISHED) DRA=1;; SYN_SENT) DRA=2;; SYN_RECV) DRA=3;; FIN_WAIT1) DRA=4;; FIN_WAIT2) DRA=5;; TIME_WAIT) DRA=6;; CLOSED) DRA=7;; CLOSE_WAIT) DRA=8;; LAST_ACK) DRA=9;; LISTEN) DRA=10;; CLOSING) DRA=11;; UNKNOWN) DRA=12;; *) DRA=13;; esac; else DRA=0; fi; ts=\\$(date +%s%N); echo \\\"linkState,source=\\$hostIP1,destination=\\$IP,host=\\$host state=\\$DRA \\$ts\\\"; done\""
+  ]
+  timeout = "30s"
+  name_override = "linkState"
+  data_format = "influx"
+
+[[inputs.ping]]
+  urls = [
+    "10.221.72.20",
+    "10.221.81.31",
+    "10.221.86.1",
+    "10.221.86.217",
+    "10.221.87.133",
+    "10.221.93.71",
+    "131.100.109.189",
+    "192.168.202.136",
+    "192.168.202.206",
+    "192.168.202.34",
+    "200.95.169.11",
+    "200.95.169.5",
+    "203.89.104.232"
+  ]
+  count = 2
+  ping_interval = 5.0
+  timeout = 2.0
+  method = "exec"
+
+[[inputs.procstat]]
+  pattern = "spread"
+  fieldinclude = ["cpu_usage", "memory_usage", "num_threads", "read_bytes", "service", "status", "user", "write_bytes"]
+
+[[inputs.procstat]]
+  pattern = "nginx"
+  fieldinclude = ["cpu_usage", "memory_usage", "num_threads", "read_bytes", "service", "status", "user", "write_bytes"]
+
+[[inputs.procstat]]
+  pattern = "DiameterRoutingAgent"
+  fieldinclude = ["cpu_usage", "memory_usage", "num_threads", "read_bytes", "service", "status", "user", "write_bytes"]
+
+[[inputs.procstat]]
+  pattern = "sftp-server"
+  fieldinclude = ["cpu_usage", "memory_usage", "num_threads", "read_bytes", "service", "status", "user", "write_bytes"]
+
+[[inputs.procstat]]
+  pattern = "telegraf"
+  fieldinclude = ["cpu_usage", "memory_usage", "num_threads", "read_bytes", "service", "status", "user", "write_bytes"]
+
+[[inputs.exec]]
+  commands = [
+    "/bin/bash -c 'for app in \"nginx: master process\" \"nginx: worker process\" spread DiameterRoutingAgent sftp-server telegraf; do if ps aux | grep -v grep | grep -q \"$app\"; then escaped_app_name=${app// /_}; echo \"app_status,host=$(hostname),app_name=$escaped_app_name value=1\"; else escaped_app_name=${app// /_}; echo \"app_status,host=$(hostname),app_name=$escaped_app_name value=0\"; fi; done'"
+  ]
+  name_override = "AppStats"
+  data_format = "influx"
+  timeout = "5s"
+
+[[inputs.exec]]
+  commands = [
+    "/bin/bash -c 'host=$(hostname); cd /opt/Roamware/scripts/operations || exit 1; current=$(/opt/rwperl/bin/perl get-int.pl 127.0.0.1 16131 1.3.6.1.4.1.11150.84.4.1.2.0); capacity=$(/opt/rwperl/bin/perl get-int.pl 127.0.0.1 16131 1.3.6.1.4.1.11150.84.4.1.3.0); enQueue=$(/opt/rwperl/bin/perl get-int.pl 127.0.0.1 16131 1.3.6.1.4.1.11150.84.4.2.1.0); deQueue=$(/opt/rwperl/bin/perl get-int.pl 127.0.0.1 16131 1.3.6.1.4.1.11150.84.4.2.2.0); if [[ -n $current && -n $capacity && -n $enQueue && -n $deQueue ]]; then echo \"DraQueue,host=$host,queue=current value=$current\"; echo \"DraQueue,host=$host,queue=capacity value=$capacity\"; echo \"DraQueue,host=$host,queue=enQueue value=$enQueue\"; echo \"DraQueue,host=$host,queue=deQueue value=$deQueue\"; fi'"
+  ]
+  timeout = "5s"
+  name_override = "DraQueue"
+  data_format = "influx"
+  interval = "60s"
+
+[[inputs.tail]]
+  files = [
+    "/opt/Roamware/logs/dra/traps/Traps-DRA-01.csv",
+    "/opt/Roamware/logs/diameternode/traps/sds-alarms.txt",
+    "/opt/Roamware/logs/embeddedsimws/traps/ESIMWS-traps.txt",
+    "/opt/Roamware/logs/csvprocessor/traps/csvp-alarms.txt",
+    "/opt/Roamware/logs/apiservice/traps/apiservice-alarms.txt"
+  ]
+  initial_read_offset = "beginning"
+  name_override = "SNMP_Traps"
+  data_format = "grok"
+  grok_patterns = ['%{DATESTAMP:dra_timestamp},%{DATA:host},%{DATA:device},%{GREEDYDATA:kvdata}']
+  grok_custom_patterns = '''
+    DATESTAMP %{MONTHDAY}-%{MONTH}-%{YEAR},%{TIME}
+  '''
+
+[[processors.starlark]]
+  namepass = ["SNMP_Traps"]
+  source = '''
+def apply(metric):
+    raw_log = metric.fields["kvdata"]
+    parts = raw_log.split(',')
+    timestamp = parts[0] + " " + parts[1]
+    host = parts[2]
+    device = parts[3]
+    metric.tags["timestamp"] = timestamp
+    metric.tags["host"] = host
+    metric.tags["device"] = device
+    key_value_pairs = parts[4:]
+    for pair in key_value_pairs:
+        if "=" in pair:
+            key, value = pair.split("=", 1)
+            if value:
+                metric.fields[key] = value
+    return metric
+  '''
+
+[[inputs.tail]]
+  files = ["/opt/Roamware/logs/dra/SummaryTrace-DRA.csv"]
+  initial_read_offset = "beginning"
+  name_override = "DRAlogs_SummaryTrace"
+  grok_patterns = ["%{CUSTOM_draSummaryLOG}"]
+  grok_custom_patterns = '''
+  CUSTOM_draTIMESTAMP %{MONTHDAY}-%{MONTHNUM}-%{YEAR} %{HOUR}:%{MINUTE}:%{SECOND},%{INT:millisecond}
+  CUSTOM_draSummaryLOG %{CUSTOM_draTIMESTAMP:timestamp},%{DATA},%{DATA},%{DATA},%{DATA},%{DATA},%{DATA},%{DATA},%{DATA},%{DATA:Type},%{DATA:FlowName},%{DATA},%{DATA},%{DATA},%{DATA},%{DATA},%{DATA},%{DATA},%{DATA},%{DATA},%{DATA},%{DATA},%{DATA},%{DATA},%{DATA},%{DATA},%{DATA},%{DATA},%{DATA},%{DATA},%{DATA},%{DATA:ResultCode},%{DATA},%{DATA},%{DATA},%{DATA},%{DATA},%{DATA},%{DATA},%{DATA},%{DATA},%{DATA}
+'''
+  data_format = "grok"
+
+[[processors.converter]]
+  namepass = ["DRAlogs_SummaryTrace"]
+  [processors.converter.fields]
+    integer = ["millisecond"]
+    tag = ["ResultCode","FlowName","Type"]
+
+[[inputs.tail]]
+  files = ["/opt/Roamware/logs/dra/kpi/KPILog-DRA-01.csv"]
+  initial_read_offset = "beginning"
+  name_override = "DRAlogs_KPI"
+  grok_patterns = ["%{CUSTOM_KPI_LOG}"]
+  grok_custom_patterns = '''
+    CUSTOM_TIMESTAMP %{YEAR}-%{MONTHNUM}-%{MONTHDAY},%{TIME:time}
+    CUSTOM_KPI_LOG %{CUSTOM_TIMESTAMP:timestamp},%{DATA:Instance},%{DATA:RecordType},%{DATA:ComponentType},%{DATA:KPItype},%{DATA:TotalRequestReceived},%{DATA:TotalRequestThatHaveFlowDefined},%{DATA:TotalRequestRejectedBasedOnFilters},%{DATA:TotalFilterBasedRejectionForDiameterRequest},%{DATA:TotalRequestSampled},%{DATA:MaxTimeSpentToServeRequest},%{DATA:MinTimeSpentToServeRequest},%{DATA},%{DATA},%{DATA:AverageTimeSpentToServeSampledRequest}
+  '''
+  data_format = "grok"
+
+[[processors.filter]]
+  namepass = ["DRAlogs_KPI"]
+  tagpass = ["ComponentType:DRA"]
+  tagdrop = ["path"]
+
+[[processors.converter]]
+  namepass = ["DRAlogs_KPI"]
+  [processors.converter.fields]
+    integer = ["TotalRequestReceived","TotalRequestThatHaveFlowDefined","TotalRequestRejectedBasedOnFilters","TotalFilterBasedRejectionForDiameterRequest","TotalRequestSampled","MaxTimeSpentToServeRequest","MinTimeSpentToServeRequest","AverageTimeSpentToServeSampledRequest"]
+    tag = ["ComponentType","RecordType","KPItype"]
+
+[[inputs.tail]]
+  files = ["/var/log/nginx/error.log"]
+  initial_read_offset = "beginning"
+  name_override = "nginx_upstream_errors"
+  data_format = "grok"
+  grok_patterns = ["%{NGINX_ERROR_LOG}"]
+
+  grok_custom_patterns = '''
+    NGINX_ERROR_LOG %{CUSTOM_TIMESTAMP:timestamp} \[error\] %{NUMBER:pid}#%{NUMBER}: \*%{NUMBER:req_id} connect\(\) failed \(%{NUMBER:errno}: %{DATA:err_msg}\) while connecting to upstream, client: %{IP:client_ip}, server: %{IP:server_ip}:%{NUMBER:server_port}, upstream: "%{IP:upstream_ip}:%{NUMBER:upstream_port}", bytes from/to client:%{NUMBER:bytes_from_client}/%{NUMBER:bytes_to_client}, bytes from/to upstream:%{NUMBER:bytes_from_upstream}/%{NUMBER:bytes_to_upstream}
+
+    CUSTOM_TIMESTAMP %{YEAR}/%{MONTHNUM}/%{MONTHDAY} %{TIME}
+  '''
+[[processors.converter]]
+  namepass = ["nginx_upstream_errors"]
+
+  [processors.converter.fields]
+    integer = [
+      "pid",
+      "req_id",
+      "errno",
+      "bytes_from_client",
+      "bytes_to_client",
+      "bytes_from_upstream",
+      "bytes_to_upstream",
+      "server_port",
+      "upstream_port"
+    ]
+
+    tag = [
+      "host",
+      "client_ip",
+      "server_ip",
+      "upstream_ip",
+      "service",
+      "path"
+    ]
+
+[[inputs.tail]]
+  files = ["/opt/Roamware/logs/restart.log*"]
+  initial_read_offset = "beginning"
+  name_override = "RestartLog"
+  data_format = "grok"
+  grok_patterns = ["%{DRA_LOG_LINE}"]
+
+  grok_custom_patterns = '''
+    DRA_LOG_LINE %{DRA_TIMESTAMP:timestamp} %{WORD:event_type} %{GREEDYDATA:message} \[%{WORD:application}\]
+    DRA_TIMESTAMP %{DAY} %{MONTH} +%{MONTHDAY} %{TIME} %{YEAR}
+  '''
+
+[[processors.converter]]
+  namepass = ["RestartLog"]
+
+  [processors.converter.fields]
+    tag = ["event_type", "application"]
+
+[[processors.regex]]
+  namepass = ["RestartLog"]
+
+  [[processors.regex.fields]]
+    key = "timestamp"
+    pattern = " "
+    replacement = "_"
+    result_key = "timestamp"
+
+### Outputs #####
+[[outputs.influxdb]]
+  urls = ["http://10.221.72.20:8086"]
+  database = "AMX"
+  retention_policy = "1hrRP"
+  timeout = "5s"
+  namepass = ["SNMP_Traps","DRAlogs_SummaryTrace", "DRAlogs_KPI","nginx_upstream_errors"]
+
+[[outputs.influxdb]]
+  urls = ["http://10.221.72.20:8086"]
+  database = "AMX"
+  retention_policy = "one_day"
+  timeout = "5s"
+  namepass = ["SNMP_Traps","RestartLog"]
+
+[[outputs.influxdb]]
+  urls = ["http://10.221.72.20:8086"]
+  database = "AMX"
+  retention_policy = "thirty_days"
+  timeout = "5s"
+  namepass = ["cpu", "disk", "diskio", "mem", "net", "system", "netstat", "nginx", "ping", "procstat", "AppStats","DraQueue","linkState","BSSbyPass"]
+
+
+#CREATE RETENTION POLICY "1hrRP" ON "AMX" DURATION 1h REPLICATION 1;
+#CREATE RETENTION POLICY "one_day" ON "AMX" DURATION 1d REPLICATION 1;
+#CREATE RETENTION POLICY "thirty_days" ON "AMX" DURATION 30d REPLICATION 1;
+#ALTER RETENTION POLICY "thirty_days" ON "AMX" DEFAULT;

@@ -1,0 +1,50 @@
+# Variables for DLVMTMAMXK8SMAST01
+# IP 10.221.93.179
+---
+# Add host-specific variables below
+deploy_telegraf_redis: false
+deploy_telegraf_postgres: false
+deploy_telegraf_infra: false
+deploy_mysql_replica_status_monitor: true
+deploy_mysql_slowquery_script: true
+deploy_app_metrics: true
+deploy_port_listen_monitor: true
+deploy_port_conn_monitor: true
+deploy_ntp_status: false
+deploy_dra_process_script: false
+deploy_nginx: false
+
+apps:
+  - name: "kubelet"
+    match: "kubelet"
+    type: "pattern"
+  - name: "kube-proxy"
+    match: "kube-proxy"
+    type: "pattern"
+  - name: "kube-apiserver"
+    match: "kube-apiserver"
+    type: "pattern"
+  - name: "kube-controller"
+    match: "kube-controller"
+    type: "pattern"
+  - name: "kube-scheduler"
+    match: "kube-scheduler"
+    type: "pattern"
+
+# Application ports for DLVMTMAMXK8SMAST01
+ports:
+  - ip: "127.0.0.1"
+    port: 6443
+    name: "kube-apiserver"
+
+  - ip: "127.0.0.1"
+    port: 10250
+    name: "kubelet"
+
+  - ip: "127.0.0.1"
+    port: 10257
+    name: "kube-controller-manager"
+
+  - ip: "127.0.0.1"
+    port: 10259
+    name: "kube-scheduler"

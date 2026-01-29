@@ -1,0 +1,126 @@
+{
+  "uid": "{{ alert_uid }}",
+  "folderUID": "{{ folder_uid }}",
+  "ruleGroup": "{{ rulegroup }}",
+  "title": "Spark LiveListenerBus - Events Dropped",
+  "condition": "E",
+  "data": [
+    {
+      "refId": "A",
+      "relativeTimeRange": {"from": 900, "to": 0},
+      "datasourceUid": "{{ datasourceUid }}",
+      "model": {
+        "datasource": {"type": "influxdb", "uid": "{{ datasourceUid }}"},
+        "instant": true,
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "query": "SELECT last(\"livelistenerbus_queue_appstatus_numdroppedevents_count\") \nFROM \"spark_livelistenerbus\" \nWHERE $timeFilter \nGROUP BY time(1m),project, zone, host, nodeIP",
+        "rawQuery": true,
+        "refId": "A",
+        "resultFormat": "time_series"
+      }
+    },
+    {
+      "refId": "B",
+      "relativeTimeRange": {"from": 600, "to": 0},
+      "datasourceUid": "{{ datasourceUid }}",
+      "model": {
+        "datasource": {"type": "influxdb", "uid": "{{ datasourceUid }}"},
+        "hide": false,
+        "query": "SELECT sum(\"livelistenerbus_queue_executormanagement_numdroppedevents_count\") \nFROM \"spark_livelistenerbus\" \nWHERE $timeFilter \nGROUP BY time(1m),project,zone, host, nodeIP",
+        "rawQuery": true,
+        "refId": "B",
+        "resultFormat": "time_series"
+      }
+    },
+    {
+      "refId": "C",
+      "relativeTimeRange": {"from": 0, "to": 0},
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": { "params": [0, 0], "type": "gt" },
+            "operator": {"type": "and"},
+            "query": {"params": []},
+            "reducer": {"params": [], "type": "avg"},
+            "type": "query"
+          }
+        ],
+        "datasource": {
+          "name": "Expression",
+          "type": "__expr__",
+          "uid" : "__expr__"
+        },
+        "expression": "A",
+        "hide": false,
+        "reducer": "last",
+        "refId": "C",
+        "type": "reduce"
+      }
+    },
+    {
+      "refId": "D",
+      "relativeTimeRange": {"from": 0, "to": 0},
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": { "params": [0, 0], "type": "gt" },
+            "operator": {"type": "and"},
+            "query": {"params": []},
+            "reducer": {"params": [], "type": "avg"},
+            "type": "query"
+          }
+        ],
+        "datasource": {
+          "name": "Expression",
+          "type": "__expr__",
+          "uid" : "__expr__"
+        },
+        "expression": "B",
+        "hide": false,
+        "reducer": "last",
+        "refId": "D",
+        "type": "reduce"
+      }
+    },
+    {
+      "refId": "E",
+      "relativeTimeRange": {"from": 0, "to": 0},
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": { "params": [0, 0], "type": "gt" },
+            "operator": {"type": "and"},
+            "query": {"params": []},
+            "reducer": {"params": [], "type": "avg"},
+            "type": "query"
+          }
+        ],
+        "datasource": {
+          "name": "Expression",
+          "type": "__expr__",
+          "uid" : "__expr__"
+        },
+        "expression": "($C + $D) > 0 ",
+        "hide": false,
+        "refId": "E",
+        "type": "math"
+      }
+    }
+  ],
+  "noDataState": "OK",
+  "execErrState": "Error",
+  "annotations": {
+    "description": "Description:\nEvents are being dropped from LiveListenerBus queues. This represents DATA LOSS \nand means monitoring/metrics are incomplete. Critical impact on observability.\n\nAction to Take:\n1. IMMEDIATE: Check queue sizes - likely at capacity\n2. Increase spark.scheduler.listenerbus.eventqueue.capacity (default 10000 → 20000+)\n3. Reduce spark.ui.retained* settings to lighten listener load\n4. Review driver CPU/memory - may be overloaded\n5. Check for event storm in application logs\n6. Restart application if persistent to clear backlog"
+  },
+  "labels": {
+    "platform": "{{ project }}",
+    "zone"    : "{{ zone }}",
+    "severity": "CRITICAL",
+    "type"    : "{{ (rulegroup | string).split('_')[0] }}"
+  },
+  "isPaused": false
+}
