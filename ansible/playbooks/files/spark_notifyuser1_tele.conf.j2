@@ -1,0 +1,559 @@
+[global_tags]
+  project = "{{ project }}"
+  zone = "{{ zone }}"
+  nodeIP = "{{ ansible_host }}"
+  service = "spark"
+  stream = "notifyuser1"
+
+[agent]
+  debug = true
+  quiet = false
+  interval = "30s"
+  flush_interval = "30s"
+  logfile = "{{ telegraf_remote_path }}/telegraf/logs/{{ telegraf_name }}_telegraf.log"
+  hostname = "{{ inventory_hostname }}"
+  omit_hostname = false
+  round_interval = true
+  metric_batch_size = 1000
+  metric_buffer_limit = 20000
+  collection_jitter = "0s"
+  flush_jitter = "0s"
+  precision = "0s"
+  logfile_rotation_interval = "12h"
+  logfile_rotation_max_size = "100MB"
+  logfile_rotation_max_archives = 5
+
+####### Port Status for {{ inventory_hostname }} #######
+{% for item in ports %}
+[[inputs.net_response]]
+  protocol = "tcp"
+  address = "{{ item.ip }}:{{ item.port }}"
+  name_override = "portResponsetime"
+  tags = { linkName="{{ item.name }}", ip="{{ item.ip }}", port="{{ item.port }}", host="{{ inventory_hostname }}" }
+{% endfor %}
+
+####### Port Status for {{ inventory_hostname }} #######
+{% for item in ports %}
+[[inputs.net_response]]
+  protocol = "tcp"
+  address = "{{ item.ip }}:{{ item.port }}"
+  name_override = "portResponsetime"
+  tags = { linkName="{{ item.name }}", ip="{{ item.ip }}", port="{{ item.port }}", host="{{ inventory_hostname }}" }
+{% endfor %}
+
+############## Ping Monitoring ################
+[[inputs.ping]]
+  {% set unique_ips = ports | map(attribute='ip') | unique %}
+  urls = [{% for ip in unique_ips %}"{{ ip }}"{% if not loop.last %}, {% endif %}{% endfor %}]
+  count = 2
+  ping_interval = 3.0
+  timeout = 2.0
+  method = "exec"
+
+##### App Metrics ###########
+[[inputs.exec]]
+  commands = ["{{ telegraf_remote_path }}/scripts/{{ telegraf_name }}_app_metrics.sh"]
+  data_format = "influx"
+  name_override = "app_metrics"
+  interval = "1m"
+  timeout = "50s"
+
+############# Port Monitor #############
+[[inputs.exec]]
+  commands = ["{{ telegraf_remote_path }}/scripts/{{ telegraf_name }}_port_listen_monitor.sh"]
+  timeout = "10s"
+  data_format = "influx"
+  name_override = "port_listen"
+
+############# Port Monitor #############
+[[inputs.exec]]
+  commands = ["{{ telegraf_remote_path }}/scripts/{{ telegraf_name }}_port_conn_monitor.sh"]
+  timeout = "10s"
+  data_format = "influx"
+  name_override = "link_count"
+
+##################################
+
+#############################################################################
+[[inputs.prometheus]]
+ urls = ["http://{{ ansible_host }}:9091/metrics"]
+ name_override = "spark_raw"
+ metric_version = 2
+ interval = "30s"
+
+###############################################################################
+# PROCESSOR-1: REWRITE SPARK METRICS → spark_<category>
+###############################################################################
+[[processors.starlark]]
+  namepass = ["spark_raw"]
+  source = '''
+def apply(metric):
+    new_fields = {}
+
+    for key, value in metric.fields.items():
+
+        # ---------------- JVM ----------------
+        if key.startswith("jvm_") or key.startswith("java_lang_"):
+            metric.name = "spark_jvm"
+            new_fields[key] = value
+
+        # ---------------- Kafka ---------------
+        elif key.startswith("kafka_consumer_"):
+            metric.name = "spark_kafka"
+            new_fields[key] = value
+
+        # ---------------- Spark JMX ------------
+        elif key.startswith("metrics_local_"):
+
+            parts = key.split("_")
+
+            # strip metrics_local_<id>_driver_
+            if len(parts) > 4 and parts[2].isdigit() and parts[3] == "driver":
+                stripped = "_".join(parts[4:])
+            else:
+                stripped = key
+
+            # LiveListenerBus (labels or no labels)
+            if "livelistenerbus" in stripped:
+                metric.name = "spark_livelistenerbus"
+
+            elif "codegenerator" in stripped:
+                metric.name = "spark_codegenerator"
+
+            elif "executor" in stripped:
+                metric.name = "spark_executor"
+
+            elif "blockmanager" in stripped:
+                metric.name = "spark_blockmanager"
+
+            elif "streamingmetrics" in stripped or "streaminglistenerbus" in stripped or "streaming" in stripped:
+                metric.name = "spark_streaming"
+
+            elif "jvm_pools" in stripped:
+                metric.name = "spark_jvm_pools"
+
+            elif "hiveexternalcatalog" in stripped:
+                metric.name = "spark_hive"
+
+            elif "dagscheduler" in stripped:
+                metric.name = "spark_dagscheduler"
+
+            else:
+                metric.name = "spark_other"
+
+            new_fields[stripped] = value
+
+        # ---------------- Misc ------------------
+        else:
+            metric.name = "spark_misc"
+            new_fields[key] = value
+
+    metric.fields.clear()
+    for k,v in new_fields.items():
+        metric.fields[k] = v
+
+    return metric
+'''
+
+###############################################################################
+# PROCESSOR-2: REMOVE NaN/INF
+###############################################################################
+[[processors.starlark]]
+  namepass = ["spark_*"]
+  source = '''
+def apply(metric):
+    remove = []
+    for k,v in metric.fields.items():
+        if str(v) == "nan" or v == float("inf") or v == float("-inf"):
+            remove.append(k)
+    for k in remove:
+        metric.fields.pop(k)
+    return metric
+'''
+
+######### Streaming Logs ###########Sample logs below #####
+#2025-10-22 08:41:23 INFO  INFO:37 :  - Configuration:- Response_Topic_nb solicited_notification_gmsa
+#2025-10-22 08:41:23 INFO  INFO:38 :  - Configuration:- cmp-prod-kafka-gmsa-01:2181,cmp-prod-kafka-gmsa-02:2181,cmp-prod-kafka-gmsa-03:2181,cmp-prod-kafka-gmsa-04:2181,cmp-prod-kafka-gmsa-05:2181 test 1
+#2025-10-22 08:41:23 INFO  INFO:40 :  - Configuration:- com.mysql.jdbc.Driver jdbc:mysql://cmp-mysql-router:6446/gmsa_orchestration_claro_nb?user=aqadmin&password=Aqadmin@123
+#2025-10-22 08:41:29 WARN  NativeCodeLoader:62 :  - Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+#2025-10-22 08:41:36 INFO  log:192 :  - Logging initialized @20444ms
+#########################################################
+[[inputs.tail]]  ### -->  ######### Streaming Logs  ##########
+  ## Spark Streaming log file
+  files = ["/opt/airlinq/grafana/telegraf/logging.log"]
+
+  ## Read from beginning or current position
+  initial_read_offset = "beginning"
+
+  ## File watch method
+  watch_method = "inotify"
+
+  ## Data parsing format
+  data_format = "grok"
+
+  ## Measurement name
+  name_override = "spark_streaming_logs"
+
+  ## Grok patterns for Spark logs
+  grok_patterns = [
+    # Standard Spark log format: Date Time LEVEL Class:Line - Message
+    "^%{TIMESTAMP_ISO8601:log_time} %{LOGLEVEL:log_level}\\s+%{JAVACLASS:class}:%{NUMBER:line_number} :\\s+- %{GREEDYDATA:message}$",
+
+    # Spark log without line number
+    "^%{TIMESTAMP_ISO8601:log_time} %{LOGLEVEL:log_level}\\s+%{JAVACLASS:class} :\\s+- %{GREEDYDATA:message}$",
+
+    # Kafka/Spark component logs
+    "^%{TIMESTAMP_ISO8601:log_time} %{LOGLEVEL:log_level}\\s+%{DATA:component}:%{NUMBER:line_number} :\\s+- %{GREEDYDATA:message}$",
+
+    # Generic fallback
+    "^%{TIMESTAMP_ISO8601:log_time} %{LOGLEVEL:log_level}\\s+%{GREEDYDATA:message}$"
+  ]
+
+  ## Custom grok patterns
+  grok_custom_patterns = '''
+    LOGLEVEL (TRACE|DEBUG|INFO|WARN|ERROR|FATAL)
+    JAVACLASS ([a-zA-Z0-9$._]+)
+  '''
+
+  ## Timezone (if needed)
+  grok_timezone = "UTC"
+
+  ## Additional tags
+  [inputs.tail.tags]
+    application = "spark_streaming"
+    service = "notification_service"
+    component = "spark"
+    environment = "production"
+
+## Convert fields to tags for better indexing
+[[processors.converter]]
+  namepass = ["spark_streaming_logs"]
+  [processors.converter.fields]
+    tag = ["log_level", "class", "component"]
+
+## Extract specific patterns from messages
+[[processors.regex]]
+  namepass = ["spark_streaming_logs"]
+
+  ## Extract RequestId
+  [[processors.regex.tags]]
+    key = "message"
+    pattern = 'RequestId:\[([^\]]+)\]'
+    replacement = "${1}"
+    result_key = "request_id"
+
+  ## Extract IMSI
+  [[processors.regex.tags]]
+    key = "message"
+    pattern = 'Imsi is:\[([^\]]+)\]'
+    replacement = "${1}"
+    result_key = "imsi"
+
+  ## Extract ICCID
+  [[processors.regex.tags]]
+    key = "message"
+    pattern = 'ICCID is:\[([^\]]+)\]'
+    replacement = "${1}"
+    result_key = "iccid"
+
+  ## Extract Event Type
+  [[processors.regex.tags]]
+    key = "message"
+    pattern = '/events/(\w+)'
+    replacement = "${1}"
+    result_key = "event_type"
+
+  ## Extract Response Code (as field, not tag - will be string)
+  [[processors.regex.fields]]
+    key = "message"
+    pattern = 'Response Code:\[(\d+)\]'
+    replacement = "${1}"
+    result_key = "response_code"
+
+## Extract Kafka-specific metrics
+[[processors.regex]]
+  namepass = ["spark_streaming_logs"]
+
+  ## Extract Record Count (as field - will be string)
+  [[processors.regex.fields]]
+    key = "message"
+    pattern = 'Record Count : (\d+)'
+    replacement = "${1}"
+    result_key = "record_count"
+
+  ## Extract Kafka version
+  [[processors.regex.tags]]
+    key = "message"
+    pattern = 'Kafka version : ([0-9.]+)'
+    replacement = "${1}"
+    result_key = "kafka_version"
+
+## Detect status from message content
+[[processors.regex]]
+  namepass = ["spark_streaming_logs"]
+
+  ## Detect failure
+  [[processors.regex.tags]]
+    key = "message"
+    pattern = '(Failiure|Error Msg|connect timed out|failed)'
+    replacement = "failure"
+    result_key = "status"
+
+  ## Detect streaming phase - start
+  [[processors.regex.tags]]
+    key = "message"
+    pattern = 'Streaming Start'
+    replacement = "start"
+    result_key = "phase"
+
+  ## Detect streaming phase - end
+  [[processors.regex.tags]]
+    key = "message"
+    pattern = 'Streaming END'
+    replacement = "end"
+    result_key = "phase"
+
+  ## Detect retry
+  [[processors.regex.tags]]
+    key = "message"
+    pattern = '(Sent for Retry|OLNotificationRetry_nb)'
+    replacement = "true"
+    result_key = "retry"
+
+########## Notification Streaming Logs #### --> Sample Logs below #####
+#2026-01-27 12:23:00 :210 - Record Count : 1
+#2026-01-27 12:23:00 :213 -======================================  Start Orchastration Processing=================================
+#2026-01-27 12:23:01 :120 -Max number of api_sequence: 1
+#2026-01-27 12:23:03 :34 -[Before getConnection] HikariCP Pool Stats → Total: 1, Active: 0, Idle: 1, Waiting Threads: 0
+#2026-01-27 12:23:03 :40 -Connection acquired.
+#2026-01-27 12:23:03 :34 -[After getConnection] HikariCP Pool Stats → Total: 1, Active: 1, Idle: 0, Waiting Threads: 0
+#2026-01-27 12:23:03 :224 -Tue Jan 27 12:23:03 UTC 2026:73344074182033559:====Initiate API Calling Process:[http://cmp-prod-goup-gmsa:8080/GOUPRouter/rout/downloadProfileEsim]====
+#12:23:05 :34 -[After getConnection] HikariCP Pool Stats → Total: 10, Active: 1, Idle: 9, Waiting Threads: 0
+#2026-01-27 12:23:05 :614 -Truncated table: param_table_7
+#2026-01-27 12:23:05 :219 -======================================End Orchastration Processing=================================
+
+[[inputs.tail]]
+  ## Orchestration notification log file
+  files = ["/opt/airlinq/grafana/telegraf/orchestration.log"]
+
+  ## Read from current position
+  initial_read_offset = "beginning"
+
+  ## File watch method
+  watch_method = "inotify"
+
+  ## Data parsing format
+  data_format = "grok"
+
+  ## Measurement name
+  name_override = "spark_orchestration_logs"
+
+  ## Grok patterns for orchestration logs
+  grok_patterns = [
+    # Pattern 1: Date Time :LineNumber - Message
+    "^%{YEAR:year}-%{MONTHNUM:month}-%{MONTHDAY:day} %{TIME:time} :%{NUMBER:line_number} -\\s*%{GREEDYDATA:message}$",
+
+    # Pattern 2: Date Time :LineNumber -RequestID:ICCID - Message
+    "^%{YEAR:year}-%{MONTHNUM:month}-%{MONTHDAY:day} %{TIME:time} :%{NUMBER:line_number} -%{DATA:request_id},ICCID is:\\[%{DATA:iccid}\\]:%{GREEDYDATA:message}$",
+
+    # Pattern 3: Date Time :LineNumber -RequestID - Message
+    "^%{YEAR:year}-%{MONTHNUM:month}-%{MONTHDAY:day} %{TIME:time} :%{NUMBER:line_number} -%{DATA:request_id}:%{GREEDYDATA:message}$"
+  ]
+
+  ## Timezone
+  grok_timezone = "UTC"
+
+  ## Additional tags
+  [inputs.tail.tags]
+    application = "spark"
+    servicename = "notification_service"
+    component = "api_orchestrator"
+    log_type = "orchestration"
+
+## Convert fields to tags
+[[processors.converter]]
+  namepass = ["spark_orchestration_logs"]
+  [processors.converter.fields]
+    tag = ["request_id", "iccid"]
+
+## Extract specific patterns from messages
+[[processors.regex]]
+  namepass = ["spark_orchestration_logs"]
+
+  ## Extract API URL
+  [[processors.regex.tags]]
+    key = "message"
+    pattern = 'Initiate API Calling Process:\[(http[^\]]+)\]'
+    replacement = "${1}"
+    result_key = "api_url"
+
+  ## Extract Response Code
+  [[processors.regex.fields]]
+    key = "message"
+    pattern = 'Response Code : (\d+)'
+    replacement = "${1}"
+    result_key = "response_code"
+
+  ## Extract Record Count
+  [[processors.regex.fields]]
+    key = "message"
+    pattern = 'Record Count : (\d+)'
+    replacement = "${1}"
+    result_key = "record_count"
+
+  ## Extract API Sequence
+  [[processors.regex.fields]]
+    key = "message"
+    pattern = 'api_sequence: (\d+)'
+    replacement = "${1}"
+    result_key = "api_sequence"
+
+## Extract database connection pool stats
+[[processors.regex]]
+  namepass = ["spark_orchestration_logs"]
+
+  ## Extract HikariCP Total
+  [[processors.regex.fields]]
+    key = "message"
+    pattern = 'Total: (\d+)'
+    replacement = "${1}"
+    result_key = "hikari_total"
+
+  ## Extract HikariCP Active
+  [[processors.regex.fields]]
+    key = "message"
+    pattern = 'Active: (\d+)'
+    replacement = "${1}"
+    result_key = "hikari_active"
+
+  ## Extract HikariCP Idle
+  [[processors.regex.fields]]
+    key = "message"
+    pattern = 'Idle: (\d+)'
+    replacement = "${1}"
+    result_key = "hikari_idle"
+
+  ## Extract HikariCP Waiting
+  [[processors.regex.fields]]
+    key = "message"
+    pattern = 'Waiting Threads: (\d+)'
+    replacement = "${1}"
+    result_key = "hikari_waiting"
+
+## Extract identifiers (IMSI, MSISDN, EID)
+[[processors.regex]]
+  namepass = ["spark_orchestration_logs"]
+
+  ## Extract IMSI
+  [[processors.regex.tags]]
+    key = "message"
+    pattern = '"imsi":"(\d+)"'
+    replacement = "${1}"
+    result_key = "imsi"
+
+  ## Extract MSISDN
+  [[processors.regex.tags]]
+    key = "message"
+    pattern = '"msisdn":"(\d+)"'
+    replacement = "${1}"
+    result_key = "msisdn"
+
+  ## Extract EID
+  [[processors.regex.tags]]
+    key = "message"
+    pattern = '"eid":"(\d+)"'
+    replacement = "${1}"
+    result_key = "eid"
+
+  ## Extract Enterprise ID
+  [[processors.regex.tags]]
+    key = "message"
+    pattern = '"enterpriseId":"(\w+)"'
+    replacement = "${1}"
+    result_key = "enterprise_id"
+
+  ## Extract Country
+  [[processors.regex.tags]]
+    key = "message"
+    pattern = '"country":"(\w+)"'
+    replacement = "${1}"
+    result_key = "country"
+
+## Detect orchestration phases
+[[processors.regex]]
+  namepass = ["spark_orchestration_logs"]
+
+  ## Detect Start
+  [[processors.regex.tags]]
+    key = "message"
+    pattern = 'Start Orchastration Processing'
+    replacement = "start"
+    result_key = "phase"
+
+  ## Detect End
+  [[processors.regex.tags]]
+    key = "message"
+    pattern = 'End Orchastration Processing'
+    replacement = "end"
+    result_key = "phase"
+
+  ## Detect Connection Events
+  [[processors.regex.tags]]
+    key = "message"
+    pattern = '(Before getConnection|After getConnection|Connection acquired|Connection closed)'
+    replacement = "${1}"
+    result_key = "db_event"
+
+## Detect status and errors
+[[processors.regex]]
+  namepass = ["spark_orchestration_logs"]
+
+  ## Detect HTTP methods
+  [[processors.regex.tags]]
+    key = "message"
+    pattern = "Sending '(POST|GET|PUT|DELETE)' request"
+    replacement = "${1}"
+    result_key = "http_method"
+
+  ## Detect Truncated operations
+  [[processors.regex.tags]]
+    key = "message"
+    pattern = '(Truncated|Deleted \d+ rows)'
+    replacement = "cleanup"
+    result_key = "operation_type"
+
+############## OUTPUTS Pri ##############
+[[outputs.influxdb]]
+  urls = ["http://{{ influx_Pri_IP }}:{{ influx_Pri_Port }}"]
+  database = "{{ influx_priDB_name }}"
+  retention_policy = "thirty_days"
+  timeout = "5s"
+  skip_database_creation = true
+  namepass = ["port_listen","link_count","app_metrics","portResponsetime","ping","spark_*"]
+
+[[outputs.influxdb]]
+  urls = ["http://{{ influx_Pri_IP }}:{{ influx_Pri_Port }}"]
+  database = "{{ influx_priDB_name }}"
+  retention_policy = "1hrRP"
+  timeout = "5s"
+  skip_database_creation = true
+  namepass = ["spark_streaming_logs","spark_orchestration_logs"]
+
+{% if influx_Sec_IP is defined and influx_Sec_IP|length > 0 %}
+############# OUTPUTS Sec ##################
+[[outputs.influxdb]]
+  urls = ["http://{{ influx_Sec_IP }}:{{ influx_Sec_Port }}"]
+  database = "{{ influx_secDB_name }}"
+  retention_policy = "thirty_days"
+  timeout = "5s"
+  skip_database_creation = true
+
+[[outputs.influxdb]]
+  urls = ["http://{{ influx_Sec_IP }}:{{ influx_Sec_Port }}"]
+  database = "{{ influx_secDB_name }}"
+  retention_policy = "1hrRP"
+  timeout = "5s"
+  skip_database_creation = true
+  namepass = ["spark_streaming_logs","spark_orchestration_logs"]
+
+{% endif %}
