@@ -320,207 +320,6 @@ def apply(metric):
     replacement = "true"
     result_key = "retry"
 
-########## Notification Streaming Logs #### --> Sample Logs below #####
-#2026-01-27 12:23:00 :210 - Record Count : 1
-#2026-01-27 12:23:00 :213 -======================================  Start Orchastration Processing=================================
-#2026-01-27 12:23:01 :120 -Max number of api_sequence: 1
-#2026-01-27 12:23:03 :34 -[Before getConnection] HikariCP Pool Stats → Total: 1, Active: 0, Idle: 1, Waiting Threads: 0
-#2026-01-27 12:23:03 :40 -Connection acquired.
-#2026-01-27 12:23:03 :34 -[After getConnection] HikariCP Pool Stats → Total: 1, Active: 1, Idle: 0, Waiting Threads: 0
-#2026-01-27 12:23:03 :224 -Tue Jan 27 12:23:03 UTC 2026:73344074182033559:====Initiate API Calling Process:[http://cmp-prod-goup-gmsa:8080/GOUPRouter/rout/downloadProfileEsim]====
-#12:23:05 :34 -[After getConnection] HikariCP Pool Stats → Total: 10, Active: 1, Idle: 9, Waiting Threads: 0
-#2026-01-27 12:23:05 :614 -Truncated table: param_table_7
-#2026-01-27 12:23:05 :219 -======================================End Orchastration Processing=================================
-
-[[inputs.tail]]
-  ## Orchestration notification log file
-  files = ["/opt/airlinq/grafana/telegraf/orchestration.log"]
-
-  ## Read from current position
-  initial_read_offset = "beginning"
-
-  ## File watch method
-  watch_method = "inotify"
-
-  ## Data parsing format
-  data_format = "grok"
-
-  ## Measurement name
-  name_override = "spark_orchestration_logs"
-
-  ## Grok patterns for orchestration logs
-  grok_patterns = [
-    # Pattern 1: Date Time :LineNumber - Message
-    "^%{YEAR:year}-%{MONTHNUM:month}-%{MONTHDAY:day} %{TIME:time} :%{NUMBER:line_number} -\\s*%{GREEDYDATA:message}$",
-
-    # Pattern 2: Date Time :LineNumber -RequestID:ICCID - Message
-    "^%{YEAR:year}-%{MONTHNUM:month}-%{MONTHDAY:day} %{TIME:time} :%{NUMBER:line_number} -%{DATA:request_id},ICCID is:\\[%{DATA:iccid}\\]:%{GREEDYDATA:message}$",
-
-    # Pattern 3: Date Time :LineNumber -RequestID - Message
-    "^%{YEAR:year}-%{MONTHNUM:month}-%{MONTHDAY:day} %{TIME:time} :%{NUMBER:line_number} -%{DATA:request_id}:%{GREEDYDATA:message}$"
-  ]
-
-  ## Timezone
-  grok_timezone = "UTC"
-
-  ## Additional tags
-  [inputs.tail.tags]
-    application = "spark"
-    servicename = "notification_service"
-    component = "api_orchestrator"
-    log_type = "orchestration"
-
-## Convert fields to tags
-[[processors.converter]]
-  namepass = ["spark_orchestration_logs"]
-  [processors.converter.fields]
-    tag = ["request_id", "iccid"]
-
-## Extract specific patterns from messages
-[[processors.regex]]
-  namepass = ["spark_orchestration_logs"]
-
-  ## Extract API URL
-  [[processors.regex.tags]]
-    key = "message"
-    pattern = 'Initiate API Calling Process:\[(http[^\]]+)\]'
-    replacement = "${1}"
-    result_key = "api_url"
-
-  ## Extract Response Code
-  [[processors.regex.fields]]
-    key = "message"
-    pattern = 'Response Code : (\d+)'
-    replacement = "${1}"
-    result_key = "response_code"
-
-  ## Extract Record Count
-  [[processors.regex.fields]]
-    key = "message"
-    pattern = 'Record Count : (\d+)'
-    replacement = "${1}"
-    result_key = "record_count"
-
-  ## Extract API Sequence
-  [[processors.regex.fields]]
-    key = "message"
-    pattern = 'api_sequence: (\d+)'
-    replacement = "${1}"
-    result_key = "api_sequence"
-
-## Extract database connection pool stats
-[[processors.regex]]
-  namepass = ["spark_orchestration_logs"]
-
-  ## Extract HikariCP Total
-  [[processors.regex.fields]]
-    key = "message"
-    pattern = 'Total: (\d+)'
-    replacement = "${1}"
-    result_key = "hikari_total"
-
-  ## Extract HikariCP Active
-  [[processors.regex.fields]]
-    key = "message"
-    pattern = 'Active: (\d+)'
-    replacement = "${1}"
-    result_key = "hikari_active"
-
-  ## Extract HikariCP Idle
-  [[processors.regex.fields]]
-    key = "message"
-    pattern = 'Idle: (\d+)'
-    replacement = "${1}"
-    result_key = "hikari_idle"
-
-  ## Extract HikariCP Waiting
-  [[processors.regex.fields]]
-    key = "message"
-    pattern = 'Waiting Threads: (\d+)'
-    replacement = "${1}"
-    result_key = "hikari_waiting"
-
-## Extract identifiers (IMSI, MSISDN, EID)
-[[processors.regex]]
-  namepass = ["spark_orchestration_logs"]
-
-  ## Extract IMSI
-  [[processors.regex.tags]]
-    key = "message"
-    pattern = '"imsi":"(\d+)"'
-    replacement = "${1}"
-    result_key = "imsi"
-
-  ## Extract MSISDN
-  [[processors.regex.tags]]
-    key = "message"
-    pattern = '"msisdn":"(\d+)"'
-    replacement = "${1}"
-    result_key = "msisdn"
-
-  ## Extract EID
-  [[processors.regex.tags]]
-    key = "message"
-    pattern = '"eid":"(\d+)"'
-    replacement = "${1}"
-    result_key = "eid"
-
-  ## Extract Enterprise ID
-  [[processors.regex.tags]]
-    key = "message"
-    pattern = '"enterpriseId":"(\w+)"'
-    replacement = "${1}"
-    result_key = "enterprise_id"
-
-  ## Extract Country
-  [[processors.regex.tags]]
-    key = "message"
-    pattern = '"country":"(\w+)"'
-    replacement = "${1}"
-    result_key = "country"
-
-## Detect orchestration phases
-[[processors.regex]]
-  namepass = ["spark_orchestration_logs"]
-
-  ## Detect Start
-  [[processors.regex.tags]]
-    key = "message"
-    pattern = 'Start Orchastration Processing'
-    replacement = "start"
-    result_key = "phase"
-
-  ## Detect End
-  [[processors.regex.tags]]
-    key = "message"
-    pattern = 'End Orchastration Processing'
-    replacement = "end"
-    result_key = "phase"
-
-  ## Detect Connection Events
-  [[processors.regex.tags]]
-    key = "message"
-    pattern = '(Before getConnection|After getConnection|Connection acquired|Connection closed)'
-    replacement = "${1}"
-    result_key = "db_event"
-
-## Detect status and errors
-[[processors.regex]]
-  namepass = ["spark_orchestration_logs"]
-
-  ## Detect HTTP methods
-  [[processors.regex.tags]]
-    key = "message"
-    pattern = "Sending '(POST|GET|PUT|DELETE)' request"
-    replacement = "${1}"
-    result_key = "http_method"
-
-  ## Detect Truncated operations
-  [[processors.regex.tags]]
-    key = "message"
-    pattern = '(Truncated|Deleted \d+ rows)'
-    replacement = "cleanup"
-    result_key = "operation_type"
 
 ############## OUTPUTS Pri ##############
 [[outputs.influxdb]]
@@ -537,7 +336,7 @@ def apply(metric):
   retention_policy = "1hrRP"
   timeout = "5s"
   skip_database_creation = true
-  namepass = ["spark_streaming_logs","spark_orchestration_logs"]
+  namepass = ["spark_streaming_logs"]
 
 {% if influx_Sec_IP is defined and influx_Sec_IP|length > 0 %}
 ############# OUTPUTS Sec ##################
@@ -547,6 +346,7 @@ def apply(metric):
   retention_policy = "thirty_days"
   timeout = "5s"
   skip_database_creation = true
+  namepass = ["port_listen","link_count","app_metrics","portResponsetime","ping","spark_*"]
 
 [[outputs.influxdb]]
   urls = ["http://{{ influx_Sec_IP }}:{{ influx_Sec_Port }}"]
@@ -554,6 +354,6 @@ def apply(metric):
   retention_policy = "1hrRP"
   timeout = "5s"
   skip_database_creation = true
-  namepass = ["spark_streaming_logs","spark_orchestration_logs"]
+  namepass = ["spark_streaming_logs"]
 
 {% endif %}
