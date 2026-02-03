@@ -23,151 +23,231 @@
   logfile_rotation_max_size = "100MB"
   logfile_rotation_max_archives = 5
 
-####### Port Status for {{ inventory_hostname }} #######
-{% for item in ports %}
-[[inputs.net_response]]
-  protocol = "tcp"
-  address = "{{ item.ip }}:{{ item.port }}"
-  name_override = "portResponsetime"
-  tags = { linkName="{{ item.name }}", ip="{{ item.ip }}", port="{{ item.port }}", host="{{ inventory_hostname }}" }
-{% endfor %}
-
-####### Port Status for {{ inventory_hostname }} #######
-{% for item in ports %}
-[[inputs.net_response]]
-  protocol = "tcp"
-  address = "{{ item.ip }}:{{ item.port }}"
-  name_override = "portResponsetime"
-  tags = { linkName="{{ item.name }}", ip="{{ item.ip }}", port="{{ item.port }}", host="{{ inventory_hostname }}" }
-{% endfor %}
-
-############## Ping Monitoring ################
-[[inputs.ping]]
-  {% set unique_ips = ports | map(attribute='ip') | unique %}
-  urls = [{% for ip in unique_ips %}"{{ ip }}"{% if not loop.last %}, {% endif %}{% endfor %}]
-  count = 2
-  ping_interval = 3.0
-  timeout = 2.0
-  method = "exec"
-
-##### App Metrics ###########
-[[inputs.exec]]
-  commands = ["{{ telegraf_remote_path }}/scripts/{{ telegraf_name }}_app_metrics.sh"]
-  data_format = "influx"
-  name_override = "app_metrics"
-  interval = "1m"
-  timeout = "50s"
-
-############# Port Monitor #############
-[[inputs.exec]]
-  commands = ["{{ telegraf_remote_path }}/scripts/{{ telegraf_name }}_port_listen_monitor.sh"]
-  timeout = "10s"
-  data_format = "influx"
-  name_override = "port_listen"
-
-############# Port Monitor #############
-[[inputs.exec]]
-  commands = ["{{ telegraf_remote_path }}/scripts/{{ telegraf_name }}_port_conn_monitor.sh"]
-  timeout = "10s"
-  data_format = "influx"
-  name_override = "link_count"
-
-##################################
-
 #############################################################################
 [[inputs.prometheus]]
  urls = ["http://{{ ansible_host }}:{{ spark_port }}/metrics"]
  name_override = "spark_raw"
  metric_version = 2
  interval = "50s"
+ timeout = "30s"
 
 ###############################################################################
-# PROCESSOR-1: REWRITE SPARK METRICS → spark_<category>
+# PROCESSOR-1: CATEGORIZE AND NORMALIZE SPARK METRICS (GENERIC)
 ###############################################################################
 [[processors.starlark]]
   namepass = ["spark_raw"]
   source = '''
 def apply(metric):
     new_fields = {}
+    new_tags = {}
 
     for key, value in metric.fields.items():
-
-        # ---------------- JVM ----------------
+        # ================================================================
+        # JVM METRICS
+        # ================================================================
         if key.startswith("jvm_") or key.startswith("java_lang_"):
             metric.name = "spark_jvm"
             new_fields[key] = value
 
-        # ---------------- Kafka ---------------
+        # ================================================================
+        # KAFKA CONSUMER METRICS
+        # ================================================================
         elif key.startswith("kafka_consumer_"):
             metric.name = "spark_kafka"
             new_fields[key] = value
 
-        # ---------------- Spark JMX ------------
+        # ================================================================
+        # SPARK STREAMING METRICS - GENERIC EXTRACTION
+        # ================================================================
         elif key.startswith("metrics_local_"):
-
             parts = key.split("_")
 
-            # strip metrics_local_<id>_driver_
+            # Strip metrics_local_<id>_driver_ prefix if present
             if len(parts) > 4 and parts[2].isdigit() and parts[3] == "driver":
                 stripped = "_".join(parts[4:])
             else:
                 stripped = key
 
-            # LiveListenerBus (labels or no labels)
-            if "livelistenerbus" in stripped:
-                metric.name = "spark_livelistenerbus"
-
-            elif "codegenerator" in stripped:
-                metric.name = "spark_codegenerator"
-
-            elif "executor" in stripped:
-                metric.name = "spark_executor"
-
-            elif "blockmanager" in stripped:
-                metric.name = "spark_blockmanager"
-
-            elif "streamingmetrics" in stripped or "streaminglistenerbus" in stripped or "streaming" in stripped:
+            # Check if this is a streaming metric
+            if "streamingmetrics_streaming_" in stripped:
                 metric.name = "spark_streaming"
 
+                # Extract service name (everything before "streamingmetrics_streaming_")
+                service_name = extract_service_name_generic(stripped)
+                if service_name:
+                    new_tags["streaming_service"] = service_name
+
+                # Extract standard metric name (everything after "streamingmetrics_streaming_")
+                standard_metric = extract_standard_metric(stripped)
+                if standard_metric:
+                    new_fields[standard_metric] = value
+
+            # LiveListenerBus metrics
+            elif "livelistenerbus" in stripped:
+                metric.name = "spark_livelistenerbus"
+                new_fields[stripped] = value
+
+            # Code Generator metrics
+            elif "codegenerator" in stripped:
+                metric.name = "spark_codegenerator"
+                new_fields[stripped] = value
+
+            # Executor metrics
+            elif "executor" in stripped:
+                metric.name = "spark_executor"
+                new_fields[stripped] = value
+
+            # Block Manager metrics
+            elif "blockmanager" in stripped:
+                metric.name = "spark_blockmanager"
+                new_fields[stripped] = value
+
+            # JVM Pool metrics
             elif "jvm_pools" in stripped:
                 metric.name = "spark_jvm_pools"
+                new_fields[stripped] = value
 
+            # Hive Catalog metrics
             elif "hiveexternalcatalog" in stripped:
                 metric.name = "spark_hive"
+                new_fields[stripped] = value
 
+            # DAG Scheduler metrics
             elif "dagscheduler" in stripped:
                 metric.name = "spark_dagscheduler"
+                new_fields[stripped] = value
 
+            # Other Spark metrics
             else:
                 metric.name = "spark_other"
+                new_fields[stripped] = value
 
-            new_fields[stripped] = value
-
-        # ---------------- Misc ------------------
+        # ================================================================
+        # MISCELLANEOUS METRICS
+        # ================================================================
         else:
             metric.name = "spark_misc"
             new_fields[key] = value
 
+    # Clear and update fields
     metric.fields.clear()
-    for k,v in new_fields.items():
+    for k, v in new_fields.items():
         metric.fields[k] = v
 
+    # Add new tags
+    for k, v in new_tags.items():
+        metric.tags[k] = v
+
     return metric
+
+# ================================================================
+# HELPER FUNCTION: Extract service name generically
+# ================================================================
+def extract_service_name_generic(field_name):
+    """
+    Extract service name by taking everything BEFORE "streamingmetrics_streaming_"
+
+    Examples:
+      gmsa_orchastration_engine_notify_limit_streamingmetrics_streaming_...
+        → gmsa_orchastration_engine_notify_limit
+
+      orchestrationstreamingapi_gmsa_addorder_streamingmetrics_streaming_...
+        → orchestrationstreamingapi_gmsa_addorder
+
+      projectx_some_service_name_streamingmetrics_streaming_...
+        → projectx_some_service_name
+    """
+    if "streamingmetrics_streaming_" in field_name:
+        # Split on the marker and take everything before it
+        service_name = field_name.split("streamingmetrics_streaming_")[0]
+        # Remove trailing underscore if present
+        service_name = service_name.rstrip("_")
+        return service_name
+
+    return "unknown"
+
+# ================================================================
+# HELPER FUNCTION: Extract standard metric name
+# ================================================================
+def extract_standard_metric(field_name):
+    """
+    Extract the standard metric name by taking everything AFTER "streamingmetrics_streaming_"
+    This is the common suffix that all streaming services share.
+
+    Examples:
+      gmsa_orchastration_engine_notify_limit_streamingmetrics_streaming_lastcompletedbatch_processingdelay_value
+        → streaming_lastcompletedbatch_processingdelay_value
+
+      orchestrationstreamingapi_gmsa_addorder_streamingmetrics_streaming_waitingbatches_value
+        → streaming_waitingbatches_value
+    """
+    if "streamingmetrics_streaming_" in field_name:
+        # Split on the marker and take everything after it
+        # Keep "streaming_" prefix for clarity
+        standard_part = field_name.split("streamingmetrics_streaming_")[1]
+        return "streaming_" + standard_part
+
+    return field_name
 '''
 
 ###############################################################################
-# PROCESSOR-2: REMOVE NaN/INF
+# PROCESSOR-2: REMOVE NaN AND INFINITE VALUES
 ###############################################################################
 [[processors.starlark]]
   namepass = ["spark_*"]
   source = '''
 def apply(metric):
     remove = []
-    for k,v in metric.fields.items():
+    for k, v in metric.fields.items():
+        # Remove NaN and Inf values
         if str(v) == "nan" or v == float("inf") or v == float("-inf"):
             remove.append(k)
+
+    # Remove invalid fields
     for k in remove:
         metric.fields.pop(k)
+
+    return metric
+'''
+
+###############################################################################
+# PROCESSOR-3: ADD COMPUTED FIELDS (OPTIONAL)
+###############################################################################
+[[processors.starlark]]
+  namepass = ["spark_streaming"]
+  source = '''
+def apply(metric):
+    """
+    Add computed fields for better monitoring:
+    - batch_efficiency: processingdelay / totaldelay
+    - is_lagging: 1 if waitingbatches > 0 else 0
+    - processing_rate: records per millisecond
+    """
+    fields = metric.fields
+
+    # Calculate batch processing efficiency
+    processing_delay = fields.get("streaming_lastcompletedbatch_processingdelay_value", 0)
+    total_delay = fields.get("streaming_lastcompletedbatch_totaldelay_value", 1)
+
+    if total_delay > 0:
+        fields["batch_efficiency_percent"] = (processing_delay / total_delay) * 100
+
+    # Add lag indicator
+    waiting_batches = fields.get("streaming_waitingbatches_value", 0)
+    fields["is_lagging"] = 1 if waiting_batches > 0 else 0
+
+    # Add batch throughput (records / processing time)
+    total_records = fields.get("streaming_totalprocessedrecords_value", 0)
+    total_batches = fields.get("streaming_totalcompletedbatches_value", 1)
+
+    if total_batches > 0:
+        fields["avg_records_per_batch"] = total_records / total_batches
+
+    # Calculate processing rate (if we have timing data)
+    last_batch_records = fields.get("streaming_lastreceivedbatch_records_value", 0)
+    if processing_delay > 0 and last_batch_records > 0:
+        fields["records_per_second"] = (last_batch_records / processing_delay) * 1000
+
     return metric
 '''
 
