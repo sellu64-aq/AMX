@@ -2,25 +2,22 @@
 
 HOSTNAME=$(hostname | tr '[:lower:]' '[:upper:]')
 
-# Get NTP enabled and synchronized statuses
-status=$(timedatectl status | awk -F: '
-/NTP enabled/ {
-  gsub(/ /, "_", $1);
-  gsub(/ /, "", $2);
-  enabled=($2=="yes") ? 1 : 0;
-}
-/NTP synchronized/ {
-  gsub(/ /, "_", $1);
-  gsub(/ /, "", $2);
-  synced=($2=="yes") ? 1 : 0;
-}
-END {
-  print enabled, synced;
-}')
+# Defaults
+enabled=0
+synced=0
 
-enabled=$(echo $status | cut -d' ' -f1)
-synced=$(echo $status | cut -d' ' -f2)
+# Capture timedatectl output once
+td_out="$(timedatectl status 2>/dev/null)"
 
-# Print Influx line protocol
+# Detect NTP enabled (works across versions)
+if echo "$td_out" | grep -Eq 'NTP enabled:\s*yes|NTP service:\s*active'; then
+  enabled=1
+fi
+
+# Detect clock synchronization (handles both formats)
+if echo "$td_out" | grep -Eq 'NTP synchronized:\s*yes|System clock synchronized:\s*yes'; then
+  synced=1
+fi
+
+# Output InfluxDB line protocol
 echo "ntp_sync_status,host=${HOSTNAME} NTP_enabled=${enabled},NTP_synchronized=${synced}"
-
